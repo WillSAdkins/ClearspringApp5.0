@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>Prayer</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('admin') }}" class="btn-ghost">← Calendar</a>
+      <a href="{{ url_for('logout') }}" class="btn-ghost">Sign out</a>
+    </div>
+  </div>
+
+  {% if held %}
+    <div class="admin-alert">
+      <strong>{{ held|length }} request{{ 's' if held|length != 1 }} need your attention.</strong>
+      These were held back from the public wall because of what they mention.
+      Please read them personally before deciding.
+    </div>
+  {% endif %}
+
+  <h2 class="section-label">Held for review ({{ held|length }})</h2>
+  {% if not held %}<p class="empty-sub">Nothing held right now.</p>{% endif %}
+  {% for p in held %}
+    <article class="qa-admin-card prayer-admin held">
+      <p class="prayer-admin-reason">Flagged: {{ p['hold_reason'] }}</p>
+      <p class="qa-question">{{ p['body'] }}</p>
+      <p class="qa-meta">
+        {{ p['author_name'] or 'Anonymous' }} · {{ p['submitted_at'] | pretty_datetime }} · {{ p['visibility'] }}
+      </p>
+      <div class="qa-admin-actions">
+        <form method="post" action="{{ url_for('admin_prayer_action', prayer_id=p['id'], action='approve') }}" style="display:inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-primary small" style="width:auto;">Publish to wall</button>
+        </form>
+        <form method="post" action="{{ url_for('admin_prayer_action', prayer_id=p['id'], action='hide') }}" style="display:inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-ghost small">Keep private</button>
+        </form>
+        <form method="post" action="{{ url_for('admin_prayer_action', prayer_id=p['id'], action='delete') }}" style="display:inline;"
+              onsubmit="return confirm('Delete this request permanently?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-danger small">Delete</button>
+        </form>
+      </div>
+    </article>
+  {% endfor %}
+
+  <h2 class="section-label" style="margin-top:2.2rem;">Private requests ({{ private|length }})</h2>
+  {% if not private %}<p class="empty-sub">No private requests.</p>{% endif %}
+  {% for p in private %}
+    <article class="qa-admin-card prayer-admin">
+      <p class="prayer-admin-tag">{{ 'Prayer team' if p['visibility'] == 'team' else 'Pastors only' }}</p>
+      <p class="qa-question">{{ p['body'] }}</p>
+      <p class="qa-meta">{{ p['author_name'] or 'Anonymous' }} · {{ p['submitted_at'] | pretty_datetime }}</p>
+      <div class="qa-admin-actions">
+        <form method="post" action="{{ url_for('admin_prayer_action', prayer_id=p['id'], action='answered') }}" style="display:inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-ghost small">Mark answered</button>
+        </form>
+        <form method="post" action="{{ url_for('admin_prayer_action', prayer_id=p['id'], action='delete') }}" style="display:inline;"
+              onsubmit="return confirm('Delete this request permanently?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-danger small">Delete</button>
+        </form>
+      </div>
+    </article>
+  {% endfor %}
+
+  <h2 class="section-label" style="margin-top:2.2rem;">On the wall ({{ live|length }})</h2>
+  {% for p in live %}
+    <article class="qa-admin-card prayer-admin">
+      <p class="qa-question">{{ p['body'] }}</p>
+      <p class="qa-meta">
+        {{ p['author_name'] or 'Anonymous' }} · {{ p['pray_count'] }} praying · {{ p['kind'] }}
+      </p>
+      <div class="qa-admin-actions">
+        <form method="post" action="{{ url_for('admin_prayer_action', prayer_id=p['id'], action='answered') }}" style="display:inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-ghost small">Mark answered</button>
+        </form>
+        <form method="post" action="{{ url_for('admin_prayer_action', prayer_id=p['id'], action='hide') }}" style="display:inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-ghost small">Hide</button>
+        </form>
+        <form method="post" action="{{ url_for('admin_prayer_action', prayer_id=p['id'], action='delete') }}" style="display:inline;"
+              onsubmit="return confirm('Delete permanently?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-danger small">Delete</button>
+        </form>
+      </div>
+    </article>
+  {% endfor %}
+
+  {% if hidden %}
+    <h2 class="section-label" style="margin-top:2.2rem;">Hidden ({{ hidden|length }})</h2>
+    {% for p in hidden %}
+      <article class="qa-admin-card prayer-admin">
+        <p class="qa-question">{{ p['body'] }}</p>
+        <p class="qa-meta">{{ p['author_name'] or 'Anonymous' }} · hidden from wall</p>
+        <div class="qa-admin-actions">
+          <form method="post" action="{{ url_for('admin_prayer_action', prayer_id=p['id'], action='approve') }}" style="display:inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-ghost small">Restore</button>
+          </form>
+          <form method="post" action="{{ url_for('admin_prayer_action', prayer_id=p['id'], action='delete') }}" style="display:inline;"
+                onsubmit="return confirm('Delete permanently?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-danger small">Delete</button>
+          </form>
+        </div>
+      </article>
+    {% endfor %}
+  {% endif %}
+
+</main>
+{% endblock %}

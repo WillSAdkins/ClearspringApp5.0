@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('more_hub') }}" class="bible-back" aria-label="Back to More">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Resources</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <p class="bible-lede">
+    Guides, documents and recommendations — whether you're new here or have been
+    walking with Jesus for years.
+  </p>
+
+  {% if not grouped %}
+    <div class="saved-empty">
+      <span class="saved-empty-icon">{{ icon('book', 26) }}</span>
+      <p class="saved-empty-title">Nothing here yet</p>
+      <p class="saved-empty-sub">Resources will appear here once they're added.</p>
+    </div>
+  {% endif %}
+
+  {% for group in grouped %}
+    <section class="bible-block">
+      <h2 class="bible-h2">{{ group.name }}</h2>
+      <p class="resource-group-blurb">{{ group.blurb }}</p>
+      <nav class="bible-list">
+        {% for r in group['items'] %}
+          {% if r['kind'] == 'article' %}
+            <a href="{{ url_for('resource_detail', resource_id=r['id']) }}" class="bible-row">
+              <span class="bible-row-icon">{{ icon('book', 20) }}</span>
+              <span class="bible-row-body">
+                <span class="bible-row-title">{{ r['title'] }}</span>
+                {% if r['summary'] %}<span class="bible-row-sub">{{ r['summary'] }}</span>{% endif %}
+              </span>
+              {{ icon('chevron-right', 18) }}
+            </a>
+          {% else %}
+            <a href="{{ r['url'] or r['file_path'] }}" target="_blank" rel="noopener" class="bible-row">
+              <span class="bible-row-icon">{{ icon('bookmark', 20) }}</span>
+              <span class="bible-row-body">
+                <span class="bible-row-title">{{ r['title'] }}</span>
+                {% if r['summary'] %}<span class="bible-row-sub">{{ r['summary'] }}</span>{% endif %}
+              </span>
+              {{ icon('chevron-right', 18) }}
+            </a>
+          {% endif %}
+        {% endfor %}
+      </nav>
+    </section>
+  {% endfor %}
+
+</main>
+
+{% endblock %}

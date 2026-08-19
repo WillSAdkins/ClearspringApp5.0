@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+  <header class="bible-head">
+    <a href="{{ url_for('reading_plans') }}" class="bible-back" aria-label="All plans">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">{{ plan.title }}</h1>
+    <span class="plan-detail-emoji" aria-hidden="true">{{ plan.emoji }}</span>
+  </header>
+  <p class="bible-lede">{{ plan.subtitle }}</p>
+
+  {% if video_embed %}
+    <p class="video-frame-label">▶ Watch the introduction</p>
+    <div class="video-frame" data-reveal>
+      <iframe src="{{ video_embed }}" title="{{ plan.title }}" frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+  {% endif %}
+
+  <div class="plan-progress" data-plan="{{ plan_slug }}" data-total="{{ days|length }}">
+    <div class="plan-progress-bar"><div class="plan-progress-fill" id="planFill"></div></div>
+    <div class="plan-progress-row">
+      <span id="planCount" class="plan-progress-count">0 of {{ days|length }} days</span>
+      <button id="planReset" class="btn-ghost small">Reset</button>
+    </div>
+  </div>
+
+  <ol class="plan-days">
+    {% for day in days %}
+      <li class="plan-day" data-day="{{ day.num }}">
+        <button class="plan-check" data-day="{{ day.num }}" aria-label="Mark day {{ day.num }} complete">
+          <span class="plan-check-box">✓</span>
+        </button>
+        <div class="plan-day-body">
+          <span class="plan-day-label">Day {{ day.num }}</span>
+          <div class="plan-day-passages">
+            {% for p in day.passages %}
+              {% if p.slug %}
+                <a href="{{ url_for('bible_read_chapter', book_slug=p.slug, chapter=p.chapter) }}" class="plan-passage">{{ p.ref }}</a>
+              {% else %}
+                <span class="plan-passage">{{ p.ref }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </li>
+    {% endfor %}
+  </ol>
+</main>
+
+<script src="{{ url_for('static', filename='reading-progress.js') }}"></script>
+
+{% endblock %}

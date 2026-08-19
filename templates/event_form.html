@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="admin-page">
+  <p class="eyebrow">Staff area</p>
+  <h1>{{ "Edit event" if event else "Add event" }}</h1>
+
+  <form method="post" class="event-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" required
+           value="{{ event['title'] if event else '' }}" placeholder="Sunday Worship Service">
+
+    <label for="category">Type</label>
+    <select id="category" name="category">
+      <option value="service" {{ "selected" if event and event['category']=='service' }}>Service</option>
+      <option value="event" {{ "selected" if event and event['category']=='event' }}>Event</option>
+    </select>
+
+    <div class="form-row">
+      <div>
+        <label for="event_date">Date</label>
+        <input type="date" id="event_date" name="event_date" required
+               value="{{ event['event_date'] if event else '' }}">
+      </div>
+      <div>
+        <label for="event_time">Time</label>
+        <input type="time" id="event_time" name="event_time" required
+               value="{{ event['event_time'] if event else '' }}">
+      </div>
+    </div>
+
+    <label for="location">Location</label>
+    <input type="text" id="location" name="location"
+           value="{{ event['location'] if event else '' }}" placeholder="Main Sanctuary">
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="3"
+              placeholder="Anything visitors should know">{{ event['description'] if event else '' }}</textarea>
+
+    <label for="ministry">Ministry</label>
+    <select id="ministry" name="ministry">
+      <option value="">Whole church</option>
+      {% for m in ministries %}
+        <option value="{{ m['slug'] }}" {{ "selected" if event and event['ministry'] == m['slug'] }}>{{ m['name'] }}</option>
+      {% endfor %}
+    </select>
+    <p class="field-hint">Tagging an event makes it appear on that ministry's page.</p>
+
+    <label for="recurring">Repeats</label>
+    <select id="recurring" name="recurring">
+      <option value="none" {{ "selected" if event and event['recurring']=='none' }}>Does not repeat</option>
+      <option value="weekly" {{ "selected" if event and event['recurring']=='weekly' }}>Weekly</option>
+      <option value="monthly" {{ "selected" if event and event['recurring']=='monthly' }}>Monthly</option>
+    </select>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">{{ "Save changes" if event else "Add event" }}</button>
+      <a href="{{ url_for('admin') }}" class="btn-ghost">Cancel</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

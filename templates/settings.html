@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('more_hub') }}" class="bible-back" aria-label="Back">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Settings</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <!-- Appearance -->
+  <section class="set-block">
+    <h2 class="set-label">Appearance</h2>
+    <div class="theme-choices" role="radiogroup" aria-label="Theme">
+      <button type="button" class="theme-option" data-theme-choice="light" role="radio" aria-checked="false">
+        <span class="theme-swatch light" aria-hidden="true"><span></span><span></span></span>
+        <span class="theme-name">Light</span>
+      </button>
+      <button type="button" class="theme-option" data-theme-choice="dark" role="radio" aria-checked="false">
+        <span class="theme-swatch dark" aria-hidden="true"><span></span><span></span></span>
+        <span class="theme-name">Dark</span>
+      </button>
+      <button type="button" class="theme-option" data-theme-choice="auto" role="radio" aria-checked="false">
+        <span class="theme-swatch auto" aria-hidden="true"><span></span><span></span></span>
+        <span class="theme-name">Automatic</span>
+      </button>
+    </div>
+    <p class="set-hint">Automatic follows your phone's own light and dark setting.</p>
+  </section>
+
+  <!-- Reading -->
+  <section class="set-block">
+    <h2 class="set-label">Reading</h2>
+    <div class="set-row">
+      <span class="set-row-body">
+        <span class="set-row-title">Text size</span>
+        <span class="set-row-sub">Affects Bible passages and devotionals</span>
+      </span>
+    </div>
+    <div class="size-choices" role="radiogroup" aria-label="Text size">
+      <button type="button" class="size-option" data-size="small" role="radio" aria-checked="false">A</button>
+      <button type="button" class="size-option" data-size="normal" role="radio" aria-checked="false">A</button>
+      <button type="button" class="size-option" data-size="large" role="radio" aria-checked="false">A</button>
+      <button type="button" class="size-option" data-size="xlarge" role="radio" aria-checked="false">A</button>
+    </div>
+    <p class="set-preview" id="sizePreview">
+      For God so loved the world, that he gave his only begotten Son.
+    </p>
+  </section>
+
+  <!-- Links -->
+  <nav class="bible-list set-block">
+    <a href="{{ url_for('notification_settings') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('settings', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Notifications</span>
+        <span class="bible-row-sub">Choose what you hear about</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+    {% if member %}
+      <a href="{{ url_for('account') }}" class="bible-row">
+        <span class="bible-row-icon">{{ icon('users', 20) }}</span>
+        <span class="bible-row-body">
+          <span class="bible-row-title">Your account</span>
+          <span class="bible-row-sub">{{ member['email'] }}</span>
+        </span>
+        {{ icon('chevron-right', 18) }}
+      </a>
+    {% else %}
+      <a href="{{ url_for('signin') }}" class="bible-row">
+        <span class="bible-row-icon">{{ icon('users', 20) }}</span>
+        <span class="bible-row-body">
+          <span class="bible-row-title">Sign in</span>
+          <span class="bible-row-sub">Sync your notes and verses across devices</span>
+        </span>
+        {{ icon('chevron-right', 18) }}
+      </a>
+    {% endif %}
+  </nav>
+
+  <!-- Data on this device -->
+  <section class="set-block">
+    <h2 class="set-label">This device</h2>
+    <button type="button" id="clearLocal" class="set-danger">Clear saved data on this device</button>
+    <p class="set-hint">
+      Removes highlights, notes, journal entries and reading progress stored here.
+      {% if member %}Anything synced to your account stays safe.{% else %}This can't be undone.{% endif %}
+    </p>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  /* ---- Theme ---- */
+  const THEME_KEY = "cs_theme";
+  const options = [...document.querySelectorAll("[data-theme-choice]")];
+
+  function currentTheme() {
+    try { return localStorage.getItem(THEME_KEY) || "auto"; } catch (e) { return "auto"; }
+  }
+
+  function paintThemeChoice() {
+    const t = currentTheme();
+    options.forEach((b) => {
+      const on = b.dataset.themeChoice === t;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+    });
+  }
+
+  function setTheme(t) {
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+    document.documentElement.setAttribute("data-theme", t);
+    paintThemeChoice();
+    updateThemeColorMeta();
+  }
+
+  // Keep the browser chrome colour in step with the theme
+  function updateThemeColorMeta() {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) return;
+    const bg = getComputedStyle(document.body).backgroundColor;
+    meta.setAttribute("content", bg);
+  }
+
+  options.forEach((b) => {
+    b.addEventListener("click", () => setTheme(b.dataset.themeChoice));
+  });
+  paintThemeChoice();
+  updateThemeColorMeta();
+
+  /* ---- Text size ---- */
+  const SIZE_KEY = "cs_text_size";
+  const sizes = [...document.querySelectorAll("[data-size]")];
+
+  function currentSize() {
+    try { return localStorage.getItem(SIZE_KEY) || "normal"; } catch (e) { return "normal"; }
+  }
+
+  function paintSizeChoice() {
+    const s = currentSize();
+    sizes.forEach((b) => {
+      const on = b.dataset.size === s;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    document.documentElement.setAttribute("data-text-size", s);
+  }
+
+  sizes.forEach((b) => {
+    b.addEventListener("click", () => {
+      try { localStorage.setItem(SIZE_KEY, b.dataset.size); } catch (e) {}
+      paintSizeChoice();
+    });
+  });
+  paintSizeChoice();
+
+  /* ---- Clear local data ---- */
+  document.getElementById("clearLocal").addEventListener("click", () => {
+    if (!confirm("Clear highlights, notes, journal and reading progress saved on this device?")) return;
+    const keep = [THEME_KEY, SIZE_KEY];
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("cs_") && !keep.includes(k))
+      .forEach((k) => localStorage.removeItem(k));
+    alert("Cleared.");
+  });
+})();
+</script>
+
+{% endblock %}

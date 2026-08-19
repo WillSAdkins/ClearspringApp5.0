@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('bible_hub') }}" class="bible-back" aria-label="Back to Bible">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Books</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <div class="recent-strip" id="recentStrip" hidden></div>
+
+  <div class="book-search">
+    {{ icon('search', 18) }}
+    <input type="search" id="bookFilter" placeholder="Find a book" autocomplete="off" aria-label="Find a book">
+  </div>
+
+  <div id="bookResults">
+    <p class="book-group-label">Old Testament</p>
+    <div class="book-list">
+      {% for book in old_testament %}
+        <a href="{{ url_for('bible_chapters', book_slug=book.slug) }}" class="book-row" data-name="{{ book.name|lower }}">
+          <span class="book-row-name">{{ book.name }}</span>
+          <span class="book-row-meta">{{ book.chapters }}</span>
+        </a>
+      {% endfor %}
+    </div>
+
+    <p class="book-group-label">New Testament</p>
+    <div class="book-list">
+      {% for book in new_testament %}
+        <a href="{{ url_for('bible_chapters', book_slug=book.slug) }}" class="book-row" data-name="{{ book.name|lower }}">
+          <span class="book-row-name">{{ book.name }}</span>
+          <span class="book-row-meta">{{ book.chapters }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <p id="bookEmpty" class="book-empty" hidden>No book matches that name.</p>
+
+</main>
+
+<script>
+(function () {
+  const input = document.getElementById("bookFilter");
+  const rows = [...document.querySelectorAll(".book-row")];
+  const labels = [...document.querySelectorAll(".book-group-label")];
+  const lists = [...document.querySelectorAll(".book-list")];
+  const empty = document.getElementById("bookEmpty");
+
+  input.addEventListener("input", () => {
+    const q = input.value.trim().toLowerCase();
+    let visible = 0;
+    rows.forEach((r) => {
+      const match = !q || r.dataset.name.includes(q);
+      r.hidden = !match;
+      if (match) visible++;
+    });
+    // Hide a group heading if its list has nothing visible
+    lists.forEach((list, i) => {
+      const any = [...list.querySelectorAll(".book-row")].some((r) => !r.hidden);
+      list.hidden = !any;
+      if (labels[i]) labels[i].hidden = !any;
+    });
+    empty.hidden = visible > 0;
+  });
+})();
+</script>
+
+<script src="{{ url_for('static', filename='reading-position.js') }}"></script>
+<script>
+(function () {
+  const strip = document.getElementById("recentStrip");
+  if (!strip || !window.ReadingPosition) return;
+  const recent = window.ReadingPosition.recentBooks();
+  if (!recent.length) return;
+  recent.forEach((b) => {
+    const a = document.createElement("a");
+    a.className = "recent-chip";
+    a.href = `/bible/read/${b.slug}`;
+    a.textContent = b.name;
+    strip.appendChild(a);
+  });
+  strip.hidden = false;
+})();
+</script>
+{% endblock %}

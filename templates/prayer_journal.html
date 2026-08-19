@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('prayer_wall') }}" class="bible-back" aria-label="Back to Prayer">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">My journal</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <p class="journal-privacy">
+    {{ icon('bookmark', 16) }}
+    <span>Private to this device. Nothing here is sent to the church or stored online.</span>
+  </p>
+
+  <form class="journal-form" id="journalForm">
+    <textarea id="journalEntry" rows="3" placeholder="Write a prayer, a thought, or something you're waiting on…"></textarea>
+    <button type="submit" class="pf-submit">Add entry</button>
+  </form>
+
+  <div id="journalEmpty" class="saved-empty" hidden>
+    <span class="saved-empty-icon">{{ icon('book', 26) }}</span>
+    <p class="saved-empty-title">Your journal is empty</p>
+    <p class="saved-empty-sub">Use it to keep track of what you're praying for, and how those prayers are answered.</p>
+  </div>
+
+  <div id="journalList" class="journal-list"></div>
+
+</main>
+
+<script src="{{ url_for('static', filename='sync.js') }}"></script>
+<script>
+(function () {
+  const KEY = "cs_prayer_journal";
+  const listEl = document.getElementById("journalList");
+  const emptyEl = document.getElementById("journalEmpty");
+  const form = document.getElementById("journalForm");
+  const input = document.getElementById("journalEntry");
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
+    catch (e) { return []; }
+  }
+  function save(items) {
+    try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {}
+  }
+
+  function keyOf(item) { return item.at; }   // timestamps are unique enough here
+
+  function syncUp(item, isDelete) {
+    if (window.Sync) window.Sync.push("journal", keyOf(item), item, isDelete);
+  }
+
+  function fmt(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  function render() {
+    const items = load();
+    listEl.innerHTML = "";
+    emptyEl.hidden = items.length > 0;
+
+    items.forEach((item, i) => {
+      const el = document.createElement("article");
+      el.className = "journal-item" + (item.answered ? " answered" : "");
+
+      const meta = document.createElement("p");
+      meta.className = "journal-meta";
+      meta.textContent = item.answered ? `${fmt(item.at)} · Answered` : fmt(item.at);
+
+      const body = document.createElement("p");
+      body.className = "journal-body";
+      body.textContent = item.text;
+
+      const actions = document.createElement("div");
+      actions.className = "journal-actions";
+
+      const mark = document.createElement("button");
+      mark.type = "button";
+      mark.className = "journal-action";
+      mark.textContent = item.answered ? "Mark unanswered" : "Mark answered";
+      mark.addEventListener("click", () => {
+        const all = load();
+        all[i].answered = !all[i].answered;
+        save(all); syncUp(all[i], false); render();
+      });
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "journal-action";
+      del.textContent = "Delete";
+      del.addEventListener("click", () => {
+        const all = load();
+        const [removed] = all.splice(i, 1);
+        save(all); if (removed) syncUp(removed, true); render();
+      });
+
+      actions.append(mark, del);
+      el.append(meta, body, actions);
+      listEl.appendChild(el);
+    });
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    const items = load();
+    const entry = { text, at: new Date().toISOString(), answered: false };
+    items.unshift(entry);
+    save(items);
+    syncUp(entry, false);
+    input.value = "";
+    render();
+  });
+
+  render();
+
+  // Bring in anything written on another device
+  if (window.Sync) {
+    window.Sync.merge("journal", KEY, keyOf).then((signedIn) => {
+      if (signedIn) render();
+    });
+  }
+})();
+</script>
+
+{% endblock %}

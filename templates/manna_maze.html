@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow"><a href="{{ url_for('games_hub') }}" style="color:inherit;">← Kids Games</a></p>
+    <h1 class="page-title">Manna Maze</h1>
+    <p class="tagline">Collect all the manna. Don't let the shadow catch you!</p>
+  </div>
+</header>
+
+<main class="board">
+  <div class="mz-stats">
+    <span>Manna: <strong id="mz-collected">0</strong> / <strong id="mz-total">0</strong></span>
+    <span>Lives: <strong id="mz-lives">3</strong></span>
+    <button id="mz-restart" class="btn-ghost small">Restart</button>
+  </div>
+
+  <div id="mz-grid" class="mz-grid"></div>
+
+  <div class="mz-controls" aria-hidden="false">
+    <div></div>
+    <button class="mz-btn" data-dir="up">↑</button>
+    <div></div>
+    <button class="mz-btn" data-dir="left">←</button>
+    <button class="mz-btn" data-dir="down">↓</button>
+    <button class="mz-btn" data-dir="right">→</button>
+  </div>
+
+  <div id="mz-end-box" class="mm-win" hidden>
+    <p id="mz-end-message"></p>
+    <button id="mz-play-again" class="btn-primary" style="width:auto;">Play again</button>
+    <div id="mz-publish-row" class="lb-publish" hidden>
+      <button id="mz-publish" class="btn-ghost small">Publish score to leaderboard</button>
+      <p id="mz-publish-result" class="lb-publish-result"></p>
+    </div>
+    <a href="{{ url_for('game_leaderboard', game_key='manna_maze') }}" class="lb-view-link">View leaderboard →</a>
+  </div>
+</main>
+
+<style>
+  .mz-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .mz-grid {
+    display: grid;
+    gap: 2px;
+    width: 100%;
+    max-width: 21rem;
+    box-sizing: border-box;
+    background: var(--ink);
+    padding: 4px;
+    border-radius: 0.6rem;
+  }
+  .mz-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    background: var(--white);
+    min-width: 0;
+    overflow: hidden;
+  }
+  .mz-cell.wall { background: var(--ink); }
+  .mz-controls {
+    display: grid;
+    grid-template-columns: repeat(3, 3.2rem);
+    gap: 0.4rem;
+    margin-top: 1.2rem;
+  }
+  .mz-btn {
+    aspect-ratio: 1;
+    border-radius: 0.6rem;
+    border: 1px solid var(--ink);
+    background: var(--white);
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+  .mz-btn:active { background: var(--ink); color: var(--white); }
+  .lb-publish { margin-top: 0.8rem; }
+  .lb-publish-result { font-size: 0.82rem; color: var(--muted); margin-top: 0.3rem; }
+  .lb-view-link { display: inline-block; margin-top: 0.6rem; font-size: 0.85rem; color: var(--accent); }
+</style>
+
+<script>
+(function () {
+  // Maze layout: # = wall, . = open path with manna, ' ' = open path (no manna), P = player start
+  const LAYOUT = [
+    "###################",
+    "#........#........#",
+    "#.##.###.#.###.##.#",
+    "#.................#",
+    "#.##.#.#####.#.##.#",
+    "#....#...#...#....#",
+    "####.### # ###.####",
+    "#........#........#",
+    "#.##.###.#.###.##.#",
+    "#..#.....P.....#..#",
+    "##.#.#.#####.#.#.##",
+    "#........#........#",
+    "###################",
+  ];
+
+  const gridEl = document.getElementById("mz-grid");
+  const collectedEl = document.getElementById("mz-collected");
+  const totalEl = document.getElementById("mz-total");
+  const livesEl = document.getElementById("mz-lives");
+  const endBox = document.getElementById("mz-end-box");
+  const endMessage = document.getElementById("mz-end-message");
+
+  const rows = LAYOUT.length;
+  const cols = LAYOUT[0].length;
+
+  let grid, player, enemy, total, lives, timer, moves;
+
+  function parseLayout() {
+    grid = LAYOUT.map((row) => row.split(""));
+    player = { r: 0, c: 0 };
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (grid[r][c] === "P") {
+          player = { r, c };
+          grid[r][c] = ".";
+        }
+      }
+    }
+    enemy = findFarCell();
+  }
+
+  function findFarCell() {
+    let best = { r: 1, c: cols - 2 };
+    if (grid[best.r][best.c] === "#") {
+      outer: for (let r = 1; r < rows - 1; r++) {
+        for (let c = cols - 2; c > 0; c--) {
+          if (grid[r][c] !== "#") { best = { r, c }; break outer; }
+        }
+      }
+    }
+    return best;
+  }
+
+  function countManna() {
+    let n = 0;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (grid[r][c] === ".") n++;
+    return n;
+  }
+
+  function render() {
+    gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    gridEl.innerHTML = "";
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const cell = document.createElement("div");
+        cell.className = "mz-cell" + (grid[r][c] === "#" ? " wall" : "");
+        if (r === player.r && c === player.c) {
+          cell.textContent = "😊";
+        } else if (r === enemy.r && c === enemy.c) {
+          cell.textContent = "👻";
+        } else if (grid[r][c] === ".") {
+          cell.textContent = "•";
+        }
+        gridEl.appendChild(cell);
+      }
+    }
+  }
+
+  function updateStats() {
+    collectedEl.textContent = total - countManna();
+    totalEl.textContent = total;
+    livesEl.textContent = lives;
+  }
+
+  function canMove(r, c) {
+    return r >= 0 && r < rows && c >= 0 && c < cols && grid[r][c] !== "#";
+  }
+
+  function move(dir) {
+    if (endBox.hidden === false) return;
+    let { r, c } = player;
+    if (dir === "up") r -= 1;
+    if (dir === "down") r += 1;
+    if (dir === "left") c -= 1;
+    if (dir === "right") c += 1;
+    if (!canMove(r, c)) return;
+    player = { r, c };
+    moves += 1;
+    if (grid[r][c] === ".") grid[r][c] = " ";
+    checkCollision();
+    updateStats();
+    render();
+    checkWin();
+  }
+
+  function moveEnemy() {
+    const dirs = [{ r: -1, c: 0 }, { r: 1, c: 0 }, { r: 0, c: -1 }, { r: 0, c: 1 }];
+    const options = dirs
+      .map((d) => ({ r: enemy.r + d.r, c: enemy.c + d.c }))
+      .filter((p) => canMove(p.r, p.c));
+    if (options.length) {
+      options.sort((a, b) => {
+        const da = Math.abs(a.r - player.r) + Math.abs(a.c - player.c);
+        const db = Math.abs(b.r - player.r) + Math.abs(b.c - player.c);
+        return da - db;
+      });
+      enemy = Math.random() < 0.7 ? options[0] : options[Math.floor(Math.random() * options.length)];
+    }
+    checkCollision();
+    render();
+  }
+
+  function checkCollision() {
+    if (player.r === enemy.r && player.c === enemy.c) {
+      lives -= 1;
+      updateStats();
+      if (lives <= 0) {
+        endGame(false);
+      } else {
+        // Reset positions only; already-eaten manna stays eaten
+        player = { r: 9, c: 9 };
+        enemy = findFarCell();
+        render();
+      }
+    }
+  }
+
+  function checkWin() {
+    if (countManna() === 0) endGame(true);
+  }
+
+  function endGame(won) {
+    clearInterval(timer);
+    endBox.hidden = false;
+    endMessage.textContent = won
+      ? `🎉 You collected all the manna in ${moves} moves!`
+      : "The shadow caught you. Better luck next time!";
+    const publishRow = document.getElementById("mz-publish-row");
+    if (won) {
+      publishRow.hidden = false;
+      const publishBtn = document.getElementById("mz-publish");
+      const resultEl = document.getElementById("mz-publish-result");
+      publishBtn.disabled = false;
+      publishBtn.textContent = "Publish score to leaderboard";
+      resultEl.textContent = "";
+      publishBtn.onclick = () => {
+        ChurchLeaderboard.publish("manna_maze", moves, resultEl, publishBtn);
+      };
+    } else {
+      publishRow.hidden = true;
+    }
+  }
+
+  function restart() {
+    parseLayout();
+    total = countManna();
+    lives = 3;
+    moves = 0;
+    endBox.hidden = true;
+    updateStats();
+    render();
+    clearInterval(timer);
+    timer = setInterval(moveEnemy, 500);
+  }
+
+  document.querySelectorAll(".mz-btn").forEach((btn) => {
+    btn.addEventListener("click", () => move(btn.dataset.dir));
+  });
+
+  document.addEventListener("keydown", (e) => {
+    const map = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
+    if (map[e.key]) { e.preventDefault(); move(map[e.key]); }
+  });
+
+  document.getElementById("mz-restart").addEventListener("click", restart);
+  document.getElementById("mz-play-again").addEventListener("click", restart);
+
+  restart();
+})();
+</script>
+
+{% endblock %}

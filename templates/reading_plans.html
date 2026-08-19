@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('bible_hub') }}" class="bible-back" aria-label="Back to Bible">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Plans</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <p class="bible-lede">Read through Scripture a little at a time. Your progress is kept on this device.</p>
+
+  <div class="plan-stack">
+    {% for p in plans %}
+      <a href="{{ url_for('reading_plan_detail', plan_slug=p.slug) }}" class="plan-item">
+        <span class="plan-item-emoji">{{ p.emoji }}</span>
+        <div class="plan-item-body">
+          <span class="plan-item-days">{{ p.length }} days</span>
+          <h3 class="plan-item-title">{{ p.title }}</h3>
+          <p class="plan-item-sub">{{ p.subtitle }}</p>
+        </div>
+        {% if p.has_video %}<span class="plan-item-video-badge" title="Includes a video">▶</span>{% endif %}
+        {{ icon('chevron-right', 18) }}
+      </a>
+    {% endfor %}
+  </div>
+
+</main>
+
+{% endblock %}

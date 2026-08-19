@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>Your data</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('admin') }}" class="btn-ghost">← Admin</a>
+    </div>
+  </div>
+
+  <section class="admin-panel">
+    <h2 class="section-label">Where it's stored</h2>
+    <p class="empty-sub" style="line-height:1.6; margin-bottom:0.8rem;">
+      Everything you enter is kept in a single file, stored <strong>outside</strong>
+      the app folder. That means you can replace the app with a newer version
+      without losing anything.
+    </p>
+    <p class="data-path">{{ db_path }}</p>
+    <p class="empty-sub" style="margin-top:0.5rem;">{{ db_size_kb }} KB</p>
+    {% if disk_free_mb is not none %}
+    <p class="empty-sub" style="margin-top:0.35rem;">
+      Disk: {{ disk_free_mb }} MB free of {{ disk_total_mb }} MB
+      {%- if disk_used_pct is not none %} ({{ disk_used_pct }}% used){% endif %}
+    </p>
+    {% if disk_used_pct is not none and disk_used_pct >= 85 %}
+    <p style="margin-top:0.5rem;padding:0.6rem 0.8rem;border-radius:0.5rem;
+              background:#fdf0e6;color:#7a3f10;font-size:0.85rem;">
+      <strong>Disk is nearly full.</strong> If it runs out, saving will start
+      failing and the database can be damaged. Download a backup now, then
+      increase the disk size in your Render dashboard.
+    </p>
+    {% endif %}
+    {% endif %}
+  </section>
+
+  <section class="admin-panel" style="margin-top:1.4rem;">
+    <h2 class="section-label">What's in it</h2>
+    <div class="notif-counts">
+      {% for label, n in counts.items() %}
+        <div class="notif-count-row"><span>{{ label }}</span><strong>{{ n }}</strong></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="admin-panel" style="margin-top:1.4rem;">
+    <h2 class="section-label">Back up</h2>
+    <p class="empty-sub" style="line-height:1.6; margin-bottom:1rem;">
+      Download a complete copy. Worth doing before any big change, and worth
+      keeping one somewhere other than this computer.
+    </p>
+    <a href="{{ url_for('admin_backup') }}" class="btn-primary" style="width:auto; display:inline-block;">
+      Download backup
+    </a>
+  </section>
+
+  <section class="admin-panel" style="margin-top:1.4rem;">
+    <h2 class="section-label">Restore</h2>
+    <div class="admin-alert" style="margin-bottom:1rem;">
+      <strong>This replaces everything currently in the app.</strong>
+      Your existing data is saved alongside first, but only restore if you're sure.
+    </div>
+    <form method="post" action="{{ url_for('admin_restore') }}" enctype="multipart/form-data"
+          onsubmit="return confirm('Replace all current data with this backup?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="file" name="backup" accept=".db" required
+             style="width:100%; margin-bottom:1rem;">
+      <button type="submit" class="btn-danger" style="width:auto;">Restore from backup</button>
+    </form>
+  </section>
+</main>
+{% endblock %}

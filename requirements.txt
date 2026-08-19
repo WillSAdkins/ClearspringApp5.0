@@ -1,0 +1,4 @@
+Flask>=3.0
+requests>=2.31
+pywebpush>=1.14
+gunicorn>=21.2

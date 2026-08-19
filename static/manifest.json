@@ -1,0 +1,13 @@
+{
+  "name": "Clearspring — Service Times",
+  "short_name": "Clearspring",
+  "description": "Upcoming services and events at Clearspring",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FBF8F3",
+  "theme_color": "#FBF8F3",
+  "icons": [
+    { "src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

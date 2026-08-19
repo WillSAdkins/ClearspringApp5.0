@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+<main class="bible">
+  <header class="bible-head">
+    <a href="{{ url_for('signin') }}" class="bible-back" aria-label="Back">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Email me a link</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <p class="bible-lede">
+    Enter your email and we'll send you a link that signs you in — no password needed.
+    The link works once and expires after 20 minutes.
+  </p>
+
+  <form method="post" class="prayer-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="email" class="pf-label">Email</label>
+    <input type="email" id="email" name="email" value="{{ email }}" required autocomplete="email">
+    <button type="submit" class="pf-submit">Send me a link</button>
+  </form>
+</main>
+{% endblock %}

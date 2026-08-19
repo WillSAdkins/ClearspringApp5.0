@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <h1 class="bible-title">Bible</h1>
+    <a href="{{ url_for('bible_books') }}" class="bible-search" aria-label="Find a book">
+      {{ icon('search', 20) }}
+    </a>
+  </header>
+
+  <!-- Continue reading: filled in by JS when a saved position exists -->
+  <a href="#" class="continue-card" id="continueCard" hidden>
+    <span class="continue-icon">{{ icon('book', 22) }}</span>
+    <span class="continue-body">
+      <span class="continue-label">Continue reading</span>
+      <span class="continue-ref" id="continueRef"></span>
+      <span class="continue-sub" id="continueSub"></span>
+    </span>
+    <span class="continue-go">{{ icon('chevron-right', 20) }}</span>
+  </a>
+
+  <!-- Verse of the day: the hero content, not a menu -->
+  <section class="votd" data-reveal>
+    <p class="votd-label">Verse of the day</p>
+    <p class="votd-text">{{ verse.text }}</p>
+    <div class="votd-foot">
+      <span class="votd-ref">{{ verse.ref }}</span>
+      <a href="{{ url_for('bible_books') }}" class="votd-action">Read in context</a>
+    </div>
+  </section>
+
+  <!-- Continue reading / plans -->
+  <section class="bible-block" data-reveal>
+    <div class="bible-block-head">
+      <h2 class="bible-h2">Reading plans</h2>
+      <a href="{{ url_for('reading_plans') }}" class="bible-more">All plans</a>
+    </div>
+    <div class="plan-rail">
+      {% for p in plans[:4] %}
+        <a href="{{ url_for('reading_plan_detail', plan_slug=p.slug) }}" class="plan-card">
+          <span class="plan-card-emoji" aria-hidden="true">{{ p.emoji }}</span>
+          <span class="plan-card-days">{{ p.length }} days</span>
+          <span class="plan-card-title">{{ p.title }}</span>
+          <span class="plan-card-sub">{{ p.subtitle }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Today's devotional, shown inline -->
+  {% if devotional %}
+  <section class="bible-block" data-reveal>
+    <div class="bible-block-head">
+      <h2 class="bible-h2">Today's devotional</h2>
+      <a href="{{ url_for('devotionals') }}" class="bible-more">Archive</a>
+    </div>
+    <a href="{{ url_for('devotional_detail', devotional_id=devotional['id']) }}" class="devo-feature">
+      <span class="devo-feature-ref">{{ devotional['verse_ref'] }}</span>
+      {% if devotional_has_video %}<span class="devo-feature-video-badge" title="Includes a video">▶ Watch</span>{% endif %}
+      <h3 class="devo-feature-title">{{ devotional['title'] }}</h3>
+      <p class="devo-feature-excerpt">{{ devotional['body'] | excerpt(150) }}</p>
+      <span class="devo-feature-cta">Read devotional {{ icon('chevron-right', 16) }}</span>
+    </a>
+  </section>
+  {% endif %}
+
+  <!-- Utility list — a list, not a grid of tiles -->
+  <nav class="bible-list">
+    <a href="{{ url_for('bible_books') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('book', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Browse Scripture</span>
+        <span class="bible-row-sub">All 66 books, KJV, ASV &amp; WEB</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+    <a href="{{ url_for('devotionals') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('sunrise', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Devotionals</span>
+        <span class="bible-row-sub">Short daily reflections</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+    <a href="{{ url_for('saved_verses') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('bookmark', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Saved verses</span>
+        <span class="bible-row-sub">Passages you've kept</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+  </nav>
+
+</main>
+
+<script src="{{ url_for('static', filename='reading-position.js') }}"></script>
+<script>
+(function () {
+  const card = document.getElementById("continueCard");
+  if (!card || !window.ReadingPosition) return;
+
+  function timeAgo(iso) {
+    if (!iso) return "";
+    const then = new Date(iso).getTime();
+    if (isNaN(then)) return "";
+    const mins = Math.round((Date.now() - then) / 60000);
+    if (mins < 2) return "just now";
+    if (mins < 60) return mins + " min ago";
+    const hrs = Math.round(mins / 60);
+    if (hrs < 24) return hrs + (hrs === 1 ? " hour ago" : " hours ago");
+    const days = Math.round(hrs / 24);
+    if (days === 1) return "yesterday";
+    if (days < 7) return days + " days ago";
+    return "a while ago";
+  }
+
+  function show(pos) {
+    if (!pos || !pos.bookSlug || !pos.chapter) return;
+    const ref = pos.book + " " + pos.chapter;
+    document.getElementById("continueRef").textContent = ref;
+    const when = timeAgo(pos.at);
+    document.getElementById("continueSub").textContent =
+      "Pick up where you left off" + (when ? " · " + when : "");
+    const trans = pos.translation ? "?translation=" + encodeURIComponent(pos.translation) : "";
+    card.href = "/bible/read/" + pos.bookSlug + "/" + pos.chapter + trans;
+    card.hidden = false;
+  }
+
+  // Show the local position immediately, then let the account's copy (which
+  // may be newer, from another device) override and refresh it.
+  show(window.ReadingPosition.getPosition());
+
+  if (window.ReadingPosition.syncWithAccount) {
+    window.ReadingPosition.syncWithAccount().then((updated) => {
+      if (updated) show(window.ReadingPosition.getPosition());
+    });
+  }
+})();
+</script>
+
+{% endblock %}

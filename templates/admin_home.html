@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="admin-head">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('admin') }}" style="color:inherit;">← The board</a></p>
+    <h1>Home page</h1>
+  </div>
+</header>
+
+<main class="board">
+
+  {% if saved %}<p class="ah-saved">Saved. <a href="{{ url_for('index') }}">See it →</a></p>{% endif %}
+
+  <p class="ah-lead">
+    The big statement at the top of the app. This is the first thing anyone
+    sees, so it's worth getting right — and worth changing when a season or a
+    series changes.
+  </p>
+
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label class="ah-f">
+      <span>Small line above</span>
+      <input type="text" name="home_eyebrow" value="{{ content.home_eyebrow }}"
+             placeholder="Cheltenham · Sundays 11am">
+      <small>Where and when. Keep it short — it sits in small capitals.</small>
+    </label>
+
+    <label class="ah-f">
+      <span>The statement</span>
+      <textarea name="home_statement" rows="3">{{ content.home_statement }}</textarea>
+      <small>
+        Put <code>*asterisks*</code> around one phrase to set it in the italic
+        serif — that contrast is the app's signature, so use it once, not
+        three times. Press Enter for a line break.
+      </small>
+    </label>
+
+    <label class="ah-f">
+      <span>Line underneath</span>
+      <input type="text" name="home_sub" value="{{ content.home_sub }}"
+             placeholder="Centenary Hall, Dean Close Prep School, GL51 6QS">
+      <small>Usually the address, but it could be a series name or a date.</small>
+    </label>
+
+    <label class="ah-f">
+      <span>Button text</span>
+      <input type="text" name="home_cta" value="{{ content.home_cta }}"
+             placeholder="Plan your visit">
+      <small>The button always goes to the Plan your visit page.</small>
+    </label>
+
+    <button type="submit" class="btn-primary" style="width:auto;margin-top:.6rem;">
+      Save
+    </button>
+  </form>
+
+  <h2 class="ah-h2">What else can I change?</h2>
+  <dl class="ah-where">
+    <dt>Sermons, events, devotionals, prayers, questions, store, giving</dt>
+    <dd>All editable from the admin board — each has its own page.</dd>
+
+    <dt>Directions, parking, what to expect</dt>
+    <dd>Admin → Visit.</dd>
+
+    <dt>Which features are switched on</dt>
+    <dd>Admin → Status shows what's configured and what each needs.</dd>
+
+    <dt>Colours and fonts</dt>
+    <dd>These live in the stylesheet, not in admin. Set
+      <code>CLEARSPRING_THEME=classic</code> in your environment variables to
+      switch back to the original warm design.</dd>
+
+    <dt>Page layout, new sections, new features</dt>
+    <dd>These need code changes.</dd>
+  </dl>
+
+</main>
+
+<style>
+  .ah-saved { background: rgba(110,155,87,0.16); color: #4E7A3C;
+              padding: 0.65rem 0.9rem; border-radius: 0.5rem;
+              font-weight: 600; font-size: 0.9rem; margin: 0 0 1rem; }
+  .ah-saved a { color: inherit; }
+  .ah-lead { font-size: 0.92rem; line-height: 1.6; color: var(--muted);
+             max-width: 38rem; margin: 0 0 1.4rem; }
+  .ah-f { display: block; margin-bottom: 1.2rem; max-width: 38rem; }
+  .ah-f > span { display: block; font-size: 0.85rem; font-weight: 600;
+                 margin-bottom: 0.3rem; }
+  .ah-f input, .ah-f textarea {
+    width: 100%; font: inherit; font-size: 0.92rem;
+    padding: 0.6rem 0.75rem; border: 1px solid var(--line);
+    border-radius: var(--r-sm, 0.5rem); background: var(--white);
+    color: var(--ink); resize: vertical;
+  }
+  .ah-f small { display: block; font-size: 0.8rem; color: var(--muted);
+                margin-top: 0.3rem; line-height: 1.5; }
+  .ah-h2 { font-family: var(--display); font-size: 1.05rem;
+           margin: 2.2rem 0 0.8rem; padding-top: 1.2rem;
+           border-top: 1px solid var(--line); }
+  .ah-where { margin: 0; max-width: 38rem; }
+  .ah-where dt { font-weight: 600; font-size: 0.88rem; margin-top: 0.8rem; }
+  .ah-where dd { margin: 0.15rem 0 0; font-size: 0.85rem;
+                 color: var(--muted); line-height: 1.5; }
+  code { font-family: var(--mono); font-size: 0.82rem;
+         background: var(--surface-2); padding: 0.1rem 0.35rem;
+         border-radius: 0.25rem; }
+</style>
+
+{% endblock %}

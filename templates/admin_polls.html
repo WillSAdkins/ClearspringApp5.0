@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>Live polls</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('admin_sermons') }}" class="btn-ghost">Sermons</a>
+      <a href="{{ url_for('admin') }}" class="btn-ghost">← Admin</a>
+    </div>
+  </div>
+
+  <section class="admin-panel">
+    <h2 class="section-label">New poll</h2>
+    <p class="empty-sub" style="margin-bottom:1rem;">
+      Ask the room a question during the service. It shows up on the Watch tab the
+      moment you open it, and closes whenever you're ready.
+    </p>
+    <form method="post" action="{{ url_for('new_poll') }}" class="event-form" style="max-width:100%;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <label for="question">Question</label>
+      <input type="text" id="question" name="question" required
+             placeholder="What stood out to you from today's message?">
+
+      <label for="option-1">Options (at least two)</label>
+      <input type="text" id="option-1" name="option" placeholder="Option 1">
+      <input type="text" name="option" placeholder="Option 2" style="margin-top:0.5rem;">
+      <input type="text" name="option" placeholder="Option 3 (optional)" style="margin-top:0.5rem;">
+      <input type="text" name="option" placeholder="Option 4 (optional)" style="margin-top:0.5rem;">
+      <input type="text" name="option" placeholder="Option 5 (optional)" style="margin-top:0.5rem;">
+      <input type="text" name="option" placeholder="Option 6 (optional)" style="margin-top:0.5rem;">
+
+      <fieldset class="pf-group" style="margin-top:1rem;">
+        <legend class="pf-label">Results</legend>
+        <div class="pf-chips">
+          <label class="pf-chip">
+            <input type="radio" name="show_results" value="live" checked>
+            <span>Show live as votes come in</span>
+          </label>
+          <label class="pf-chip">
+            <input type="radio" name="show_results" value="after_close">
+            <span>Hold until I close it</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" style="width:auto;">Create poll</button>
+      </div>
+    </form>
+  </section>
+
+  <h2 class="section-label" style="margin-top:2.4rem;">All polls ({{ polls|length }})</h2>
+  {% if not polls %}
+    <p class="empty-sub">No polls yet. Create the first one above.</p>
+  {% endif %}
+
+  <div class="admin-table">
+    {% for item in polls %}
+      {% set p = item.row %}
+      {% set total = item.options | sum(attribute='vote_count') %}
+      <div class="admin-row poll-row">
+        <div class="admin-row-main">
+          <span class="card-tag poll-status poll-status-{{ p['status'] }}">{{ p['status'] }}</span>
+          <strong>{{ p['question'] }}</strong>
+          <div class="poll-admin-options">
+            {% for o in item.options %}
+              <div class="poll-admin-option">
+                <span class="poll-admin-option-label">{{ o['label'] }}</span>
+                <span class="poll-admin-option-bar">
+                  <span class="poll-admin-option-fill"
+                        style="width: {{ (100 * o['vote_count'] / total) if total else 0 }}%"></span>
+                </span>
+                <span class="poll-admin-option-count">{{ o['vote_count'] }}</span>
+              </div>
+            {% endfor %}
+          </div>
+          <span class="admin-row-loc">{{ total }} vote{{ 's' if total != 1 }}</span>
+        </div>
+        <div class="admin-row-actions">
+          {% if p['status'] != 'live' %}
+            <form method="post" action="{{ url_for('open_poll', poll_id=p['id']) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-primary small">Open</button>
+            </form>
+          {% else %}
+            <form method="post" action="{{ url_for('close_poll', poll_id=p['id']) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-ghost small">Close</button>
+            </form>
+          {% endif %}
+          <form method="post" action="{{ url_for('delete_poll', poll_id=p['id']) }}"
+                onsubmit="return confirm('Delete this poll and its votes?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-danger small">Delete</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</main>
+
+<style>
+  .poll-status {
+    display: inline-block;
+    margin-bottom: 0.3rem;
+    text-transform: capitalize;
+  }
+  .poll-status-live { background: var(--accent); color: var(--white); }
+  .poll-admin-options { margin: 0.5rem 0; display: flex; flex-direction: column; gap: 0.3rem; }
+  .poll-admin-option {
+    display: grid;
+    grid-template-columns: 8rem 1fr 2.4rem;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+  }
+  .poll-admin-option-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .poll-admin-option-bar {
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+  .poll-admin-option-fill {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s ease;
+  }
+  .poll-admin-option-count { text-align: right; color: var(--muted); font-family: var(--mono); }
+  .poll-row .admin-row-actions { flex-direction: column; }
+  .poll-row .admin-row-actions form { width: 100%; }
+  .poll-row .admin-row-actions button { width: 100%; }
+</style>
+{% endblock %}

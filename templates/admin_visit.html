@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="admin-head">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('admin') }}" style="color:inherit;">← The board</a></p>
+    <h1>Plan your visit</h1>
+  </div>
+</header>
+
+<main class="board">
+
+  {% if saved %}<p class="av-saved">Saved.</p>{% endif %}
+
+  <p class="av-lead">
+    This fills in the page a first-time visitor sees. Leave anything blank and
+    that section simply won't appear, so it's fine to start with the address
+    and add the rest later.
+  </p>
+  <p class="av-lead">
+    <a href="{{ url_for('plan_visit') }}" class="av-view">View the page →</a>
+  </p>
+
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <h2 class="av-h2">Address</h2>
+    <label class="av-f">
+      <span>Street address</span>
+      <input type="text" name="visit_address" value="{{ info.visit_address }}"
+             placeholder="12 High Street, Newtown">
+    </label>
+    <label class="av-f">
+      <span>Postcode</span>
+      <input type="text" name="visit_postcode" value="{{ info.visit_postcode }}"
+             placeholder="AB1 2CD">
+      <small>Used to build the directions links. Worth getting exactly right.</small>
+    </label>
+    <label class="av-f">
+      <span>what3words <em>(optional)</em></span>
+      <input type="text" name="visit_what3words" value="{{ info.visit_what3words }}"
+             placeholder="///filled.count.soap">
+      <small>Helpful if the entrance is hard to find from the postcode alone.</small>
+    </label>
+
+    <h2 class="av-h2">Services</h2>
+    <label class="av-f">
+      <span>When you meet</span>
+      <input type="text" name="visit_service_times" value="{{ info.visit_service_times }}"
+             placeholder="Sundays at 10:30am">
+    </label>
+    <label class="av-f">
+      <span>How long it lasts</span>
+      <input type="text" name="visit_duration" value="{{ info.visit_duration }}"
+             placeholder="About 90 minutes">
+      <small>People genuinely want to know this before committing a morning.</small>
+    </label>
+
+    <h2 class="av-h2">Getting here</h2>
+    <label class="av-f">
+      <span>Parking</span>
+      <textarea name="visit_parking" rows="3"
+                placeholder="Free car park behind the building, entrance on Mill Lane. Room for about 40 cars.">{{ info.visit_parking }}</textarea>
+    </label>
+    <label class="av-f">
+      <span>Public transport</span>
+      <textarea name="visit_transport" rows="3"
+                placeholder="Ten minutes' walk from the station. The 42 and 108 buses stop outside.">{{ info.visit_transport }}</textarea>
+    </label>
+    <label class="av-f">
+      <span>Accessibility</span>
+      <textarea name="visit_accessibility" rows="3"
+                placeholder="Step-free from the car park. Accessible toilet. Hearing loop. Large-print orders of service.">{{ info.visit_accessibility }}</textarea>
+      <small>Be specific. "Accessible" on its own tells a wheelchair user nothing.</small>
+    </label>
+
+    <h2 class="av-h2">What to expect</h2>
+    <label class="av-f">
+      <span>Children</span>
+      <textarea name="visit_kids" rows="3"
+                placeholder="Children stay in for the first 20 minutes, then go to their groups. All leaders are DBS checked.">{{ info.visit_kids }}</textarea>
+    </label>
+    <label class="av-f">
+      <span>What to wear</span>
+      <textarea name="visit_dress" rows="2">{{ info.visit_dress }}</textarea>
+    </label>
+    <label class="av-f">
+      <span>What happens in a service</span>
+      <textarea name="visit_expect" rows="4"
+                placeholder="Some singing, a talk of about 25 minutes, and coffee afterwards. Nobody will ask you to stand up or introduce yourself.">{{ info.visit_expect }}</textarea>
+      <small>Worth saying plainly if you don't single visitors out — it's the
+        thing people are most anxious about.</small>
+    </label>
+
+    <h2 class="av-h2">Questions before coming</h2>
+    <label class="av-f">
+      <span>Email</span>
+      <input type="email" name="visit_contact_email" value="{{ info.visit_contact_email }}"
+             placeholder="hello@yourchurch.org">
+    </label>
+    <label class="av-f">
+      <span>Phone</span>
+      <input type="text" name="visit_contact_phone" value="{{ info.visit_contact_phone }}"
+             placeholder="01234 567890">
+    </label>
+
+    <button type="submit" class="btn-primary" style="width:auto;margin-top:1rem;">
+      Save
+    </button>
+  </form>
+
+</main>
+
+<style>
+  .av-saved { background: rgba(110,155,87,0.16); color: #4E7A3C;
+              padding: 0.65rem 0.9rem; border-radius: 0.5rem;
+              font-weight: 600; font-size: 0.9rem; margin: 0 0 1rem; }
+  .av-lead { font-size: 0.92rem; line-height: 1.6; color: var(--muted);
+             max-width: 38rem; margin: 0 0 0.7rem; }
+  .av-view { color: var(--accent); font-weight: 600; text-decoration: none; }
+  .av-h2 { font-family: var(--display); font-size: 1.1rem;
+           margin: 1.8rem 0 0.8rem; padding-top: 1rem;
+           border-top: 1px solid var(--line); }
+  .av-f { display: block; margin-bottom: 1rem; max-width: 38rem; }
+  .av-f > span { display: block; font-size: 0.85rem; font-weight: 600;
+                 margin-bottom: 0.3rem; }
+  .av-f em { font-weight: 400; color: var(--muted); font-style: normal; }
+  .av-f input, .av-f textarea {
+    width: 100%; font: inherit; font-size: 0.92rem;
+    padding: 0.6rem 0.75rem; border: 1px solid var(--line);
+    border-radius: 0.5rem; background: var(--white); color: var(--ink);
+    resize: vertical;
+  }
+  .av-f small { display: block; font-size: 0.8rem; color: var(--muted);
+                margin-top: 0.3rem; line-height: 1.45; }
+</style>
+
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<header class="v2-hero" data-hero>
+  <div class="v2-hero-bg"></div>
+  <div class="v2-hero-scrim"></div>
+  <div class="v2-hero-inner">
+    <div class="v2-hero-panel" data-load>
+      <p class="v2-eyebrow">You're welcome here</p>
+      <img src="{{ url_for('static', filename='logo-ink.png') }}" alt="{{ church_name }}" class="v2-hero-logo">
+      <p class="v2-hero-sub">A place to know God and be known</p>
+      <a href="{{ url_for('plan_visit') }}" class="v2-hero-cta">Plan your visit</a>
+    </div>
+  </div>
+  <div class="v2-hero-fade"></div>
+</header>
+
+<main class="bible home-main">
+
+  {% if live_on %}
+    <a href="{{ url_for('watch_hub') }}" class="home-live" data-reveal>
+      <span class="live-dot"></span>
+      <span>We're live right now — join the service</span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+  {% endif %}
+
+  <!-- Continue where they left off -->
+  <a href="#" id="continueCard" class="continue-card" hidden>
+    <span class="continue-body">
+      <span class="continue-label">Continue reading</span>
+      <span class="continue-ref" id="continueRef"></span>
+      <span class="continue-note" id="continueNote"></span>
+    </span>
+    {{ icon('chevron-right', 20) }}
+  </a>
+
+  <!-- Verse of the day -->
+  <section class="votd" data-reveal>
+    <p class="votd-label">Verse of the day</p>
+    <p class="votd-text">{{ verse.text }}</p>
+    <div class="votd-foot">
+      <span class="votd-ref">{{ verse.ref }}</span>
+      <a href="{{ url_for('bible_hub') }}" class="votd-action">Open Bible</a>
+    </div>
+  </section>
+
+  <!-- Latest sermon -->
+  {% if latest_sermon %}
+    <section class="bible-block" data-reveal>
+      <div class="bible-block-head">
+        <h2 class="bible-h2">Latest message</h2>
+        <a href="{{ url_for('watch_hub') }}" class="bible-more">All sermons</a>
+      </div>
+      <a href="{{ url_for('sermon_detail', sermon_id=latest_sermon['id']) }}" class="sermon-feature">
+        <div class="sermon-feature-media">
+          {% if sermon_thumb %}<img src="{{ sermon_thumb }}" alt="" loading="lazy">{% endif %}
+          <span class="sermon-play">{{ icon('play', 26) }}</span>
+        </div>
+        <div class="sermon-feature-body">
+          <h3 class="sermon-feature-title">{{ latest_sermon['title'] }}</h3>
+          <p class="sermon-feature-meta">
+            {% if latest_sermon['speaker'] %}{{ latest_sermon['speaker'] }} · {% endif %}
+            {{ latest_sermon['preached_on'] | pretty_date }}
+          </p>
+        </div>
+      </a>
+    </section>
+  {% endif %}
+
+  <!-- What's on -->
+  <section class="bible-block" data-reveal>
+    <div class="bible-block-head">
+      <h2 class="bible-h2">What's on</h2>
+      <a href="{{ url_for('calendar_page') }}" class="bible-more">Full calendar</a>
+    </div>
+
+    {% if not upcoming %}
+      <p class="bible-lede bible-lede--flush">Nothing on the calendar yet — check back soon.</p>
+    {% endif %}
+
+    <div class="home-events">
+      {% for iso, e in upcoming %}
+        <a href="{{ url_for('calendar_page') }}" class="home-event">
+          <span class="home-event-when">
+            <span class="home-event-day">{{ iso | pretty_date_short_day }}</span>
+            <span class="home-event-date">{{ iso | pretty_date_num }}</span>
+          </span>
+          <span class="home-event-body">
+            <span class="home-event-title">{{ e['title'] }}</span>
+            <span class="home-event-meta">{{ e['event_time'] }}{% if e['location'] %} · {{ e['location'] }}{% endif %}</span>
+          </span>
+          {{ icon('chevron-right', 18) }}
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Today's devotional -->
+  {% if devotional %}
+    <section class="bible-block" data-reveal>
+      <div class="bible-block-head">
+        <h2 class="bible-h2">Today's devotional</h2>
+        <a href="{{ url_for('devotionals') }}" class="bible-more">Archive</a>
+      </div>
+      <a href="{{ url_for('devotional_detail', devotional_id=devotional['id']) }}" class="devo-feature">
+        <span class="devo-feature-ref">{{ devotional['verse_ref'] }}</span>
+        <h3 class="devo-feature-title">{{ devotional['title'] }}</h3>
+        <p class="devo-feature-excerpt">{{ devotional['body'] | excerpt(140) }}</p>
+        <span class="devo-feature-cta">Read devotional {{ icon('chevron-right', 16) }}</span>
+      </a>
+    </section>
+  {% endif %}
+
+  <!-- Quick links -->
+  <nav class="bible-list" data-reveal>
+    <a href="{{ url_for('prayer_wall') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('hands', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Prayer</span>
+        <span class="bible-row-sub">Share a request or pray for others</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+    <a href="{{ url_for('ask_question') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('handshake', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">New here?</span>
+        <span class="bible-row-sub">Get in touch or ask us anything</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+  </nav>
+
+</main>
+
+<script src="{{ url_for('static', filename='reading-position.js') }}"></script>
+<script>
+(function () {
+  const card = document.getElementById("continueCard");
+  if (!card || !window.ReadingPosition) return;
+
+  function paint(pos) {
+    if (!pos || !pos.bookSlug) return;
+    card.href = `/bible/read/${pos.bookSlug}/${pos.chapter}` +
+                (pos.translation ? `?translation=${pos.translation}` : "");
+    document.getElementById("continueRef").textContent = `${pos.book} ${pos.chapter}`;
+    const note = window.ReadingPosition.encouragement();
+    const noteEl = document.getElementById("continueNote");
+    if (note) noteEl.textContent = note;
+    card.hidden = false;
+  }
+
+  // Check the account first, in case they were reading on another device
+  if (window.ReadingPosition.syncWithAccount) {
+    window.ReadingPosition.syncWithAccount().then(() => {
+      paint(window.ReadingPosition.getPosition());
+    });
+  }
+
+  const pos = window.ReadingPosition.getPosition();
+  if (!pos || !pos.bookSlug) return;
+
+  card.href = `/bible/read/${pos.bookSlug}/${pos.chapter}` +
+              (pos.translation ? `?translation=${pos.translation}` : "");
+  document.getElementById("continueRef").textContent = `${pos.book} ${pos.chapter}`;
+
+  const note = window.ReadingPosition.encouragement();
+  const noteEl = document.getElementById("continueNote");
+  if (note) noteEl.textContent = note; else noteEl.remove();
+
+  card.hidden = false;
+})();
+</script>
+{% endblock %}

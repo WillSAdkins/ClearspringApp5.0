@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('more_hub') }}" class="bible-back" aria-label="Back to More">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Giving</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <p class="bible-lede">
+    Everything we do — Sunday services, the Bible college, our work in the community —
+    is made possible by people giving generously. Thank you.
+  </p>
+
+  {% if give_url or regular_url %}
+    <div class="give-actions">
+      {% if give_url %}
+        <a href="{{ give_url }}" target="_blank" rel="noopener" class="give-primary">
+          {{ icon('heart', 20) }}
+          <span>
+            <strong>Give once</strong>
+            <small>A single gift, any amount</small>
+          </span>
+          {{ icon('chevron-right', 18) }}
+        </a>
+      {% endif %}
+      {% if regular_url %}
+        <a href="{{ regular_url }}" target="_blank" rel="noopener" class="give-secondary">
+          {{ icon('calendar', 20) }}
+          <span>
+            <strong>Give regularly</strong>
+            <small>Set up a monthly gift</small>
+          </span>
+          {{ icon('chevron-right', 18) }}
+        </a>
+      {% endif %}
+    </div>
+    <p class="give-secure">
+      {{ icon('check', 14) }}
+      Giving is handled securely by {{ provider }}. Clearspring never sees or stores your card details.
+    </p>
+  {% else %}
+    <div class="placeholder-card">
+      <p><strong>Online giving isn't set up yet.</strong></p>
+      <p>Once our giving links are added, you'll be able to give here directly.</p>
+    </div>
+  {% endif %}
+
+  {% if campaigns %}
+    <section class="bible-block" style="margin-top:2.2rem;">
+      <h2 class="bible-h2">Appeals</h2>
+      <div class="campaign-list">
+        {% for item in campaigns %}
+          <a href="{{ url_for('campaign_detail', campaign_id=item.row['id']) }}" class="campaign-card">
+            <span class="campaign-title">{{ item.row['title'] }}</span>
+            {% if item.row['blurb'] %}
+              <span class="campaign-blurb">{{ item.row['blurb'] | excerpt(110) }}</span>
+            {% endif %}
+            {% if item.pct is not none %}
+              <span class="campaign-bar"><span class="campaign-fill" style="width: {{ item.pct }}%"></span></span>
+              <span class="campaign-figures">
+                <strong>{{ item.row['raised_pence'] | gbp }}</strong>
+                <span>of {{ item.row['target_pence'] | gbp }}</span>
+              </span>
+            {% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <nav class="bible-list" style="margin-top:2rem;">
+    <a href="{{ url_for('gift_aid_info') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('check', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Gift Aid</span>
+        <span class="bible-row-sub">Add 25% to your gift at no extra cost</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+    {% if portal_url %}
+      <a href="{{ portal_url }}" target="_blank" rel="noopener" class="bible-row">
+        <span class="bible-row-icon">{{ icon('book', 20) }}</span>
+        <span class="bible-row-body">
+          <span class="bible-row-title">Your giving history</span>
+          <span class="bible-row-sub">View past gifts in your {{ provider }} account</span>
+        </span>
+        {{ icon('chevron-right', 18) }}
+      </a>
+    {% endif %}
+  </nav>
+
+  <p class="charity-note">
+    Clearspring Church is a registered charity (CIO no. {{ charity_number }}).
+  </p>
+
+</main>
+
+{% endblock %}

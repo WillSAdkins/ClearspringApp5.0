@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>Notification check</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('admin_notifications') }}" class="btn-ghost">← Notify</a>
+    </div>
+  </div>
+
+  <div class="check-list">
+    {% for c in checks %}
+      <div class="check-row {{ 'ok' if c.ok else 'bad' }}">
+        <span class="check-mark">{{ '✓' if c.ok else '✗' }}</span>
+        <span class="check-body">
+          <span class="check-label">{{ c.label }}</span>
+          {% if not c.ok %}<span class="check-fix">{{ c.fix }}</span>{% endif %}
+        </span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <section class="admin-panel" style="margin-top:1.8rem;">
+    <h2 class="section-label">Details</h2>
+    <div class="notif-counts">
+      <div class="notif-count-row">
+        <span>Public key in use</span><strong class="mono">{{ public_key_preview }}</strong>
+      </div>
+      <div class="notif-count-row">
+        <span>Key length</span><strong class="mono">{{ key_length }} / 87</strong>
+      </div>
+      <div class="notif-count-row">
+        <span>Devices subscribed</span><strong>{{ subs }}</strong>
+      </div>
+    </div>
+    <p class="empty-sub" style="margin-top:0.8rem;">{{ key_message }}</p>
+  </section>
+
+  <section class="admin-panel" style="margin-top:1.4rem;">
+    <h2 class="section-label">If the toggle does nothing</h2>
+    <p class="empty-sub" style="line-height:1.6;">
+      The button only appears when every check above passes. If it appears but
+      clicking does nothing, open your browser's developer console (F12) and look
+      at the Console tab — any error there tells us what's blocking it. The most
+      common causes are: the page isn't on <code>localhost</code> or HTTPS, or the
+      browser has previously blocked notifications for this site.
+    </p>
+  </section>
+</main>
+{% endblock %}

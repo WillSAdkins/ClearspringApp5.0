@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>Devotionals</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('new_devotional') }}" class="btn-primary">+ New devotional</a>
+      <a href="{{ url_for('admin') }}" class="btn-ghost">← Dashboard</a>
+    </div>
+  </div>
+
+  <div class="admin-table">
+    {% if not devotionals %}
+      <p class="empty-sub">No devotionals yet. Write the first one.</p>
+    {% endif %}
+    {% for d in devotionals %}
+      <div class="admin-row">
+        <div class="admin-row-main">
+          <strong>{{ d['title'] }}</strong>
+          {% if d['verse_ref'] %}<span class="admin-row-loc">{{ d['verse_ref'] }}</span>{% endif %}
+          {% if not d['published'] %}<span class="card-tag" style="background:var(--surface-2);">Draft</span>{% endif %}
+        </div>
+        <div class="admin-row-actions">
+          <a href="{{ url_for('edit_devotional', devotional_id=d['id']) }}" class="btn-ghost small">Edit</a>
+          <form method="post" action="{{ url_for('delete_devotional', devotional_id=d['id']) }}"
+                onsubmit="return confirm('Delete this devotional?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-danger small">Delete</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}

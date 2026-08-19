@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: clearspring-app
+    runtime: python
+    # IMPORTANT: this MUST NOT be "free".
+    #
+    # Free instances cannot have a persistent disk, and their filesystem is
+    # wiped whenever the service redeploys, restarts, or spins down after 15
+    # minutes of no traffic. Because the whole database is a SQLite file, that
+    # means losing every member account, prayer request, sermon and event —
+    # repeatedly, and silently.
+    #
+    # "starter" is the cheapest plan that supports a disk.
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    # Keep workers low: SQLite is a single file, and many processes writing at
+    # once causes lock contention even under WAL. Threads handle concurrency.
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 60
+    healthCheckPath: /
+    envVars:
+      - key: RENDER
+        value: "1"
+      - key: HTTPS_ONLY
+        value: "1"
+      - key: CHURCH_DB
+        value: "/var/data/church.db"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      # Push notifications — set these in the dashboard, not here.
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
+      # Firebase key for the native iOS/Android apps.
+      - key: FCM_SERVER_KEY
+        sync: false
+    disk:
+      name: church-data
+      mountPath: /var/data
+      sizeGB: 1

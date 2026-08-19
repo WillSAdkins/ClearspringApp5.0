@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('bible_hub') }}" class="bible-back" aria-label="Back to Bible">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Devotionals</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  {% if not today %}
+    <div class="saved-empty">
+      <span class="saved-empty-icon">{{ icon('sunrise', 26) }}</span>
+      <p class="saved-empty-title">No devotionals yet</p>
+      <p class="saved-empty-sub">Check back soon — a new reflection is on the way.</p>
+    </div>
+  {% else %}
+    <article class="devo-read" data-reveal>
+      <p class="devo-read-label">Today's reflection</p>
+      <h2 class="devo-read-title">{{ today.row['title'] }}</h2>
+      {% if today.row['verse_ref'] %}
+        {% if today.ref_link %}
+          <a href="{{ url_for('bible_read_chapter', book_slug=today.ref_link[0], chapter=today.ref_link[1]) }}" class="devo-read-ref">
+            {{ today.row['verse_ref'] }} {{ icon('chevron-right', 14) }}
+          </a>
+        {% else %}
+          <span class="devo-read-ref">{{ today.row['verse_ref'] }}</span>
+        {% endif %}
+      {% endif %}
+      {% if today.video_embed %}
+        <p class="video-frame-label">▶ Watch</p>
+        <div class="video-frame">
+          <iframe src="{{ today.video_embed }}" title="{{ today.row['title'] }}" frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      {% endif %}
+      <div class="devo-read-body devo-single">
+        {% for para in today.row['body'].split('\n\n') %}
+          <p>{{ para }}</p>
+        {% endfor %}
+      </div>
+    </article>
+
+    {% if archive %}
+      <h2 class="devo-archive-head">Previous</h2>
+      <div class="devo-archive-list">
+        {% for item in archive %}
+          <a href="{{ url_for('devotional_detail', devotional_id=item.row['id']) }}" class="devo-archive-row">
+            <span class="devo-archive-body">
+              <span class="devo-archive-title">{{ item.row['title'] }}</span>
+              {% if item.row['verse_ref'] %}<span class="devo-archive-ref">{{ item.row['verse_ref'] }}</span>{% endif %}
+            </span>
+            {% if item.video_embed %}<span class="devo-archive-video-badge" title="Includes a video">▶</span>{% endif %}
+            {{ icon('chevron-right', 18) }}
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endif %}
+
+</main>
+
+{% endblock %}

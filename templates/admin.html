@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>The board</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('admin_status') }}" class="btn-ghost">Status</a>
+      <a href="{{ url_for('admin_email') }}" class="btn-ghost">Email</a>
+      <a href="{{ url_for('admin_home') }}" class="btn-ghost">Home</a>
+      <a href="{{ url_for('admin_visit') }}" class="btn-ghost">Visit</a>
+      <a href="{{ url_for('admin_data') }}" class="btn-ghost">Data</a>
+      <a href="{{ url_for('admin_notifications') }}" class="btn-ghost">Notify</a>
+      <a href="{{ url_for('admin_resources') }}" class="btn-ghost">Resources</a>
+      <a href="{{ url_for('admin_ministries') }}" class="btn-ghost">Ministries</a>
+      <a href="{{ url_for('admin_store') }}" class="btn-ghost">Store</a>
+      <a href="{{ url_for('admin_giving') }}" class="btn-ghost">Giving</a>
+      <a href="{{ url_for('admin_sermons') }}" class="btn-ghost">Sermons</a>
+      <a href="{{ url_for('admin_polls') }}" class="btn-ghost">Polls</a>
+      <a href="{{ url_for('admin_prayers') }}" class="btn-ghost">Prayer{% if held_count %} ({{ held_count }}){% endif %}</a>
+      <a href="{{ url_for('admin_questions') }}" class="btn-ghost">Questions{% if pending_count %} ({{ pending_count }}){% endif %}</a>
+      <a href="{{ url_for('admin_devotionals') }}" class="btn-ghost">Devotionals</a>
+      <a href="{{ url_for('new_event') }}" class="btn-primary">+ Add event</a>
+      <a href="{{ url_for('logout') }}" class="btn-ghost">Sign out</a>
+    </div>
+  </div>
+
+  <div class="admin-table">
+    {% if not events %}
+      <p class="empty-sub">No events yet. Add the first one.</p>
+    {% endif %}
+    {% for e in events %}
+      <div class="admin-row">
+        <div class="admin-row-date">
+          <span class="mono">{{ e['event_date'] }}</span>
+          <span class="mono">{{ e['event_time'] }}</span>
+        </div>
+        <div class="admin-row-main">
+          <span class="card-tag">{{ e['category'] }}</span>
+          <strong>{{ e['title'] }}</strong>
+          {% if e['location'] %}<span class="admin-row-loc">{{ e['location'] }}</span>{% endif %}
+        </div>
+        <div class="admin-row-actions">
+          <a href="{{ url_for('edit_event', event_id=e['id']) }}" class="btn-ghost small">Edit</a>
+          <form method="post" action="{{ url_for('delete_event', event_id=e['id']) }}"
+                onsubmit="return confirm('Remove this event?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-danger small">Delete</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <a class="back-link" href="{{ url_for('index') }}">← View public page</a>
+</main>
+{% endblock %}

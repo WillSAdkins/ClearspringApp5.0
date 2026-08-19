@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('more_hub') }}" class="bible-back" aria-label="Back">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Store</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  {% if categories %}
+    <div class="filter-row">
+      <a href="{{ url_for('store') }}" class="filter-pill {{ 'on' if not active_category }}">All</a>
+      {% for slug, label in categories %}
+        <a href="{{ url_for('store', category=slug) }}"
+           class="filter-pill {{ 'on' if active_category == slug }}">{{ label }}</a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if not products and not featured %}
+    <div class="saved-empty">
+      <span class="saved-empty-icon">{{ icon('bookmark', 26) }}</span>
+      <p class="saved-empty-title">Nothing here yet</p>
+      <p class="saved-empty-sub">Items will appear here once they've been added.</p>
+    </div>
+  {% endif %}
+
+  {% for p in featured %}
+    <a href="{{ url_for('product_detail', product_id=p['id']) }}" class="product-feature">
+      {% if p['image_url'] %}
+        <span class="product-feature-media">
+          <img src="{{ p['image_url'] }}" alt="" loading="lazy">
+        </span>
+      {% endif %}
+      <span class="product-feature-body">
+        <span class="product-tag">Featured</span>
+        <span class="product-feature-name">{{ p['name'] }}</span>
+        {% if p['summary'] %}<span class="product-feature-sub">{{ p['summary'] }}</span>{% endif %}
+        <span class="product-price-row">
+          {% if p['price_pence'] %}<span class="product-price">{{ p['price_pence'] | gbp }}</span>{% endif %}
+          {% if p['price_note'] %}<span class="product-price-note">{{ p['price_note'] }}</span>{% endif %}
+        </span>
+      </span>
+    </a>
+  {% endfor %}
+
+  <div class="product-grid">
+    {% for p in products %}
+      <a href="{{ url_for('product_detail', product_id=p['id']) }}" class="product-card">
+        <span class="product-media">
+          {% if p['image_url'] %}
+            <img src="{{ p['image_url'] }}" alt="" loading="lazy">
+          {% else %}
+            {{ icon('bookmark', 22) }}
+          {% endif %}
+          {% if stock_labels.get(p['stock']) %}
+            <span class="product-stock {{ p['stock'] }}">{{ stock_labels[p['stock']] }}</span>
+          {% endif %}
+        </span>
+        <span class="product-name">{{ p['name'] }}</span>
+        <span class="product-price-row">
+          {% if p['price_pence'] %}<span class="product-price">{{ p['price_pence'] | gbp }}</span>{% endif %}
+          {% if p['price_note'] %}<span class="product-price-note">{{ p['price_note'] }}</span>{% endif %}
+        </span>
+      </a>
+    {% endfor %}
+  </div>
+
+  <p class="charity-note">
+    Clearspring Church is a registered charity (CIO no. {{ charity_number }}).
+    {% if delivery_note %}<br>{{ delivery_note }}{% endif %}
+    {% if returns_url %}<br><a href="{{ returns_url }}" target="_blank" rel="noopener">Returns &amp; delivery</a>{% endif %}
+  </p>
+
+</main>
+
+{% endblock %}

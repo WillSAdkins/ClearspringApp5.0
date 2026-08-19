@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <a href="{{ url_for('index') }}" class="bible-back" aria-label="Back">{{ icon('chevron-left', 22) }}</a>
+    <p class="eyebrow">First time?</p>
+    <h1 class="page-title">Plan your visit</h1>
+    <p class="tagline">Everything you might want to know before you come</p>
+  </div>
+</header>
+
+<main class="board">
+
+  {#  The practical worries first. Someone deciding whether to come is asking
+      "where do I park" and "what do I wear", not reading a mission statement. #}
+
+  <section class="vs-block">
+    <h2 class="vs-h2">{{ icon('calendar', 18) }} When we meet</h2>
+    <p class="vs-lead">{{ info.visit_service_times }}</p>
+    {% if info.visit_duration %}
+      <p class="vs-note">{{ info.visit_duration }}.</p>
+    {% endif %}
+    <a href="{{ url_for('calendar_page') }}" class="vs-link">See what else is on →</a>
+  </section>
+
+  {% if info.full_address %}
+  <section class="vs-block">
+    <h2 class="vs-h2">{{ icon('home', 18) }} Where to find us</h2>
+    <p class="vs-address">
+      {{ info.visit_address }}{% if info.visit_postcode %}<br><strong>{{ info.visit_postcode }}</strong>{% endif %}
+    </p>
+    {% if info.visit_what3words %}
+      <p class="vs-note">what3words: <code>{{ info.visit_what3words }}</code></p>
+    {% endif %}
+
+    <div class="vs-maps">
+      <a href="{{ info.maps_google }}" class="vs-map-btn" data-external
+         target="_blank" rel="noopener">Google Maps</a>
+      <a href="{{ info.maps_apple }}" class="vs-map-btn" data-external
+         target="_blank" rel="noopener">Apple Maps</a>
+      <a href="{{ info.maps_citymapper }}" class="vs-map-btn" data-external
+         target="_blank" rel="noopener">Citymapper</a>
+    </div>
+    <p class="vs-note">These open directions in your own maps app.</p>
+  </section>
+  {% endif %}
+
+  {% if info.visit_parking %}
+  <section class="vs-block">
+    <h2 class="vs-h2">{{ icon('target', 18) }} Parking</h2>
+    <p class="vs-body">{{ info.visit_parking }}</p>
+  </section>
+  {% endif %}
+
+  {% if info.visit_transport %}
+  <section class="vs-block">
+    <h2 class="vs-h2">{{ icon('users', 18) }} Getting here without a car</h2>
+    <p class="vs-body">{{ info.visit_transport }}</p>
+  </section>
+  {% endif %}
+
+  {% if info.visit_accessibility %}
+  <section class="vs-block">
+    <h2 class="vs-h2">{{ icon('heart', 18) }} Accessibility</h2>
+    <p class="vs-body">{{ info.visit_accessibility }}</p>
+  </section>
+  {% endif %}
+
+  {% if info.visit_kids %}
+  <section class="vs-block">
+    <h2 class="vs-h2">{{ icon('baby', 18) }} Bringing children</h2>
+    <p class="vs-body">{{ info.visit_kids }}</p>
+  </section>
+  {% endif %}
+
+  {% if info.visit_dress %}
+  <section class="vs-block">
+    <h2 class="vs-h2">{{ icon('check', 18) }} What to wear</h2>
+    <p class="vs-body">{{ info.visit_dress }}</p>
+  </section>
+  {% endif %}
+
+  {% if info.visit_expect %}
+  <section class="vs-block">
+    <h2 class="vs-h2">{{ icon('sunrise', 18) }} What happens</h2>
+    <p class="vs-body">{{ info.visit_expect }}</p>
+  </section>
+  {% endif %}
+
+  {% if info.visit_contact_email or info.visit_contact_phone %}
+  <section class="vs-block vs-contact">
+    <h2 class="vs-h2">{{ icon('message', 18) }} Still have a question?</h2>
+    <p class="vs-body">Ask us anything before you come — no question is too small.</p>
+    <div class="vs-maps">
+      {% if info.visit_contact_email %}
+        <a href="mailto:{{ info.visit_contact_email }}" class="vs-map-btn">Email us</a>
+      {% endif %}
+      {% if info.visit_contact_phone %}
+        <a href="tel:{{ info.visit_contact_phone|replace(' ', '') }}" class="vs-map-btn">
+          {{ info.visit_contact_phone }}
+        </a>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if not info.full_address and not info.visit_parking %}
+  <p class="vs-empty">
+    This page isn't filled in yet. A church admin can add directions, parking
+    and service details from the admin area.
+  </p>
+  {% endif %}
+
+</main>
+
+<style>
+  .vs-block { padding: 1.1rem 0; border-bottom: 1px solid var(--line); }
+  .vs-block:last-of-type { border-bottom: 0; }
+  .vs-h2 {
+    font-family: var(--label); font-size: 0.76rem; font-weight: 700;
+    letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted);
+    margin: 0 0 0.55rem; display: flex; align-items: center; gap: 0.45rem;
+  }
+  .vs-lead { font-family: var(--display); font-size: 1.4rem;
+             margin: 0 0 0.25rem; line-height: 1.25; }
+  .vs-address { font-family: var(--display); font-size: 1.15rem;
+                line-height: 1.45; margin: 0 0 0.5rem; }
+  .vs-body { font-size: 0.95rem; line-height: 1.6; margin: 0;
+             max-width: 34rem; white-space: pre-line; }
+  .vs-note { font-size: 0.84rem; color: var(--muted); margin: 0.4rem 0 0;
+             line-height: 1.5; }
+  .vs-link { display: inline-block; margin-top: 0.7rem; font-size: 0.88rem;
+             font-weight: 600; color: var(--accent); text-decoration: none; }
+  .vs-maps { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.7rem; }
+  .vs-map-btn {
+    font-size: 0.86rem; font-weight: 600; text-decoration: none;
+    padding: 0.55rem 1rem; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface);
+    color: var(--ink);
+  }
+  .vs-map-btn:active { transform: scale(0.97); }
+  .vs-contact { border-bottom: 0; }
+  .vs-empty { font-size: 0.92rem; color: var(--muted); line-height: 1.6;
+              padding: 1.5rem 0; max-width: 32rem; }
+  .vs-block code { font-family: var(--mono); font-size: 0.84rem;
+                   background: var(--surface-2); padding: 0.1rem 0.35rem;
+                   border-radius: 0.25rem; }
+</style>
+
+{% endblock %}

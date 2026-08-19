@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('giving') }}" class="bible-back" aria-label="Back to Giving">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Gift Aid</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <section class="giftaid-hero">
+    <p class="giftaid-figure">+25%</p>
+    <p class="giftaid-strap">
+      If you're a UK taxpayer, Gift Aid lets us claim an extra 25p from HMRC
+      for every £1 you give — at no extra cost to you.
+    </p>
+  </section>
+
+  <div class="giftaid-example">
+    <div class="giftaid-example-row">
+      <span>You give</span><strong>£100</strong>
+    </div>
+    <div class="giftaid-example-row">
+      <span>HMRC adds</span><strong>£25</strong>
+    </div>
+    <div class="giftaid-example-row total">
+      <span>Clearspring receives</span><strong>£125</strong>
+    </div>
+  </div>
+
+  <h2 class="bible-h2" style="margin-top:2rem;">Can I use Gift Aid?</h2>
+  <p class="giftaid-body">
+    You can, provided you are a UK taxpayer and you have paid at least as much
+    Income Tax or Capital Gains Tax in the tax year as all the charities and
+    community amateur sports clubs you support will reclaim on your gifts.
+  </p>
+  <p class="giftaid-body">
+    It is your responsibility to pay any difference if you have not paid enough tax.
+    Council Tax and VAT do not count.
+  </p>
+
+  <h2 class="bible-h2" style="margin-top:1.8rem;">How do I set it up?</h2>
+  <p class="giftaid-body">
+    You make a Gift Aid declaration when you give through {{ provider }} — there's a
+    tick box during the giving process. You only need to do it once; it then applies
+    to your future gifts, and can cover gifts made in the previous four years.
+  </p>
+  <p class="giftaid-body">
+    Your declaration and details are held securely by {{ provider }}, who handle the
+    HMRC claim on our behalf. Nothing about your tax status is stored in this app.
+  </p>
+
+  {% if give_url %}
+    <a href="{{ give_url }}" target="_blank" rel="noopener" class="give-primary" style="margin-top:1.4rem;">
+      {{ icon('heart', 20) }}
+      <span><strong>Give with Gift Aid</strong><small>Opens {{ provider }} securely</small></span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+  {% endif %}
+
+  <p class="giftaid-footnote">
+    Please tell us if you change name or address, no longer pay enough tax, or wish to
+    cancel your declaration. Full guidance is available on the
+    <a href="https://www.gov.uk/donating-to-charity/gift-aid" target="_blank" rel="noopener">GOV.UK website</a>.
+  </p>
+
+  <p class="charity-note">
+    Clearspring Church is a registered charity (CIO no. {{ charity_number }}).
+  </p>
+
+</main>
+
+{% endblock %}

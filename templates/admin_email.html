@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="admin-head">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('admin') }}" style="color:inherit;">← The board</a></p>
+    <h1>Email</h1>
+  </div>
+</header>
+
+<main class="board">
+
+  {% if result %}
+  <p class="em-result {{ result[0] }}">{{ result[1] }}</p>
+  {% endif %}
+
+  <div class="em-card {{ 'on' if configured else 'off' }}">
+    <div class="em-row">
+      <span class="em-badge">{{ "WORKING" if configured else "NOT SET UP" }}</span>
+      <span class="em-name">Outgoing email</span>
+    </div>
+    {% if configured %}
+      <p class="em-note">
+        Sending as <code>{{ smtp_from }}</code> via <code>{{ smtp_host }}:{{ smtp_port }}</code>
+        ({{ smtp_security }}). Capped at {{ max_recipients }} recipients per send.
+      </p>
+    {% else %}
+      <p class="em-note">Members can't receive sign-in links until this is set up.</p>
+      <ul class="em-problems">
+        {% for p in problems %}<li>{{ p }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+
+  <h2 class="em-h2">Send a test</h2>
+  <p class="em-lead">
+    The quickest way to know email works. Sends a short message to whatever
+    address you enter.
+  </p>
+  <form method="post" class="em-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="test">
+    <input type="email" name="to" placeholder="you@example.com" required
+           class="em-input" autocomplete="email">
+    <button type="submit" class="btn-primary" style="width:auto;">Send test</button>
+  </form>
+
+  <h2 class="em-h2">Prayer review reminder</h2>
+  <p class="em-lead">
+    {% if held_count %}
+      <strong>{{ held_count }}</strong> prayer request{{ "s" if held_count != 1 }}
+      held for review. Send whoever handles safeguarding a reminder.
+    {% else %}
+      Nothing is currently held for review.
+    {% endif %}
+  </p>
+  <p class="em-warn">
+    The reminder contains no part of any request — only how many are waiting
+    and when they arrived. The requests themselves stay in the app behind this
+    login, because email isn't a private channel and these are the most
+    sensitive messages people send.
+  </p>
+  <form method="post" class="em-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="digest">
+    <input type="email" name="to" placeholder="safeguarding@example.com"
+           required class="em-input" autocomplete="email">
+    <button type="submit" class="btn-ghost" {{ "disabled" if not held_count }}>
+      Send reminder
+    </button>
+  </form>
+
+  <h2 class="em-h2">Settings you need</h2>
+  <table class="em-table">
+    <tr><td><code>SMTP_HOST</code></td><td>Your provider's server, e.g. <code>smtp.gmail.com</code></td></tr>
+    <tr><td><code>SMTP_PORT</code></td><td>Usually <code>587</code>. Defaults to 587 if unset.</td></tr>
+    <tr><td><code>SMTP_USER</code></td><td>Your login, usually the full email address</td></tr>
+    <tr><td><code>SMTP_PASSWORD</code></td><td>An app password, not your normal one</td></tr>
+    <tr><td><code>SMTP_FROM</code></td><td>The address people see, e.g. <code>hello@yourchurch.org</code></td></tr>
+    <tr><td><code>SMTP_SECURITY</code></td><td><code>starttls</code> (default), <code>ssl</code>, or <code>none</code></td></tr>
+  </table>
+  <p class="em-note">
+    Gmail and Outlook both need an app password rather than your account
+    password, and Gmail requires two-factor authentication switched on before
+    it will issue one. Dedicated senders like Brevo, Mailgun or Postmark are
+    more reliable for anything going to more than a handful of people, since
+    a normal mailbox will start being treated as spam.
+  </p>
+
+</main>
+
+<style>
+  .em-result { padding: 0.7rem 0.9rem; border-radius: 0.6rem;
+               font-size: 0.9rem; font-weight: 600; margin: 0 0 1.2rem; }
+  .em-result.good { background: rgba(110,155,87,0.16); color: #4E7A3C; }
+  .em-result.bad  { background: rgba(201,104,60,0.14); color: #C9683C; }
+  .em-card { border: 1px solid var(--line); border-radius: 0.8rem;
+             padding: 0.95rem 1rem; background: var(--surface); }
+  .em-row { display: flex; align-items: center; gap: 0.6rem; }
+  .em-badge { font-family: var(--mono); font-size: 0.66rem; font-weight: 700;
+              letter-spacing: 0.08em; padding: 0.2rem 0.5rem;
+              border-radius: 0.3rem; }
+  .em-card.on  .em-badge { background: #6E9B57; color: #FFFFFF; }
+  .em-card.off .em-badge { background: var(--surface-2); color: var(--muted); }
+  .em-name { font-weight: 600; }
+  .em-note { font-size: 0.87rem; color: var(--muted); line-height: 1.55;
+             margin: 0.55rem 0 0; max-width: 42rem; }
+  .em-problems { font-size: 0.87rem; color: #C9683C; margin: 0.6rem 0 0;
+                 padding-left: 1.1rem; line-height: 1.6; }
+  .em-h2 { font-family: var(--display); font-size: 1.12rem;
+           margin: 2rem 0 0.5rem; }
+  .em-lead { font-size: 0.92rem; line-height: 1.55; margin: 0 0 0.9rem;
+             max-width: 42rem; }
+  .em-warn { font-size: 0.85rem; color: var(--muted); line-height: 1.5;
+             margin: 0 0 0.9rem; max-width: 42rem;
+             border-left: 3px solid var(--accent); padding-left: 0.7rem; }
+  .em-form { display: flex; gap: 0.6rem; flex-wrap: wrap;
+             align-items: center; margin-bottom: 0.5rem; }
+  .em-input { font: inherit; font-size: 0.92rem; padding: 0.65rem 0.8rem;
+              border: 1px solid var(--line); border-radius: 0.55rem;
+              background: var(--white); color: var(--ink); min-width: 15rem; }
+  .em-table { border-collapse: collapse; font-size: 0.87rem;
+              margin: 0 0 0.9rem; }
+  .em-table td { padding: 0.35rem 0.9rem 0.35rem 0;
+                 vertical-align: top; line-height: 1.5; }
+  .em-table td:first-child { white-space: nowrap; }
+  .em-card code, .em-table code {
+    font-family: var(--mono); font-size: 0.82rem;
+    background: var(--surface-2); padding: 0.1rem 0.35rem;
+    border-radius: 0.25rem;
+  }
+</style>
+
+{% endblock %}

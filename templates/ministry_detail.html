@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('ministries') }}" class="bible-back" aria-label="All ministries">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">{{ m['name'] }}</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  {% if m['tagline'] %}<p class="ministry-tagline">{{ m['tagline'] }}</p>{% endif %}
+
+  {% if m['meets'] or m['location'] %}
+    <div class="ministry-facts">
+      {% if m['meets'] %}
+        <div class="ministry-fact">
+          <span class="ministry-fact-icon">{{ icon('calendar', 18) }}</span>
+          <span>{{ m['meets'] }}</span>
+        </div>
+      {% endif %}
+      {% if m['location'] %}
+        <div class="ministry-fact">
+          <span class="ministry-fact-icon">{{ icon('home', 18) }}</span>
+          <span>{{ m['location'] }}</span>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if m['description'] %}
+    <div class="ministry-body">
+      {% for para in m['description'].split('\n\n') %}<p>{{ para }}</p>{% endfor %}
+    </div>
+  {% endif %}
+
+  {% if events %}
+    <section class="bible-block">
+      <div class="bible-block-head">
+        <h2 class="bible-h2">Coming up</h2>
+        <a href="{{ url_for('calendar_page') }}" class="bible-more">Full calendar</a>
+      </div>
+      <div class="home-events">
+        {% for iso, e in events %}
+          <a href="{{ url_for('calendar_page') }}" class="home-event">
+            <span class="home-event-when">
+              <span class="home-event-day">{{ iso | pretty_date_short_day }}</span>
+              <span class="home-event-date">{{ iso | pretty_date_num }}</span>
+            </span>
+            <span class="home-event-body">
+              <span class="home-event-title">{{ e['title'] }}</span>
+              <span class="home-event-meta">{{ e['event_time'] }}{% if e['location'] %} · {{ e['location'] }}{% endif %}</span>
+            </span>
+            {{ icon('chevron-right', 18) }}
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if resources %}
+    <section class="bible-block">
+      <h2 class="bible-h2">Resources</h2>
+      <nav class="bible-list">
+        {% for r in resources %}
+          {% if r.url %}
+            <a href="{{ r.url }}" target="_blank" rel="noopener" class="bible-row">
+              <span class="bible-row-icon">{{ icon('book', 20) }}</span>
+              <span class="bible-row-body"><span class="bible-row-title">{{ r.label }}</span></span>
+              {{ icon('chevron-right', 18) }}
+            </a>
+          {% else %}
+            <div class="bible-row">
+              <span class="bible-row-icon">{{ icon('book', 20) }}</span>
+              <span class="bible-row-body"><span class="bible-row-title">{{ r.label }}</span></span>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </nav>
+    </section>
+  {% endif %}
+
+  {% if m['contact_email'] or m['contact_name'] or m['contact_phone'] %}
+    <section class="ministry-contact">
+      <h2 class="bible-h2">Get in touch</h2>
+      {% if m['contact_name'] %}<p class="ministry-contact-name">{{ m['contact_name'] }}</p>{% endif %}
+      <div class="ministry-contact-links">
+        {% if m['contact_email'] %}
+          <a href="mailto:{{ m['contact_email'] }}" class="ministry-contact-btn">
+            {{ icon('mail', 18) }}<span>{{ m['contact_email'] }}</span>
+          </a>
+        {% endif %}
+        {% if m['contact_phone'] %}
+          <a href="tel:{{ m['contact_phone']|replace(' ','') }}" class="ministry-contact-btn">
+            {{ icon('handshake', 18) }}<span>{{ m['contact_phone'] }}</span>
+          </a>
+        {% endif %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if safeguarded %}
+    <p class="ministry-safeguard">
+      {{ icon('check', 14) }}
+      <span>All our team working with children and young people are DBS-checked and
+      trained in line with our safeguarding policy.</span>
+    </p>
+  {% endif %}
+
+</main>
+
+{% endblock %}

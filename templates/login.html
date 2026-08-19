@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="auth-page">
+  <div class="auth-card">
+    <p class="eyebrow">Staff area</p>
+    <h1 class="auth-title">Sign in</h1>
+
+    {% if using_default_password %}
+      <div class="admin-alert" style="margin-bottom:1.2rem;">
+        <strong>This app is using the default password.</strong>
+        Before anyone else can reach it, set your own by adding
+        <code>ADMIN_PASSWORD</code> to your run file or server settings.
+      </div>
+    {% endif %}
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="password">Admin password</label>
+      <input type="password" id="password" name="password" required autofocus>
+      <button type="submit" class="btn-primary">Sign in</button>
+    </form>
+    <a class="back-link" href="{{ url_for('calendar_page') }}">← Back to service times</a>
+  </div>
+</main>
+{% endblock %}

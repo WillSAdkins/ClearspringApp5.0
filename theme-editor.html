@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clearspring — theme editor</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: #171513;
+    color: #ECE7E0;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: 100vh;
+  }
+  @media (max-width: 820px) { body { grid-template-columns: 1fr; } }
+
+  /* ---------- controls ---------- */
+  .panel {
+    padding: 1.25rem;
+    border-right: 1px solid #2A2521;
+    overflow-y: auto;
+    max-height: 100vh;
+  }
+  .panel h1 { font-size: 1rem; margin: 0 0 .2rem; }
+  .panel .sub { font-size: .8rem; color: #9C9186; margin: 0 0 1.2rem; line-height: 1.5; }
+  .modeswitch { display: flex; gap: .4rem; margin-bottom: 1.2rem; }
+  .modeswitch button {
+    flex: 1; font: inherit; font-size: .8rem; font-weight: 600;
+    padding: .5rem; border: 1px solid #3A342E; background: transparent;
+    color: #9C9186; border-radius: .4rem; cursor: pointer;
+  }
+  .modeswitch button.active { background: #ECE7E0; color: #171513; border-color: #ECE7E0; }
+  .grp { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+         color: #6E655C; margin: 1.3rem 0 .5rem; font-weight: 700; }
+  .row { display: flex; align-items: center; gap: .6rem; margin-bottom: .45rem; }
+  .row label { flex: 1; font-size: .8rem; font-family: ui-monospace, monospace; }
+  .row input[type=color] {
+    width: 34px; height: 26px; padding: 0; border: 1px solid #3A342E;
+    border-radius: .3rem; background: none; cursor: pointer;
+  }
+  .row .hex { font-family: ui-monospace, monospace; font-size: .7rem;
+              color: #6E655C; width: 62px; }
+  .fontrow { margin-bottom: .5rem; }
+  .fontrow label { display: block; font-size: .75rem; color: #9C9186; margin-bottom: .25rem; }
+  .fontrow select { width: 100%; font: inherit; font-size: .82rem; padding: .4rem;
+                    background: #211E1B; color: #ECE7E0;
+                    border: 1px solid #3A342E; border-radius: .35rem; }
+  .actions { display: grid; gap: .5rem; margin-top: 1.4rem; }
+  .actions button {
+    font: inherit; font-size: .85rem; font-weight: 600; padding: .65rem;
+    border-radius: .45rem; cursor: pointer; border: 1px solid #3A342E;
+    background: transparent; color: #ECE7E0;
+  }
+  .actions button.primary { background: #D0A068; color: #2B2622; border-color: #D0A068; }
+
+  /* ---------- preview ---------- */
+  .stage { padding: 1.5rem; overflow-y: auto; max-height: 100vh; }
+  .frame {
+    background: var(--bg); color: var(--ink);
+    border-radius: 1rem; padding: 1.4rem; max-width: 34rem;
+    font-family: var(--body);
+    border: 1px solid var(--line);
+  }
+  .frame h2 { font-family: var(--display); font-size: 1.5rem; margin: 0 0 .2rem;
+              font-weight: 600; }
+  .frame .tag { font-size: .78rem; color: var(--muted); margin: 0 0 1.2rem; }
+  .card { background: var(--surface); border: 1px solid var(--line);
+          border-radius: .7rem; padding: .85rem; margin-bottom: .7rem; }
+  .card .t { font-weight: 600; font-size: .95rem; }
+  .card .s { font-size: .82rem; color: var(--muted); margin-top: .2rem; }
+  .btn { display: inline-block; background: var(--accent); color: var(--on-accent);
+         font-weight: 600; font-size: .88rem; padding: .7rem 1.4rem;
+         border-radius: 999px; border: 0; margin: .3rem .4rem .3rem 0;
+         cursor: pointer; font-family: var(--body); }
+  .invcard { background: var(--invert-bg); color: var(--invert-ink);
+             border-radius: .7rem; padding: .9rem; margin-bottom: .7rem; }
+  .invcard small { color: var(--invert-muted); display: block; margin-top: .2rem; }
+  .chat { display: flex; flex-direction: column; gap: .5rem; margin-top: 1rem; }
+  .bub { max-width: 82%; padding: .65rem .85rem; border-radius: .9rem;
+         font-size: .87rem; line-height: 1.5; }
+  .bub.me { align-self: flex-end; background: var(--accent); color: var(--on-accent);
+            border-bottom-right-radius: .25rem; }
+  .bub.ai { align-self: flex-start; background: var(--surface); color: var(--ink);
+            border-bottom-left-radius: .25rem; }
+  .games { background: linear-gradient(135deg, var(--quest-deep), var(--quest-mid));
+           border-radius: .7rem; padding: .9rem; color: #fff; margin-bottom: .7rem; }
+  .games .e { color: var(--quest-ember); font-weight: 600; font-size: .82rem; }
+
+  /* ---------- contrast report ---------- */
+  .report { margin-top: 1.5rem; max-width: 34rem; }
+  .report h3 { font-size: .85rem; margin: 0 0 .5rem; color: #9C9186;
+               text-transform: uppercase; letter-spacing: .07em; }
+  .chk { display: flex; align-items: center; gap: .6rem; font-size: .8rem;
+         padding: .4rem .55rem; border-radius: .35rem; margin-bottom: .25rem;
+         background: #211E1B; }
+  .chk .r { font-family: ui-monospace, monospace; width: 56px; }
+  .chk .v { font-weight: 700; font-size: .68rem; padding: .1rem .4rem;
+            border-radius: .25rem; width: 44px; text-align: center; }
+  .chk.pass .v { background: #4E7A3C; color: #fff; }
+  .chk.warn .v { background: #B8874E; color: #171513; }
+  .chk.fail .v { background: #C9683C; color: #fff; }
+  .chk .n { color: #9C9186; }
+  textarea {
+    width: 100%; min-height: 160px; margin-top: .8rem; font-family: ui-monospace, monospace;
+    font-size: .72rem; background: #211E1B; color: #ECE7E0;
+    border: 1px solid #3A342E; border-radius: .45rem; padding: .6rem;
+    resize: vertical;
+  }
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <h1>Theme editor</h1>
+  <p class="sub">Edit the tokens, watch real components update, then copy the CSS
+    into <code>static/style.css</code>. Contrast is checked as you go.</p>
+
+  <div class="modeswitch">
+    <button id="mLight" class="active">Light</button>
+    <button id="mDark">Dark</button>
+  </div>
+
+  <div id="controls"></div>
+
+  <div class="grp">Typography</div>
+  <div class="fontrow">
+    <label>Headings</label>
+    <select id="fDisplay">
+      <option value='"Fraunces", Georgia, serif'>Fraunces (current)</option>
+      <option value='Georgia, "Times New Roman", serif'>Georgia</option>
+      <option value='"Playfair Display", Georgia, serif'>Playfair Display</option>
+      <option value='"Lora", Georgia, serif'>Lora</option>
+      <option value='"Inter", system-ui, sans-serif'>Inter (sans headings)</option>
+    </select>
+  </div>
+  <div class="fontrow">
+    <label>Body text</label>
+    <select id="fBody">
+      <option value='"Inter", -apple-system, sans-serif'>Inter (current)</option>
+      <option value='"Source Sans 3", system-ui, sans-serif'>Source Sans</option>
+      <option value='"Nunito Sans", system-ui, sans-serif'>Nunito Sans</option>
+      <option value='Georgia, serif'>Georgia</option>
+    </select>
+  </div>
+
+  <div class="actions">
+    <button class="primary" id="copy">Copy CSS</button>
+    <button id="reset">Reset to current theme</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="frame" id="frame">
+    <h2>Sunday Service</h2>
+    <p class="tag">Clearspring Church · 10:30am</p>
+
+    <button class="btn">Plan your visit</button>
+
+    <div class="card">
+      <div class="t">Read the Bible</div>
+      <div class="s">Pick up where you left off in John</div>
+    </div>
+    <div class="card">
+      <div class="t">This week's sermon</div>
+      <div class="s">Faith that shows itself in action</div>
+    </div>
+
+    <div class="invcard">
+      Give to Clearspring
+      <small>One-off or monthly · Gift Aid eligible</small>
+    </div>
+
+    <div class="games">
+      Kids Games
+      <div class="e">Verse Builder · Lost Sheep</div>
+    </div>
+
+    <div class="chat">
+      <div class="bub me">What does this passage mean?</div>
+      <div class="bub ai">Different traditions read it in different ways. Reformed
+        writers tend to stress that works are the evidence of faith rather than
+        its cause.</div>
+    </div>
+  </div>
+
+  <div class="report">
+    <h3>Contrast (WCAG AA needs 4.5:1 for text)</h3>
+    <div id="checks"></div>
+    <textarea id="out" readonly></textarea>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // The app's real tokens, both themes.
+  const THEMES = {
+    light: {
+      "--bg": "#FBF8F3", "--surface": "#F4EFE7", "--surface-2": "#EBE3D6",
+      "--ink": "#2B2622", "--muted": "#7A6E60", "--line": "#E4DBCC",
+      "--white": "#FFFFFF", "--accent": "#8A5A2B", "--accent-soft": "#96603A",
+      "--invert-bg": "#2B2622", "--invert-ink": "#F6F2EC",
+      "--quest-deep": "#372A52", "--quest-mid": "#6B3F63", "--quest-ember": "#D97A3D",
+    },
+    dark: {
+      "--bg": "#141210", "--surface": "#1E1B18", "--surface-2": "#2A2521",
+      "--ink": "#F2EDE5", "--muted": "#A69A8C", "--line": "#332E29",
+      "--white": "#1E1B18", "--accent": "#D0A068", "--accent-soft": "#B8874E",
+      "--invert-bg": "#2A2521", "--invert-ink": "#F2EDE5",
+      "--quest-deep": "#372A52", "--quest-mid": "#6B3F63", "--quest-ember": "#D97A3D",
+    },
+  };
+
+  const GROUPS = [
+    ["Surfaces", ["--bg", "--surface", "--surface-2", "--white", "--line"]],
+    ["Text", ["--ink", "--muted"]],
+    ["Accent", ["--accent", "--accent-soft"]],
+    ["Inverted cards", ["--invert-bg", "--invert-ink"]],
+    ["Games section", ["--quest-deep", "--quest-mid", "--quest-ember"]],
+  ];
+
+  let mode = "light";
+  const state = { light: { ...THEMES.light }, dark: { ...THEMES.dark } };
+  const fonts = { display: '"Fraunces", Georgia, serif', body: '"Inter", -apple-system, sans-serif' };
+
+  const frame = document.getElementById("frame");
+  const controls = document.getElementById("controls");
+
+  /* ---------- colour maths ---------- */
+  function lin(c) { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+  function lum(hex) {
+    const h = hex.replace("#", "");
+    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  }
+  function ratio(a, b) {
+    const la = lum(a), lb = lum(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+  // Pick black or white text for a given background — this is how the app
+  // avoids the "invisible bubble" problem where both ended up light.
+  function onColor(bg) {
+    return ratio(bg, "#FFFFFF") >= ratio(bg, "#2B2622") ? "#F6F2EC" : "#2B2622";
+  }
+
+  /* ---------- render ---------- */
+  function buildControls() {
+    controls.textContent = "";
+    GROUPS.forEach(([title, keys]) => {
+      const h = document.createElement("div");
+      h.className = "grp"; h.textContent = title;
+      controls.appendChild(h);
+      keys.forEach((k) => {
+        const row = document.createElement("div"); row.className = "row";
+        const lab = document.createElement("label"); lab.textContent = k;
+        const inp = document.createElement("input");
+        inp.type = "color"; inp.value = state[mode][k];
+        const hex = document.createElement("span");
+        hex.className = "hex"; hex.textContent = state[mode][k];
+        inp.addEventListener("input", () => {
+          state[mode][k] = inp.value.toUpperCase();
+          hex.textContent = inp.value.toUpperCase();
+          apply();
+        });
+        row.append(lab, inp, hex);
+        controls.appendChild(row);
+      });
+    });
+  }
+
+  function apply() {
+    const t = state[mode];
+    Object.entries(t).forEach(([k, v]) => frame.style.setProperty(k, v));
+    frame.style.setProperty("--on-accent", onColor(t["--accent"]));
+    frame.style.setProperty("--invert-muted", hexToRgba(t["--invert-ink"], 0.68));
+    frame.style.setProperty("--display", fonts.display);
+    frame.style.setProperty("--body", fonts.body);
+    checks();
+    output();
+  }
+
+  function hexToRgba(hex, a) {
+    const h = hex.replace("#", "");
+    return `rgba(${parseInt(h.slice(0,2),16)}, ${parseInt(h.slice(2,4),16)}, ${parseInt(h.slice(4,6),16)}, ${a})`;
+  }
+
+  function checks() {
+    const t = state[mode];
+    const box = document.getElementById("checks");
+    box.textContent = "";
+    const pairs = [
+      ["Body text on page", t["--ink"], t["--bg"]],
+      ["Muted text on page", t["--muted"], t["--bg"]],
+      ["Text on cards", t["--ink"], t["--surface"]],
+      ["Muted on cards", t["--muted"], t["--surface"]],
+      ["Button label on accent", onColor(t["--accent"]), t["--accent"]],
+      ["Accent against page", t["--accent"], t["--bg"]],
+      ["Inverted card text", t["--invert-ink"], t["--invert-bg"]],
+    ];
+    pairs.forEach(([name, fg, bg]) => {
+      const r = ratio(fg, bg);
+      const div = document.createElement("div");
+      div.className = "chk " + (r >= 4.5 ? "pass" : r >= 3 ? "warn" : "fail");
+      const rv = document.createElement("span");
+      rv.className = "r"; rv.textContent = r.toFixed(2) + ":1";
+      const v = document.createElement("span");
+      v.className = "v"; v.textContent = r >= 4.5 ? "AA" : r >= 3 ? "LARGE" : "FAIL";
+      const n = document.createElement("span");
+      n.className = "n"; n.textContent = name;
+      div.append(v, rv, n);
+      box.appendChild(div);
+    });
+  }
+
+  function output() {
+    const l = state.light, d = state.dark;
+    const fmt = (o, indent) => Object.entries(o)
+      .map(([k, v]) => `${indent}${k}: ${v};`).join("\n");
+    document.getElementById("out").value =
+`:root {
+${fmt(l, "  ")}
+  --invert-muted: ${hexToRgba(l["--invert-ink"], 0.68)};
+  --display: ${fonts.display};
+  --body: ${fonts.body};
+  --label: ${fonts.body};
+  --mono: ${fonts.body};
+}
+
+[data-theme="dark"] {
+${fmt(d, "  ")}
+  --invert-muted: ${hexToRgba(d["--invert-ink"], 0.68)};
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] {
+${fmt(d, "    ")}
+    --invert-muted: ${hexToRgba(d["--invert-ink"], 0.68)};
+  }
+}`;
+  }
+
+  /* ---------- wiring ---------- */
+  document.getElementById("mLight").addEventListener("click", function () {
+    mode = "light"; this.classList.add("active");
+    document.getElementById("mDark").classList.remove("active");
+    buildControls(); apply();
+  });
+  document.getElementById("mDark").addEventListener("click", function () {
+    mode = "dark"; this.classList.add("active");
+    document.getElementById("mLight").classList.remove("active");
+    buildControls(); apply();
+  });
+  document.getElementById("fDisplay").addEventListener("change", function () {
+    fonts.display = this.value; apply();
+  });
+  document.getElementById("fBody").addEventListener("change", function () {
+    fonts.body = this.value; apply();
+  });
+  document.getElementById("copy").addEventListener("click", function () {
+    const ta = document.getElementById("out");
+    ta.select();
+    navigator.clipboard.writeText(ta.value).then(() => {
+      this.textContent = "Copied";
+      setTimeout(() => { this.textContent = "Copy CSS"; }, 1400);
+    });
+  });
+  document.getElementById("reset").addEventListener("click", () => {
+    state.light = { ...THEMES.light };
+    state.dark = { ...THEMES.dark };
+    buildControls(); apply();
+  });
+
+  buildControls();
+  apply();
+})();
+</script>
+
+</body>
+</html>

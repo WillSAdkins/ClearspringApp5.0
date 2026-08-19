@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clearspring — design direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #08080A;
+    --raise: #131316;
+    --line: rgba(255,255,255,0.10);
+    --white: #FFFFFF;
+    --dim: rgba(255,255,255,0.58);
+    --faint: rgba(255,255,255,0.34);
+    --r-sm: 3px;
+    --r-md: 10px;
+    --display: "Archivo", system-ui, sans-serif;
+    --emph: "Instrument Serif", Georgia, serif;
+    --body: "Inter", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #1A1A1D; color: #EDEDEF;
+    font-family: var(--body); padding: 1.4rem;
+  }
+  .head { max-width: 60rem; margin: 0 auto 1.4rem; }
+  .head h1 { font-family: var(--display); font-size: 1.45rem; font-weight: 800;
+             letter-spacing: -0.03em; margin: 0 0 .3rem; }
+  .head p { color: #9A98A0; font-size: .88rem; line-height: 1.55; margin: 0; max-width: 42rem; }
+
+  .split { max-width: 60rem; margin: 0 auto; display: grid; gap: 1.2rem;
+           grid-template-columns: 1fr 1fr; align-items: start; }
+  @media (max-width: 760px) { .split { grid-template-columns: 1fr; } }
+  .col > h2 { font-family: var(--display); font-size: .68rem; text-transform: uppercase;
+              letter-spacing: .14em; color: #7C7A84; margin: 0 0 .55rem; font-weight: 700; }
+  .phone { border-radius: 20px; overflow: hidden; border: 1px solid #2E2C34; }
+
+  /* ---------------- CURRENT ---------------- */
+  .now { background: #FBF8F3; color: #2B2622; font-family: "Inter", sans-serif; padding: 1.1rem; }
+  .now h3 { font-family: "Fraunces", Georgia, serif; font-size: 1.45rem; margin: 0 0 .1rem; font-weight: 600; }
+  .now .sub { font-size: .78rem; color: #7A6E60; margin: 0 0 1rem; }
+  .now .cta { display: inline-block; background: #8A5A2B; color: #F6F2EC; font-weight: 600;
+              font-size: .85rem; padding: .78rem 1.6rem; border-radius: 999px; margin-bottom: 1rem; }
+  .now .card { background: #F4EFE7; border: 1px solid #E4DBCC; border-radius: .7rem;
+               padding: .78rem; margin-bottom: .5rem; }
+  .now .card b { font-size: .9rem; font-weight: 600; display: block; }
+  .now .card span { font-size: .78rem; color: #7A6E60; }
+
+  /* ---------------- PROPOSED ---------------- */
+  .new { background: var(--void); color: var(--white); }
+
+  /* Hero: the photograph is the page. Chrome sits on top of it, not beside it. */
+  .hero {
+    position: relative; min-height: 340px; display: flex;
+    flex-direction: column; justify-content: flex-end; padding: 1.2rem;
+    isolation: isolate;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0; z-index: -2;
+    background:
+      radial-gradient(120% 90% at 20% 15%, #3B4A63 0%, transparent 55%),
+      radial-gradient(100% 80% at 85% 5%, #6A4A55 0%, transparent 50%),
+      linear-gradient(180deg, #232936 0%, #0D0D11 100%);
+  }
+  /* Stand-in for the congregation photograph, so the type can be judged
+     against real tonal range rather than flat colour. */
+  .hero::after {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(180deg,
+      rgba(8,8,10,0.15) 0%, rgba(8,8,10,0.55) 55%, rgba(8,8,10,0.96) 100%);
+  }
+  .eyebrow {
+    font-family: var(--display); font-size: .6rem; font-weight: 700;
+    letter-spacing: .2em; text-transform: uppercase; color: var(--faint);
+    margin: 0 0 .7rem;
+  }
+  .statement {
+    font-family: var(--display); font-weight: 800; font-size: 2.6rem;
+    line-height: .95; letter-spacing: -0.045em; margin: 0 0 .8rem;
+  }
+  /* The signature: one word set in serif italic inside a sans headline. */
+  .statement em {
+    font-family: var(--emph); font-style: italic; font-weight: 400;
+    letter-spacing: -0.01em; font-size: 1.06em;
+  }
+  .herometa {
+    font-size: .8rem; color: var(--dim); line-height: 1.5;
+    margin: 0 0 1rem; max-width: 24rem;
+  }
+  .cta {
+    display: inline-flex; align-items: center; gap: .6rem; align-self: flex-start;
+    background: var(--white); color: var(--void);
+    font-family: var(--display); font-weight: 700; font-size: .78rem;
+    letter-spacing: .04em; text-transform: uppercase;
+    padding: .8rem 1.4rem; border-radius: var(--r-sm);
+  }
+  .cta::after { content: "→"; font-weight: 400; }
+
+  .body { padding: 1.3rem 1.2rem 1.5rem; }
+  .sechead {
+    font-family: var(--display); font-size: .6rem; font-weight: 700;
+    letter-spacing: .2em; text-transform: uppercase; color: var(--faint);
+    margin: 0 0 .8rem; padding-bottom: .55rem; border-bottom: 1px solid var(--line);
+  }
+
+  /* Content is photographic tiles, not bordered cards. */
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; margin-bottom: 1.6rem; }
+  .tile {
+    position: relative; aspect-ratio: 4/5; border-radius: var(--r-md);
+    overflow: hidden; display: flex; align-items: flex-end; padding: .7rem;
+  }
+  .tile::before { content: ""; position: absolute; inset: 0; z-index: -2; }
+  .tile::after {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(180deg, rgba(8,8,10,0) 35%, rgba(8,8,10,0.88) 100%);
+  }
+  .tile { isolation: isolate; }
+  .t1::before { background: linear-gradient(150deg, #2F4356, #14181F); }
+  .t2::before { background: linear-gradient(150deg, #4A3A4E, #17141A); }
+  .t3::before { background: linear-gradient(150deg, #33463C, #141A17); }
+  .t4::before { background: linear-gradient(150deg, #52412F, #1A1613); }
+  .tile b {
+    font-family: var(--display); font-size: .95rem; font-weight: 700;
+    letter-spacing: -0.02em; line-height: 1.15; display: block;
+  }
+  .tile span { font-size: .72rem; color: var(--dim); display: block; margin-top: .1rem; }
+
+  /* A full-width statement band, the way the reference sites break up a page. */
+  .band {
+    margin: 0 -1.2rem 1.6rem; padding: 2rem 1.2rem;
+    background: var(--raise); border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .band p {
+    font-family: var(--display); font-weight: 700; font-size: 1.5rem;
+    line-height: 1.1; letter-spacing: -0.035em; margin: 0 0 .5rem;
+  }
+  .band p em { font-family: var(--emph); font-style: italic; font-weight: 400; font-size: 1.08em; }
+  .band small { font-size: .75rem; color: var(--faint); }
+
+  .list { border-top: 1px solid var(--line); }
+  .row { display: flex; align-items: center; gap: .9rem; padding: .85rem 0;
+         border-bottom: 1px solid var(--line); }
+  .row b { font-family: var(--display); font-size: .92rem; font-weight: 600;
+           letter-spacing: -0.015em; display: block; }
+  .row span { font-size: .76rem; color: var(--dim); }
+  .row .arrow { margin-left: auto; color: var(--faint); font-size: .9rem; }
+
+  .notes { max-width: 60rem; margin: 1.6rem auto 0; }
+  .notes h2 { font-family: var(--display); font-size: .68rem; text-transform: uppercase;
+              letter-spacing: .14em; color: #7C7A84; margin: 0 0 .7rem; font-weight: 700; }
+  .notes dt { font-family: var(--display); font-weight: 700; font-size: .87rem; color: #EDEDEF; }
+  .notes dd { margin: .15rem 0 .8rem; font-size: .85rem; line-height: 1.55; color: #9A98A0; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>Taking the cue from Passion City</h1>
+  <p>Dark, cinematic, photograph-led. Minimal interface furniture — the images
+     and the typography do the work. The signature borrowed from Passion is the
+     serif italic word dropped into a sans headline.</p>
+</div>
+
+<div class="split">
+  <div class="col">
+    <h2>Now</h2>
+    <div class="phone">
+      <div class="now">
+        <h3>Sunday Service</h3>
+        <p class="sub">Clearspring Church · 11am</p>
+        <span class="cta">Plan your visit</span>
+        <div class="card"><b>Read the Bible</b><span>Continue in John</span></div>
+        <div class="card"><b>This week's talk</b><span>Faith that acts</span></div>
+        <div class="card"><b>Bible College</b><span>Monday nights, free</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <h2>Proposed</h2>
+    <div class="phone">
+      <div class="new">
+
+        <div class="hero">
+          <p class="eyebrow">Cheltenham · Sundays 11am</p>
+          <h1 class="statement">Jesus is<br>always the<br><em>lead story</em></h1>
+          <p class="herometa">Centenary Hall, Dean Close Prep School,
+            Lansdown Road, GL51 6QS</p>
+          <span class="cta">Plan your visit</span>
+        </div>
+
+        <div class="body">
+          <p class="sechead">This week</p>
+          <div class="tiles">
+            <div class="tile t1"><span><b>Latest talk</b><span>Faith that acts</span></span></div>
+            <div class="tile t2"><span><b>Bible College</b><span>Mondays, free</span></span></div>
+            <div class="tile t3"><span><b>Flashpoint Prayer</b><span>Sundays 10.30am</span></span></div>
+            <div class="tile t4"><span><b>Kids Church</b><span>4 years and up</span></span></div>
+          </div>
+
+          <div class="band">
+            <p>There is a place <em>for you</em></p>
+            <small>Ephesians 2:10</small>
+          </div>
+
+          <p class="sechead">Keep going</p>
+          <div class="list">
+            <div class="row"><span><b>Read the Bible</b><span>Continue in John 3</span></span><span class="arrow">→</span></div>
+            <div class="row"><span><b>Your progress</b><span>12 days running</span></span><span class="arrow">→</span></div>
+            <div class="row"><span><b>Give</b><span>Gift Aid eligible</span></span><span class="arrow">→</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <h2>What I took from each</h2>
+  <dl>
+    <dt>Dark, and photography carries the colour</dt>
+    <dd>Passion City runs a full-bleed video loop behind its statement. On a
+      phone that translates to a dark app where your congregation photographs
+      glow rather than sit inside tinted cards. The gradients here stand in for
+      real images so the type can be judged against actual tonal range.</dd>
+
+    <dt>The serif italic word</dt>
+    <dd>Passion sets one word of a heading in italic serif — "Select a
+      <em style="font-family:var(--emph);font-style:italic">City</em>",
+      "Around the Passion <em style="font-family:var(--emph);font-style:italic">Movement</em>".
+      It's the whole identity in one move: confident sans, one soft word. Archivo
+      at 800 with Instrument Serif italic does the same job here.</dd>
+
+    <dt>Your own words, not placeholder copy</dt>
+    <dd>"Jesus is always the lead story" and "There is a place for you" are from
+      your site. Real service time, real address, real programmes — Bible
+      College, Flashpoint Prayer, Kids Church.</dd>
+
+    <dt>Tiles and rules, no cards</dt>
+    <dd>Both references use square photographic tiles and full-width statement
+      bands. Tinted cards with borders are the thing that currently makes the
+      app read as generic.</dd>
+
+    <dt>What I'd flag</dt>
+    <dd>This design lives or dies on photography. It needs a small library of
+      good, dark-friendly images — congregation, worship, the building. Without
+      them the tiles are just coloured rectangles. Worth deciding whether you
+      have those before committing.</dd>
+  </dl>
+</div>
+
+</body>
+</html>

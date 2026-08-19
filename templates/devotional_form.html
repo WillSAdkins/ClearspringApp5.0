@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="admin-page">
+  <p class="eyebrow">Staff area</p>
+  <h1>{{ "Edit devotional" if devotional else "New devotional" }}</h1>
+
+  <form method="post" class="event-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" required
+           value="{{ devotional['title'] if devotional else '' }}" placeholder="A Steady Anchor">
+
+    <label for="verse_ref">Scripture reference (optional)</label>
+    <input type="text" id="verse_ref" name="verse_ref"
+           value="{{ devotional['verse_ref'] if devotional else '' }}" placeholder="e.g. Psalms 23 or John 3">
+    <p class="form-hint">Use "Book Chapter" format so it links to the reader — e.g. "Romans 8".</p>
+
+    <label for="body">Reflection</label>
+    <textarea id="body" name="body" rows="12" required
+              placeholder="Write the devotional here. Leave a blank line between paragraphs.">{{ devotional['body'] if devotional else '' }}</textarea>
+
+    <label for="video_url">Accompanying video (optional)</label>
+    <input type="url" id="video_url" name="video_url"
+           value="{{ devotional['video_url'] if devotional else '' }}" placeholder="A YouTube, Vimeo, or Facebook video link">
+    <p class="form-hint">Shown as a short embedded video alongside the reflection. Leave blank for text-only.</p>
+
+    <label class="checkbox-row">
+      <input type="checkbox" name="published" {{ "checked" if not devotional or devotional['published'] }}>
+      Published (visible to everyone)
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" style="width:auto;">{{ "Save changes" if devotional else "Save devotional" }}</button>
+      <a href="{{ url_for('admin_devotionals') }}" class="btn-ghost">Cancel</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

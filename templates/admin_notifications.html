@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>Notifications</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('notification_check') }}" class="btn-ghost">Check setup</a>
+      <a href="{{ url_for('admin') }}" class="btn-ghost">← Admin</a>
+    </div>
+  </div>
+
+  {% if not configured %}
+    <div class="admin-alert">
+      <strong>Notifications aren't configured on this server.</strong>
+      They need the <code>pywebpush</code> package installed and VAPID keys set in
+      the environment. See <code>notifications.py</code> for the setup steps.
+      Everything below will work once that's done.
+    </div>
+  {% endif %}
+
+  <section class="admin-panel">
+    <h2 class="section-label">Who's subscribed</h2>
+    <p class="empty-sub" style="margin-bottom:0.9rem;">
+      {{ total }} device{{ 's' if total != 1 }} subscribed in total.
+    </p>
+    <div class="notif-counts">
+      {% for t in types %}
+        <div class="notif-count-row">
+          <span>{{ t.name }}</span>
+          <strong>{{ counts[t.key] }}</strong>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <h2 class="section-label" style="margin-top:2.4rem;">Send an announcement</h2>
+  <p class="empty-sub" style="margin-bottom:1rem;">
+    This goes only to people who opted in to the type you choose. Please use
+    "Urgent announcements" sparingly — it's the one people trust most.
+  </p>
+
+  <form method="post" class="event-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="type_key">Send as</label>
+    <select id="type_key" name="type_key">
+      {% for t in types %}
+        <option value="{{ t.key }}" {{ 'selected' if t.key == 'emergency' }}>
+          {{ t.name }} ({{ counts[t.key] }} subscribed)
+        </option>
+      {% endfor %}
+    </select>
+
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" required maxlength="60"
+           placeholder="Sunday service cancelled">
+    <p class="field-hint">Keep it short — phones truncate long titles.</p>
+
+    <label for="body">Message</label>
+    <textarea id="body" name="body" rows="3" required maxlength="180"
+              placeholder="Due to the weather, tomorrow's 10.30am service won't be going ahead."></textarea>
+
+    <label for="url">Opens at</label>
+    <input type="text" id="url" name="url" value="/" placeholder="/">
+    <p class="field-hint">Where tapping the notification takes people. "/" is the home screen.</p>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" style="width:auto;"
+              onclick="return confirm('Send this notification now?');">Send now</button>
+    </div>
+  </form>
+</main>
+{% endblock %}

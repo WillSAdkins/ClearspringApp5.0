@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <h1 class="bible-title">More</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <nav class="bible-list">
+    {% if member %}
+      <a href="{{ url_for('account') }}" class="bible-row">
+        <span class="bible-row-icon">{{ icon('users', 20) }}</span>
+        <span class="bible-row-body">
+          <span class="bible-row-title">Your account</span>
+          <span class="bible-row-sub">{{ member['email'] }}</span>
+        </span>
+        {{ icon('chevron-right', 18) }}
+      </a>
+    {% else %}
+      <a href="{{ url_for('signin') }}" class="bible-row">
+        <span class="bible-row-icon">{{ icon('users', 20) }}</span>
+        <span class="bible-row-body">
+          <span class="bible-row-title">Sign in</span>
+          <span class="bible-row-sub">Keep your notes and verses across devices</span>
+        </span>
+        {{ icon('chevron-right', 18) }}
+      </a>
+    {% endif %}
+    <a href="{{ url_for('store') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('bookmark', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Store</span>
+        <span class="bible-row-sub">Books, resources &amp; merchandise</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+
+    <a href="{{ url_for('giving') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('heart', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Giving</span>
+        <span class="bible-row-sub">Support the church &amp; current appeals</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+
+    <a href="{{ url_for('settings') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('settings', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Settings</span>
+        <span class="bible-row-sub">Appearance, text size &amp; notifications</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+
+    <a href="{{ url_for('notification_settings') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('settings', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Notifications</span>
+        <span class="bible-row-sub">Choose what you hear about</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+
+    <a href="{{ url_for('resources') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('book', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Resources</span>
+        <span class="bible-row-sub">Guides, handbook &amp; recommendations</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+
+    <a href="{{ url_for('ministries') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('users', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Ministries</span>
+        <span class="bible-row-sub">Kids, youth, men, women, seniors &amp; missions</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+
+    <a href="{{ url_for('ask_question') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('mail', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Contact us</span>
+        <span class="bible-row-sub">Reach a pastor or ask a question</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+
+    <a href="{{ url_for('games_hub') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('gamepad', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Kids games</span>
+        <span class="bible-row-sub">Bible games to play together</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+  </nav>
+
+  <h2 class="coming-head">Coming soon</h2>
+  <div class="coming-list">
+
+
+  </div>
+
+  <p class="staff-link">
+    <a href="{{ url_for('login') }}">Church staff sign in</a>
+  </p>
+
+</main>
+
+{% endblock %}

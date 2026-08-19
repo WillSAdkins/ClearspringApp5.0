@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow"><a href="{{ url_for('index') }}" style="color:inherit;">← Home</a></p>
+    <h1 class="page-title">Calendar</h1>
+    <p class="tagline">Services &amp; events</p>
+  </div>
+</header>
+
+<main class="board">
+
+  <div class="toolbar">
+    <div class="filter-chips">
+      <a href="{{ url_for('calendar_page', month=request.args.get('month'), cat='all') }}"
+         class="chip {{ 'active' if cat == 'all' }}">All</a>
+      <a href="{{ url_for('calendar_page', month=request.args.get('month'), cat='service') }}"
+         class="chip {{ 'active' if cat == 'service' }}">Services</a>
+      <a href="{{ url_for('calendar_page', month=request.args.get('month'), cat='event') }}"
+         class="chip {{ 'active' if cat == 'event' }}">Events</a>
+    </div>
+    <a href="{{ webcal_url }}" class="subscribe-btn" title="Subscribe in your calendar app">
+      Subscribe ⤓
+    </a>
+  </div>
+
+  <div class="calendar">
+    <div class="cal-nav">
+      <a href="{{ url_for('calendar_page', month=prev_month, cat=cat) }}" class="cal-nav-btn" aria-label="Previous month">‹</a>
+      <h2 class="cal-month-label">{{ month_label }}</h2>
+      <a href="{{ url_for('calendar_page', month=next_month, cat=cat) }}" class="cal-nav-btn" aria-label="Next month">›</a>
+    </div>
+
+    <div class="cal-weekdays">
+      {% for label in weekday_labels %}<span>{{ label }}</span>{% endfor %}
+    </div>
+
+    <div class="cal-grid">
+      {% for week in weeks %}
+        {% for day in week %}
+          <a href="{{ '#day-' ~ day.iso if day.has_events else '#' }}"
+             class="cal-day {{ 'out-of-month' if not day.in_month }} {{ 'is-today' if day.is_today }} {{ 'has-events' if day.has_events }}">
+            <span class="cal-day-num">{{ day.date.day }}</span>
+            {% if day.has_events %}
+              <span class="cal-dots">
+                {% for c in day.categories %}<span class="dot {{ c }}"></span>{% endfor %}
+              </span>
+            {% endif %}
+          </a>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if not agenda %}
+    <div class="empty">
+      <p>Nothing on the calendar this month.</p>
+      <p class="empty-sub">Try the arrows above to check another month.</p>
+    </div>
+  {% endif %}
+
+  {% for iso, items in agenda.items() %}
+    <section class="day-group" id="day-{{ iso }}">
+      <h2 class="day-label">{{ iso | pretty_date }}</h2>
+      <div class="day-rule"></div>
+
+      {% for e in items %}
+        <article class="card {{ e['category'] }}">
+          <div class="card-time">{{ e['event_time'] }}</div>
+          <div class="card-body">
+            <span class="card-tag">{{ e['category'] }}</span>
+            <h3>{{ e['title'] }}</h3>
+            {% if e['location'] %}<p class="card-location">{{ e['location'] }}</p>{% endif %}
+            {% if e['description'] %}<p class="card-desc">{{ e['description'] }}</p>{% endif %}
+            <div class="card-actions">
+              {% if e['recurring'] and e['recurring'] != 'none' %}
+                <span class="card-recurring">Repeats {{ e['recurring'] }}</span>
+              {% endif %}
+              <a href="{{ url_for('event_ics', event_id=e['id']) }}" class="add-to-cal">+ Add to calendar</a>
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+  {% endfor %}
+</main>
+
+<footer class="site-footer">
+  <a href="{{ url_for('login') }}">Church staff sign in</a>
+</footer>
+
+{% endblock %}

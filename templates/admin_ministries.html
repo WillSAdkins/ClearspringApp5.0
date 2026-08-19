@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>Ministries</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('admin') }}" class="btn-ghost">← Admin</a>
+    </div>
+  </div>
+
+  <p class="empty-sub" style="margin-bottom:1.4rem;">
+    Each ministry has its own page in the app. Tag an event to a ministry when you
+    create it and it will appear on that page automatically.
+  </p>
+
+  <div class="admin-table">
+    {% for m in ministries %}
+      <div class="admin-row">
+        <div class="admin-row-main">
+          <strong>{{ m['name'] }}</strong>
+          <span class="admin-row-loc">
+            {% if not m['active'] %}hidden{% else %}live{% endif %}
+            {% if m['slug'] in safeguarded %} · role contact only{% endif %}
+            {% if not m['description'] %} · needs description{% endif %}
+          </span>
+        </div>
+        <div class="admin-row-actions">
+          <a href="{{ url_for('edit_ministry', slug=m['slug']) }}" class="btn-ghost small">Edit</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}

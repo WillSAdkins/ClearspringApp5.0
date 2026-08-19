@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+<main class="bible">
+  <header class="bible-head">
+    <a href="{{ url_for('more_hub') }}" class="bible-back" aria-label="Back">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Sign in</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <p class="bible-lede">
+    Signing in keeps your saved verses, notes, reading progress and journal
+    together across your phone, tablet and computer.
+  </p>
+
+  <form method="post" class="prayer-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="email" class="pf-label">Email</label>
+    <input type="email" id="email" name="email" value="{{ email }}" required autocomplete="email">
+
+    <label for="password" class="pf-label">Password</label>
+    <input type="password" id="password" name="password" required autocomplete="current-password">
+
+    <button type="submit" class="pf-submit">Sign in</button>
+  </form>
+
+  <nav class="bible-list" style="margin-top:1.6rem;">
+    <a href="{{ url_for('magic_link_request') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('mail', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Email me a link instead</span>
+        <span class="bible-row-sub">No password needed — useful if you've forgotten it</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+    <a href="{{ url_for('signup') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('users', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Create an account</span>
+        <span class="bible-row-sub">It takes a moment and it's free</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+  </nav>
+</main>
+{% endblock %}

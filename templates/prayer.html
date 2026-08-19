@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('community_hub') }}" class="bible-back" aria-label="Back to Community">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Prayer</h1>
+    <a href="{{ url_for('prayer_journal') }}" class="bible-search" aria-label="My prayer journal">{{ icon('book', 20) }}</a>
+  </header>
+
+  <a href="{{ url_for('prayer_new') }}" class="prayer-cta">
+    {{ icon('hands', 20) }}
+    <span>Share a prayer request</span>
+    {{ icon('chevron-right', 18) }}
+  </a>
+
+  {% if praises %}
+  <section class="prayer-block">
+    <h2 class="prayer-h2">Answered prayers</h2>
+    <div class="praise-rail">
+      {% for p in praises %}
+        <article class="praise-card">
+          <span class="praise-label">Praise report</span>
+          <p class="praise-body">{{ p['body'] }}</p>
+          {% if p['author_name'] %}<p class="praise-author">— {{ p['author_name'] }}</p>{% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="prayer-block">
+    <h2 class="prayer-h2">Prayer requests</h2>
+
+    {% if not requests %}
+      <div class="saved-empty">
+        <span class="saved-empty-icon">{{ icon('hands', 26) }}</span>
+        <p class="saved-empty-title">No requests yet</p>
+        <p class="saved-empty-sub">Be the first to share something for the church to pray about.</p>
+        <a href="{{ url_for('prayer_new') }}" class="saved-empty-cta">Share a request</a>
+      </div>
+    {% endif %}
+
+    <div class="prayer-list">
+      {% for p in requests %}
+        <article class="prayer-item" data-id="{{ p['id'] }}">
+          <p class="prayer-body">{{ p['body'] }}</p>
+          <div class="prayer-foot">
+            <span class="prayer-author">{{ p['author_name'] or 'Anonymous' }}</span>
+            <button type="button" class="pray-btn" data-id="{{ p['id'] }}">
+              {{ icon('hands', 16) }}
+              <span class="pray-label">Praying</span>
+              <span class="pray-count">{{ p['pray_count'] }}</span>
+            </button>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  const KEY = "cs_prayed";
+  function prayed() {
+    try { return new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); }
+    catch (e) { return new Set(); }
+  }
+  function remember(id) {
+    const s = prayed(); s.add(id);
+    localStorage.setItem(KEY, JSON.stringify([...s]));
+  }
+
+  const already = prayed();
+  document.querySelectorAll(".pray-btn").forEach((btn) => {
+    const id = parseInt(btn.dataset.id, 10);
+    if (already.has(id)) {
+      btn.classList.add("done");
+      btn.querySelector(".pray-label").textContent = "Prayed";
+    }
+    btn.addEventListener("click", async () => {
+      if (btn.classList.contains("done")) return;
+      btn.classList.add("done");
+      btn.querySelector(".pray-label").textContent = "Prayed";
+      remember(id);
+      try {
+        const res = await fetch(`/prayer/${id}/pray`, { method: "POST" });
+        const data = await res.json();
+        if (data.ok) btn.querySelector(".pray-count").textContent = data.count;
+      } catch (e) { /* count will catch up on next load */ }
+    });
+  });
+})();
+</script>
+
+{% endblock %}

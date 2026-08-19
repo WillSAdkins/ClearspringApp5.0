@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow"><a href="{{ url_for('devotionals') }}" style="color:inherit;">← Devotionals</a></p>
+    <h1 class="page-title">{{ d['title'] }}</h1>
+    {% if d['verse_ref'] %}
+      {% if ref_link %}
+        <a href="{{ url_for('bible_read_chapter', book_slug=ref_link[0], chapter=ref_link[1]) }}" class="tagline" style="color:var(--accent);">{{ d['verse_ref'] }} →</a>
+      {% else %}
+        <p class="tagline">{{ d['verse_ref'] }}</p>
+      {% endif %}
+    {% endif %}
+  </div>
+</header>
+
+<main class="board">
+  {% if video_embed %}
+    <p class="video-frame-label">▶ Watch</p>
+    <div class="video-frame" data-reveal>
+      <iframe src="{{ video_embed }}" title="{{ d['title'] }}" frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+  {% endif %}
+  <article class="devo-body devo-single" data-reveal>
+    {% for para in d['body'].split('\n\n') %}
+      <p>{{ para }}</p>
+    {% endfor %}
+  </article>
+</main>
+
+{% endblock %}

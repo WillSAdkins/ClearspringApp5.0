@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+<main class="bible">
+  <header class="bible-head">
+    <a href="{{ url_for('signin') }}" class="bible-back" aria-label="Back">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Check your email</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <div class="saved-empty">
+    <span class="saved-empty-icon">{{ icon('mail', 26) }}</span>
+    <p class="saved-empty-title">On its way</p>
+    <p class="saved-empty-sub">
+      If <strong>{{ email }}</strong> has an account, a sign-in link is on its way.
+      It expires in 20 minutes and works only once.
+    </p>
+  </div>
+
+  {% if dev_link %}
+    <div class="admin-alert">
+      <strong>Email isn't set up on this server yet.</strong>
+      Until it is, the link appears here instead of being sent:
+      <p style="margin-top:0.6rem;"><a href="{{ dev_link }}">{{ dev_link }}</a></p>
+    </div>
+  {% endif %}
+</main>
+{% endblock %}

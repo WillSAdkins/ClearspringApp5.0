@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('more_hub') }}" class="bible-back" aria-label="Back to More">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Ministries</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <p class="bible-lede">
+    There's a place for everyone at Clearspring. Find out what's happening for you and your family.
+  </p>
+
+  <nav class="bible-list">
+    {% for m in ministries %}
+      <a href="{{ url_for('ministry_detail', slug=m['slug']) }}" class="bible-row">
+        <span class="bible-row-icon">
+          {%- if m['slug'] == 'kids' -%}{{ icon('baby', 20) }}
+          {%- elif m['slug'] == 'youth' -%}{{ icon('users', 20) }}
+          {%- elif m['slug'] == 'young-adults' -%}{{ icon('users', 20) }}
+          {%- elif m['slug'] == 'men' -%}{{ icon('handshake', 20) }}
+          {%- elif m['slug'] == 'women' -%}{{ icon('heart', 20) }}
+          {%- elif m['slug'] == 'seniors' -%}{{ icon('hands', 20) }}
+          {%- else -%}{{ icon('target', 20) }}{%- endif -%}
+        </span>
+        <span class="bible-row-body">
+          <span class="bible-row-title">{{ m['name'] }}</span>
+          {% if m['tagline'] %}<span class="bible-row-sub">{{ m['tagline'] }}</span>{% endif %}
+        </span>
+        {{ icon('chevron-right', 18) }}
+      </a>
+    {% endfor %}
+  </nav>
+
+</main>
+
+{% endblock %}

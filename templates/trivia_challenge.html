@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow"><a href="{{ url_for('games_hub') }}" style="color:inherit;">← Kids Games</a></p>
+    <h1 class="page-title">Bible Trivia Challenge</h1>
+    <p class="tagline">Answer correctly to climb the ladder</p>
+  </div>
+</header>
+
+<main class="board">
+  <div class="tc-layout">
+    <div class="tc-main">
+      <div id="tc-question-box" class="tc-question-box">
+        <p id="tc-level-label" class="tc-level-label"></p>
+        <p id="tc-question" class="tc-question"></p>
+        <div id="tc-choices" class="tc-choices"></div>
+      </div>
+
+      <div class="tc-lifelines">
+        <button id="tc-5050" class="btn-ghost small">50:50</button>
+        <button id="tc-skip" class="btn-ghost small">Skip</button>
+        <button id="tc-hint" class="btn-ghost small">Ask the Pastor</button>
+        <button id="tc-restart" class="btn-ghost small">Restart</button>
+      </div>
+
+      <div id="tc-hint-box" class="tc-hint-box" hidden></div>
+
+      <div id="tc-end-box" class="mm-win" hidden>
+        <p id="tc-end-message"></p>
+        <button id="tc-play-again" class="btn-primary" style="width:auto;">Play again</button>
+        <div class="lb-publish">
+          <button id="tc-publish" class="btn-ghost small">Publish score to leaderboard</button>
+          <p id="tc-publish-result" class="lb-publish-result"></p>
+        </div>
+        <a href="{{ url_for('game_leaderboard', game_key='trivia_challenge') }}" class="lb-view-link">View leaderboard →</a>
+      </div>
+    </div>
+
+    <ol id="tc-ladder" class="tc-ladder" reversed></ol>
+  </div>
+</main>
+
+<style>
+  .tc-layout { display: flex; gap: 1.5rem; flex-wrap: wrap-reverse; }
+  .tc-main { flex: 1; min-width: 16rem; }
+  .tc-question-box {
+    border: 1px solid var(--line);
+    border-radius: 0.9rem;
+    padding: 1.4rem;
+    background: var(--surface);
+  }
+  .tc-level-label {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin: 0 0 0.6rem;
+  }
+  .tc-question {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin: 0 0 1.1rem;
+  }
+  .tc-choices { display: grid; gap: 0.6rem; }
+  .tc-choice-btn {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--ink);
+    background: var(--white);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  .tc-choice-btn:disabled { cursor: default; }
+  .tc-choice-btn.correct { background: var(--ink); color: var(--white); }
+  .tc-choice-btn.wrong { opacity: 0.35; text-decoration: line-through; }
+  .tc-choice-btn.eliminated { opacity: 0.2; }
+
+  .tc-lifelines { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+  .tc-hint-box {
+    margin-top: 0.8rem;
+    padding: 0.8rem 1rem;
+    border-radius: 0.6rem;
+    background: var(--surface-2);
+    font-size: 0.85rem;
+  }
+
+  .tc-ladder {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.15rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    min-width: 9.5rem;
+  }
+  .tc-ladder li {
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.4rem;
+    color: var(--muted);
+  }
+  .tc-ladder li.current { background: var(--ink); color: var(--white); font-weight: 700; }
+  .tc-ladder li.done { color: var(--ink); }
+  .tc-ladder li.checkpoint { text-decoration: underline; }
+</style>
+
+<script>
+(function () {
+  const QUESTIONS = {{ questions | tojson }};
+  const POINTS = [100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 1000000];
+  const CHECKPOINTS = [4, 9, 14]; // index of safe levels (0-based): after Q5, Q10, Q15
+
+  let level = 0;
+  let usedFifty = false, usedSkip = false, usedHint = false;
+  let eliminated = [];
+
+  const qBox = document.getElementById("tc-question");
+  const levelLabel = document.getElementById("tc-level-label");
+  const choicesBox = document.getElementById("tc-choices");
+  const ladderEl = document.getElementById("tc-ladder");
+  const hintBox = document.getElementById("tc-hint-box");
+  const endBox = document.getElementById("tc-end-box");
+  const endMessage = document.getElementById("tc-end-message");
+  const questionBox = document.getElementById("tc-question-box");
+
+  function buildLadder() {
+    ladderEl.innerHTML = "";
+    POINTS.forEach((pts, i) => {
+      const li = document.createElement("li");
+      li.textContent = `${i + 1}. ${pts.toLocaleString()}`;
+      li.dataset.i = i;
+      if (CHECKPOINTS.includes(i)) li.classList.add("checkpoint");
+      ladderEl.appendChild(li);
+    });
+  }
+
+  function updateLadder() {
+    [...ladderEl.children].forEach((li, i) => {
+      li.classList.toggle("current", i === level);
+      li.classList.toggle("done", i < level);
+    });
+  }
+
+  function lastCheckpointPoints() {
+    let safe = 0;
+    for (const cp of CHECKPOINTS) {
+      if (level > cp) safe = POINTS[cp];
+    }
+    return safe;
+  }
+
+  function loadQuestion() {
+    eliminated = [];
+    hintBox.hidden = true;
+    endBox.hidden = true;
+    questionBox.hidden = false;
+    const q = QUESTIONS[level];
+    levelLabel.textContent = `Question ${level + 1} of ${QUESTIONS.length} — playing for ${POINTS[level].toLocaleString()} points`;
+    qBox.textContent = q.q;
+    choicesBox.innerHTML = "";
+    q.choices.forEach((choice, i) => {
+      const btn = document.createElement("button");
+      btn.className = "tc-choice-btn";
+      btn.textContent = choice;
+      btn.addEventListener("click", () => onAnswer(i));
+      choicesBox.appendChild(btn);
+    });
+  }
+
+  function onAnswer(i) {
+    const q = QUESTIONS[level];
+    const buttons = [...choicesBox.children];
+    buttons.forEach((b) => (b.disabled = true));
+    buttons[q.answer].classList.add("correct");
+
+    if (i === q.answer) {
+      buttons[i].classList.add("correct");
+      updateLadder();
+      setTimeout(() => {
+        if (level === QUESTIONS.length - 1) {
+          finish(true);
+        } else {
+          level += 1;
+          updateLadder();
+          loadQuestion();
+        }
+      }, 900);
+    } else {
+      buttons[i].classList.add("wrong");
+      setTimeout(() => finish(false), 900);
+    }
+  }
+
+  function finish(won) {
+    questionBox.hidden = true;
+    endBox.hidden = false;
+    let finalScore;
+    if (won) {
+      finalScore = POINTS[POINTS.length - 1];
+      endMessage.textContent = `🎉 You reached the top! Final score: ${finalScore.toLocaleString()} points.`;
+    } else {
+      finalScore = lastCheckpointPoints();
+      endMessage.textContent = `That wasn't it. You walk away with ${finalScore.toLocaleString()} points.`;
+    }
+    const publishBtn = document.getElementById("tc-publish");
+    const resultEl = document.getElementById("tc-publish-result");
+    publishBtn.disabled = false;
+    publishBtn.textContent = "Publish score to leaderboard";
+    resultEl.textContent = "";
+    publishBtn.onclick = () => {
+      ChurchLeaderboard.publish("trivia_challenge", finalScore, resultEl, publishBtn);
+    };
+  }
+
+  document.getElementById("tc-5050").addEventListener("click", () => {
+    if (usedFifty) return;
+    usedFifty = true;
+    document.getElementById("tc-5050").disabled = true;
+    const q = QUESTIONS[level];
+    const wrongIndexes = [0, 1, 2, 3].filter((i) => i !== q.answer);
+    const toRemove = wrongIndexes.sort(() => Math.random() - 0.5).slice(0, 2);
+    toRemove.forEach((i) => {
+      const btn = choicesBox.children[i];
+      btn.disabled = true;
+      btn.classList.add("eliminated");
+    });
+  });
+
+  document.getElementById("tc-skip").addEventListener("click", () => {
+    if (usedSkip || level === QUESTIONS.length - 1) return;
+    usedSkip = true;
+    document.getElementById("tc-skip").disabled = true;
+    level += 1;
+    updateLadder();
+    loadQuestion();
+  });
+
+  document.getElementById("tc-hint").addEventListener("click", () => {
+    if (usedHint) return;
+    usedHint = true;
+    document.getElementById("tc-hint").disabled = true;
+    const q = QUESTIONS[level];
+    hintBox.hidden = false;
+    hintBox.textContent = `The Pastor is fairly confident it starts with "${q.choices[q.answer][0]}"...`;
+  });
+
+  function restart() {
+    level = 0;
+    usedFifty = usedSkip = usedHint = false;
+    document.getElementById("tc-5050").disabled = false;
+    document.getElementById("tc-skip").disabled = false;
+    document.getElementById("tc-hint").disabled = false;
+    buildLadder();
+    updateLadder();
+    loadQuestion();
+  }
+
+  document.getElementById("tc-restart").addEventListener("click", restart);
+  document.getElementById("tc-play-again").addEventListener("click", restart);
+
+  buildLadder();
+  updateLadder();
+  loadQuestion();
+})();
+</script>
+
+{% endblock %}

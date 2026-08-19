@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>Resources</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('new_resource') }}" class="btn-primary">+ Add resource</a>
+      <a href="{{ url_for('admin') }}" class="btn-ghost">← Admin</a>
+    </div>
+  </div>
+
+  <p class="empty-sub" style="margin-bottom:1.4rem;">
+    A resource is either an <strong>article</strong> written here in the app, or a
+    <strong>link</strong> out to a document elsewhere — your website, Google Drive,
+    or anywhere else it already lives.
+  </p>
+
+  {% for group in grouped %}
+    <h2 class="section-label" style="margin-top:1.8rem;">{{ group.name }} ({{ group['items']|length }})</h2>
+    {% if not group['items'] %}
+      <p class="empty-sub">Nothing in this category yet.</p>
+    {% endif %}
+    <div class="admin-table">
+      {% for r in group['items'] %}
+        <div class="admin-row">
+          <div class="admin-row-date">
+            <span class="mono">{{ r['kind'] }}</span>
+            {% if not r['published'] %}<span class="mono" style="color:var(--muted)">draft</span>{% endif %}
+          </div>
+          <div class="admin-row-main">
+            <strong>{{ r['title'] }}</strong>
+            {% if r['summary'] %}<span class="admin-row-loc">{{ r['summary'][:70] }}</span>{% endif %}
+          </div>
+          <div class="admin-row-actions">
+            <a href="{{ url_for('edit_resource', resource_id=r['id']) }}" class="btn-ghost small">Edit</a>
+            <form method="post" action="{{ url_for('delete_resource', resource_id=r['id']) }}"
+                  onsubmit="return confirm('Delete this resource?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-danger small">Delete</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</main>
+{% endblock %}

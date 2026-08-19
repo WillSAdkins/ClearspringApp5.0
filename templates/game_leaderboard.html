@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('games_hub') }}" class="bible-back" aria-label="Back to games">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">{{ info.label }}</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <p class="bible-lede">
+    Top scores, by {{ info.unit }}{{ ' (fewer is better)' if not info.higher_is_better else '' }}.
+    Only players who chose to publish appear here — first name and last initial only.
+  </p>
+
+  {% if board %}
+    <ol class="lb-list">
+      {% for row in board %}
+        <li class="lb-row {{ 'lb-row-me' if row.is_me }}">
+          <span class="lb-rank">{{ row.rank }}</span>
+          <span class="lb-name">{{ row.name }}{{ ' (you)' if row.is_me }}</span>
+          <span class="lb-score">{{ row.score }} {{ info.unit }}</span>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <p class="lb-empty">No scores published yet — be the first!</p>
+  {% endif %}
+
+  {% if not signed_in %}
+    <p class="lb-signin-hint">
+      <a href="{{ url_for('signin') }}">Sign in</a> to publish your own score after a game.
+    </p>
+  {% endif %}
+
+</main>
+
+<style>
+  .lb-list {
+    list-style: none;
+    margin: 1rem 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .lb-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--surface);
+    border-radius: 0.6rem;
+    border: 1px solid var(--line);
+  }
+  .lb-row-me {
+    border-color: var(--accent);
+    background: var(--surface-2);
+  }
+  .lb-rank {
+    font-family: var(--mono);
+    font-weight: 700;
+    width: 1.6rem;
+    color: var(--muted);
+  }
+  .lb-name {
+    flex: 1;
+    font-family: var(--body);
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+  .lb-score {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .lb-empty, .lb-signin-hint {
+    font-family: var(--body);
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 1rem;
+  }
+</style>
+
+{% endblock %}

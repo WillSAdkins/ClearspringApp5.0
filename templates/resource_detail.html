@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('resources') }}" class="bible-back" aria-label="All resources">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">{{ category_name }}</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <article class="resource-article">
+    <h2 class="resource-article-title">{{ r['title'] }}</h2>
+    {% if r['summary'] %}<p class="resource-article-summary">{{ r['summary'] }}</p>{% endif %}
+    {% if r['author'] %}<p class="resource-article-author">{{ r['author'] }}</p>{% endif %}
+
+    <div class="resource-article-body">
+      {% for para in r['body'].split('\n\n') %}
+        {% set p = para.strip() %}
+        {% if p == '---' %}
+          <hr class="resource-rule">
+        {% elif p.startswith('**') and p.endswith('**') %}
+          <h3 class="resource-h3">{{ p[2:-2] }}</h3>
+        {% elif p.startswith('*') and p.endswith('*') %}
+          <p class="resource-note">{{ p[1:-1] }}</p>
+        {% else %}
+          <p>{{ p }}</p>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {% if r['url'] %}
+      <a href="{{ r['url'] }}" target="_blank" rel="noopener" class="give-secondary" style="margin-top:1.4rem;">
+        {{ icon('bookmark', 20) }}
+        <span><strong>Read more</strong><small>Opens in a new tab</small></span>
+        {{ icon('chevron-right', 18) }}
+      </a>
+    {% endif %}
+  </article>
+
+</main>
+
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+<main class="bible">
+  <header class="bible-head">
+    <a href="{{ url_for('signin') }}" class="bible-back" aria-label="Back">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Create account</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <p class="bible-lede">
+    An account keeps your saved verses, sermon notes, reading progress and
+    journal in one place, on every device you use.
+  </p>
+
+  <form method="post" class="prayer-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="name" class="pf-label">Your name</label>
+    <input type="text" id="name" name="name" value="{{ name }}" autocomplete="name"
+           placeholder="Optional">
+
+    <label for="email" class="pf-label">Email</label>
+    <input type="email" id="email" name="email" value="{{ email }}" required autocomplete="email">
+
+    <label for="password" class="pf-label">Password</label>
+    <input type="password" id="password" name="password" required autocomplete="new-password"
+           minlength="10">
+    <p class="field-hint" style="margin-top:0.4rem;">
+      At least 10 characters. A short phrase you'll remember works well.
+    </p>
+
+    <button type="submit" class="pf-submit">Create account</button>
+  </form>
+
+  <p class="notif-privacy">
+    We store your name and email so you can sign in, and whatever you choose to
+    save in the app. Nothing is shared with anyone else. You can delete your
+    account and everything in it at any time.
+  </p>
+</main>
+{% endblock %}

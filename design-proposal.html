@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clearspring — design proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Neutral structure — near-achromatic, so the season carries all colour */
+    --page: #FCFCFB;
+    --card: #FFFFFF;
+    --sunk: #F2F1EF;
+    --ink: #111013;
+    --muted: #63616B;
+    --rule: #E3E1DE;
+
+    /* Liturgical accent. Changes with the church year; violet is Advent. */
+    --accent: #5B3A8C;
+    --on-accent: #FFFFFF;
+
+    /* Three radii. Not eight. */
+    --r-sm: 4px;
+    --r-md: 12px;
+    --r-full: 999px;
+
+    --display: "Archivo", system-ui, sans-serif;
+    --read: "Newsreader", Georgia, serif;
+    --data: "JetBrains Mono", ui-monospace, monospace;
+  }
+  [data-season="christmas"] { --accent: #8A6410; }
+  [data-season="ordinary"]  { --accent: #1F6B4A; }
+  [data-season="pentecost"] { --accent: #A32B28; }
+
+  [data-theme="dark"] {
+    --page: #0B0B0D; --card: #161519; --sunk: #1F1E23;
+    --ink: #F4F3F0; --muted: #9B99A3; --rule: #2A282F;
+    --accent: #A77BE0; --on-accent: #111013;
+  }
+  [data-theme="dark"][data-season="christmas"] { --accent: #E8B54B; }
+  [data-theme="dark"][data-season="ordinary"]  { --accent: #4FBF8B; }
+  [data-theme="dark"][data-season="pentecost"] { --accent: #F2726E; }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #17161A; color: #E8E6E3;
+    font-family: var(--display);
+    padding: 1.5rem;
+  }
+  .head { max-width: 62rem; margin: 0 auto 1.6rem; }
+  .head h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 .3rem; }
+  .head p { color: #97949C; font-size: .9rem; line-height: 1.55; margin: 0; max-width: 44rem; }
+
+  .controls { max-width: 62rem; margin: 1.2rem auto; display: flex; gap: .4rem; flex-wrap: wrap; }
+  .controls button {
+    font: inherit; font-size: .78rem; font-weight: 600; padding: .45rem .85rem;
+    border: 1px solid #35333A; background: transparent; color: #97949C;
+    border-radius: var(--r-full); cursor: pointer;
+  }
+  .controls button.on { background: #E8E6E3; color: #17161A; border-color: #E8E6E3; }
+
+  .split { max-width: 62rem; margin: 0 auto; display: grid; gap: 1.2rem;
+           grid-template-columns: 1fr 1fr; align-items: start; }
+  @media (max-width: 780px) { .split { grid-template-columns: 1fr; } }
+  .col > h2 { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em;
+              color: #77747C; margin: 0 0 .6rem; font-weight: 700; }
+
+  /* ---------------- shared phone frame ---------------- */
+  .phone { border-radius: 18px; overflow: hidden; border: 1px solid #2C2A31; }
+
+  /* ---------------- CURRENT ---------------- */
+  .now { background: #FBF8F3; color: #2B2622; font-family: "Inter", sans-serif; padding: 1.1rem; }
+  .now h3 { font-family: "Fraunces", Georgia, serif; font-size: 1.5rem; margin: 0 0 .1rem; font-weight: 600; }
+  .now .sub { font-size: .8rem; color: #7A6E60; margin: 0 0 1rem; }
+  .now .cta { display: inline-block; background: #8A5A2B; color: #F6F2EC; font-weight: 600;
+              font-size: .87rem; padding: .8rem 1.7rem; border-radius: 999px; margin-bottom: 1rem; }
+  .now .card { background: #F4EFE7; border: 1px solid #E4DBCC; border-radius: .7rem;
+               padding: .8rem; margin-bottom: .55rem; }
+  .now .card b { font-size: .93rem; font-weight: 600; display: block; }
+  .now .card span { font-size: .8rem; color: #7A6E60; }
+  .now .stat { display: inline-block; text-align: center; margin-right: 1.4rem; }
+  .now .stat i { font-family: "Fraunces", serif; font-style: normal; font-size: 1.7rem; font-weight: 600; display: block; }
+  .now .stat em { font-style: normal; font-size: .72rem; color: #7A6E60; }
+
+  /* ---------------- PROPOSED ---------------- */
+  .new { background: var(--page); color: var(--ink); padding: 1.1rem; }
+
+  .season-strip {
+    display: flex; align-items: center; gap: .5rem;
+    font-family: var(--data); font-size: .62rem; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: .9rem;
+  }
+  .season-strip i { width: 9px; height: 9px; border-radius: 2px;
+                    background: var(--accent); display: block; flex: none; }
+
+  .new h3 {
+    font-family: var(--display); font-size: 2rem; font-weight: 800;
+    letter-spacing: -0.035em; line-height: 1.02; margin: 0 0 .35rem;
+  }
+  .new .sub { font-size: .84rem; color: var(--muted); margin: 0 0 1.1rem; line-height: 1.5; }
+
+  .new .cta {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: var(--accent); color: var(--on-accent);
+    font-weight: 700; font-size: .85rem; letter-spacing: -0.01em;
+    padding: .8rem 1.3rem; border-radius: var(--r-sm); margin-bottom: 1.2rem;
+  }
+  .new .cta::after { content: "→"; font-family: var(--data); }
+
+  /* Rows, not cards. Hairlines carry the structure. */
+  .new .row {
+    display: flex; align-items: baseline; gap: .8rem;
+    padding: .75rem 0; border-top: 1px solid var(--rule);
+  }
+  .new .row:last-of-type { border-bottom: 1px solid var(--rule); }
+  .new .row .n { font-family: var(--data); font-size: .68rem; color: var(--accent);
+                 font-weight: 700; flex: none; width: 1.6rem; }
+  .new .row b { font-size: .93rem; font-weight: 600; letter-spacing: -0.01em; display: block; }
+  .new .row span { font-size: .8rem; color: var(--muted); }
+
+  /* The hymn-board numerals: data face, tight, oversized. */
+  .board { display: flex; gap: .5rem; margin: 1.2rem 0 .4rem; }
+  .board .slot {
+    background: var(--sunk); border-radius: var(--r-sm);
+    padding: .55rem .7rem; text-align: center; flex: 1;
+  }
+  .board .slot i {
+    font-family: var(--data); font-style: normal; font-weight: 700;
+    font-size: 1.55rem; letter-spacing: -0.05em; display: block;
+    line-height: 1; color: var(--ink);
+  }
+  .board .slot.lit i { color: var(--accent); }
+  .board .slot em {
+    font-style: normal; font-family: var(--data); font-size: .55rem;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+    display: block; margin-top: .3rem;
+  }
+
+  .scripture {
+    font-family: var(--read); font-size: 1.02rem; line-height: 1.65;
+    margin: 1.1rem 0 0; padding-top: .9rem; border-top: 1px solid var(--rule);
+  }
+  .scripture sup { font-family: var(--data); font-size: .58rem; font-weight: 700;
+                   color: var(--accent); margin-right: .15rem; vertical-align: .45em; }
+
+  .notes { max-width: 62rem; margin: 1.6rem auto 0; }
+  .notes h2 { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em;
+              color: #77747C; margin: 0 0 .7rem; font-weight: 700; }
+  .notes dl { margin: 0; display: grid; gap: .7rem; }
+  .notes dt { font-weight: 700; font-size: .87rem; color: #E8E6E3; }
+  .notes dd { margin: .15rem 0 0; font-size: .85rem; line-height: 1.55; color: #97949C; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>A different direction</h1>
+  <p>Bold and modern, but built from the church's own vocabulary rather than a
+     generic app palette. The one idea worth arguing about: the accent colour
+     follows the liturgical year.</p>
+</div>
+
+<div class="controls">
+  <button data-set="theme" data-val="light" class="on">Light</button>
+  <button data-set="theme" data-val="dark">Dark</button>
+  <span style="width:1rem"></span>
+  <button data-set="season" data-val="advent" class="on">Advent · violet</button>
+  <button data-set="season" data-val="christmas">Christmas · gold</button>
+  <button data-set="season" data-val="ordinary">Ordinary · green</button>
+  <button data-set="season" data-val="pentecost">Pentecost · red</button>
+</div>
+
+<div class="split">
+  <div class="col">
+    <h2>Now</h2>
+    <div class="phone">
+      <div class="now">
+        <h3>Sunday Service</h3>
+        <p class="sub">Clearspring Church · 10:30am</p>
+        <span class="cta">Plan your visit</span>
+        <div class="card"><b>Read the Bible</b><span>Continue in John</span></div>
+        <div class="card"><b>This week's sermon</b><span>Faith that acts</span></div>
+        <div style="margin-top:1.1rem;">
+          <span class="stat"><i>12</i><em>days running</em></span>
+          <span class="stat"><i>18</i><em>this month</em></span>
+          <span class="stat"><i>21</i><em>longest</em></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <h2>Proposed</h2>
+    <div class="phone">
+      <div class="new" id="stage" data-theme="light" data-season="advent">
+        <div class="season-strip"><i></i><span id="seasonLabel">Advent · week 2</span></div>
+        <h3>Sunday<br>Service</h3>
+        <p class="sub">Clearspring Church · 10:30am</p>
+        <span class="cta">Plan your visit</span>
+
+        <div class="row"><span class="n">01</span><span><b>Read the Bible</b><span>Continue in John</span></span></div>
+        <div class="row"><span class="n">02</span><span><b>This week's sermon</b><span>Faith that acts</span></span></div>
+
+        <div class="board">
+          <div class="slot lit"><i>12</i><em>running</em></div>
+          <div class="slot"><i>18</i><em>this month</em></div>
+          <div class="slot"><i>21</i><em>longest</em></div>
+        </div>
+
+        <p class="scripture"><sup>16</sup>For God so loved the world, that he gave
+          his only Son, that whoever believes in him should not perish.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <h2>What changed, and why</h2>
+  <dl>
+    <dt>The accent follows the church year</dt>
+    <dd>Violet for Advent and Lent, gold for Christmas and Easter, green for
+      Ordinary Time, red for Pentecost. It's the colour system your building
+      already uses, it tells someone where they are in the year, and it means
+      the app looks different in March than it does in December without anyone
+      redesigning it. All four pass AA contrast in both themes.</dd>
+
+    <dt>Three typefaces, three jobs</dt>
+    <dd>Archivo set tight and heavy for headings — confident rather than
+      crafted. Newsreader for scripture only, because reading a chapter is a
+      different act from tapping a menu and deserves a face built for it.
+      JetBrains Mono for every number: verse markers, streaks, scores. Your
+      current build declares four font variables but loads two, so numerals
+      render in proportional type.</dd>
+
+    <dt>Rows and rules instead of cards</dt>
+    <dd>Stacked tinted cards with soft shadows are what makes the current
+      screen feel like every other app. Hairline rules and a numbered column
+      are flatter, denser and read as more deliberate.</dd>
+
+    <dt>Three corner radii, not eight</dt>
+    <dd>4px, 12px, and full pills. Your stylesheet currently uses eight
+      different values, which is the sort of thing nobody names but everybody
+      feels.</dd>
+
+    <dt>The risk I'd defend</dt>
+    <dd>A colour scheme that changes four times a year is harder to art-direct
+      than a fixed one, and gold in particular is a difficult accent. But a
+      church app that ignores the liturgical calendar is leaving its own best
+      material on the table.</dd>
+  </dl>
+</div>
+
+<script>
+  const stage = document.getElementById("stage");
+  const label = document.getElementById("seasonLabel");
+  const NAMES = {
+    advent: "Advent · week 2", christmas: "Christmas · Epiphany",
+    ordinary: "Ordinary Time · week 14", pentecost: "Pentecost",
+  };
+  document.querySelectorAll(".controls button").forEach((b) => {
+    b.addEventListener("click", () => {
+      const set = b.dataset.set, val = b.dataset.val;
+      document.querySelectorAll(`.controls button[data-set="${set}"]`)
+        .forEach((o) => o.classList.remove("on"));
+      b.classList.add("on");
+      stage.dataset[set] = val;
+      if (set === "season") label.textContent = NAMES[val];
+    });
+  });
+</script>
+
+</body>
+</html>

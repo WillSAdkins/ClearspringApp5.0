@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>Giving</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('new_campaign') }}" class="btn-primary">+ Add appeal</a>
+      <a href="{{ url_for('admin') }}" class="btn-ghost">← Admin</a>
+    </div>
+  </div>
+
+  <section class="admin-panel">
+    <h2 class="section-label">Giving links</h2>
+    <p class="empty-sub" style="margin-bottom:1rem;">
+      Paste the links from your {{ provider or 'giving provider' }} account. The app sends
+      people to these — it never handles card details or Gift Aid declarations itself.
+    </p>
+    <form method="post" action="{{ url_for('admin_giving_settings') }}" class="event-form" style="max-width:100%;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="give_provider">Provider name</label>
+      <input type="text" id="give_provider" name="give_provider" value="{{ provider }}" placeholder="Stewardship">
+
+      <label for="give_url">One-off giving link</label>
+      <input type="url" id="give_url" name="give_url" value="{{ give_url }}"
+             placeholder="https://www.stewardship.org.uk/partner/...">
+      <p class="field-hint">Used for the main "Give once" button and appeals without their own link.</p>
+
+      <label for="give_regular_url">Regular giving link</label>
+      <input type="url" id="give_regular_url" name="give_regular_url" value="{{ regular_url }}"
+             placeholder="https://www.stewardship.org.uk/...">
+      <p class="field-hint">Optional. For setting up a monthly gift. Leave blank to hide that button.</p>
+
+      <label for="give_portal_url">Donor account link</label>
+      <input type="url" id="give_portal_url" name="give_portal_url" value="{{ portal_url }}"
+             placeholder="https://www.stewardship.org.uk/login">
+      <p class="field-hint">Where givers view their own giving history. Leave blank to hide.</p>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" style="width:auto;">Save links</button>
+      </div>
+    </form>
+  </section>
+
+  <h2 class="section-label" style="margin-top:2.4rem;">Appeals ({{ campaigns|length }})</h2>
+  {% if not campaigns %}
+    <p class="empty-sub">No appeals yet. Add one to feature a specific need.</p>
+  {% endif %}
+
+  <div class="admin-table">
+    {% for c in campaigns %}
+      <div class="admin-row">
+        <div class="admin-row-date">
+          <span class="mono">{{ c['raised_pence'] | gbp }}</span>
+          {% if c['target_pence'] %}<span class="mono" style="color:var(--muted)">of {{ c['target_pence'] | gbp }}</span>{% endif %}
+        </div>
+        <div class="admin-row-main">
+          <strong>{{ c['title'] }}</strong>
+          <span class="admin-row-loc">
+            {% if not c['active'] %}hidden{% else %}live{% endif %}
+            {% if c['closes_on'] %} · closes {{ c['closes_on'] }}{% endif %}
+          </span>
+        </div>
+        <div class="admin-row-actions">
+          <a href="{{ url_for('edit_campaign', campaign_id=c['id']) }}" class="btn-ghost small">Edit</a>
+          <form method="post" action="{{ url_for('delete_campaign', campaign_id=c['id']) }}"
+                onsubmit="return confirm('Delete this appeal?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-danger small">Delete</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <p class="empty-sub" style="margin-top:1.6rem;">
+    Note: the raised figure is entered manually — it isn't pulled from {{ provider or 'your provider' }}
+    automatically. Update it as gifts come in.
+  </p>
+</main>
+{% endblock %}

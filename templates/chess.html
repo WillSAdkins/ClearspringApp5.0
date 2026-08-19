@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow"><a href="{{ url_for('games_hub') }}" style="color:inherit;">← Kids Games</a></p>
+    <h1 class="page-title">Chess</h1>
+    <p class="tagline">Two players, or take on the computer</p>
+  </div>
+</header>
+
+<main class="board">
+
+  <section id="cs-setup" class="cs-setup">
+    <div class="cs-mode-buttons">
+      <button id="cs-mode-2p" class="btn-primary" style="width:auto;">Two players</button>
+      <button id="cs-mode-cpu" class="btn-ghost" style="width:auto;">Vs. computer</button>
+    </div>
+
+    <div id="cs-cpu-options" class="cs-cpu-options" hidden>
+      <fieldset class="pf-group">
+        <legend class="pf-label">Play as</legend>
+        <div class="pf-chips">
+          <label class="pf-chip"><input type="radio" name="cs-color" value="w" checked><span>White</span></label>
+          <label class="pf-chip"><input type="radio" name="cs-color" value="b"><span>Black</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="pf-group" style="margin-top:0.9rem;">
+        <legend class="pf-label">Difficulty</legend>
+        <div class="pf-chips">
+          <label class="pf-chip"><input type="radio" name="cs-diff" value="1" checked><span>Easy</span></label>
+          <label class="pf-chip"><input type="radio" name="cs-diff" value="2"><span>Medium</span></label>
+          <label class="pf-chip"><input type="radio" name="cs-diff" value="3"><span>Hard</span></label>
+        </div>
+      </fieldset>
+      <button id="cs-start-cpu" class="btn-primary" style="width:auto; margin-top:1.1rem;">Start game</button>
+    </div>
+  </section>
+
+  <section id="cs-game" class="cs-game" hidden>
+    <div class="cs-status-bar">
+      <span id="cs-turn-label" class="cs-turn-label"></span>
+      <button id="cs-new-game" class="btn-ghost small">New game</button>
+    </div>
+
+    <div id="cs-board" class="cs-board"></div>
+
+    <p id="cs-2p-hint" class="cs-hint" hidden>Pass the device to the other player after each move.</p>
+
+    <div id="cs-promo" class="cs-promo" hidden>
+      <p class="cs-promo-label">Promote to:</p>
+      <div id="cs-promo-options" class="cs-promo-options"></div>
+    </div>
+
+    <div id="cs-end-box" class="mm-win" hidden>
+      <p id="cs-end-message"></p>
+      <button id="cs-play-again" class="btn-primary" style="width:auto;">New game</button>
+      <div id="cs-publish-wrap" class="lb-publish" hidden>
+        <button id="cs-publish" class="btn-ghost small">Publish score to leaderboard</button>
+        <p id="cs-publish-result" class="lb-publish-result"></p>
+      </div>
+      <a href="{{ url_for('game_leaderboard', game_key='chess') }}" class="lb-view-link">View leaderboard →</a>
+    </div>
+  </section>
+
+</main>
+
+<style>
+  .cs-setup { padding: 0.5rem 0 1.5rem; }
+  .cs-mode-buttons { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-top: 0.6rem; }
+  .cs-cpu-options { margin-top: 1.4rem; max-width: 22rem; }
+
+  .cs-status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0.4rem 0 0.8rem;
+  }
+  .cs-turn-label { font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
+  .cs-turn-label.cs-check { color: var(--accent); }
+
+  .cs-board {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    max-width: 26rem;
+    margin: 0 auto;
+    border: 3px solid var(--ink);
+    border-radius: 0.4rem;
+    overflow: hidden;
+    aspect-ratio: 1;
+  }
+  .cs-sq {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: clamp(1.5rem, 6.5vw, 2rem);
+  }
+  .cs-sq.light { background: var(--surface); }
+  .cs-sq.dark { background: var(--accent); }
+  .cs-sq.selected { box-shadow: inset 0 0 0 3px var(--white); }
+  .cs-sq.in-check { box-shadow: inset 0 0 0 3px #C0392B; }
+  .cs-sq .cs-dot {
+    position: absolute;
+    width: 26%;
+    height: 26%;
+    border-radius: 50%;
+    background: rgba(43, 38, 34, 0.35);
+    pointer-events: none;
+  }
+  .cs-sq.light .cs-dot { background: rgba(43, 38, 34, 0.28); }
+  .cs-sq .cs-capture-ring {
+    position: absolute;
+    inset: 6%;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 4px rgba(43, 38, 34, 0.35);
+    pointer-events: none;
+  }
+  .cs-piece { position: relative; z-index: 1; line-height: 1; user-select: none; }
+  .cs-piece.w { color: var(--white); -webkit-text-stroke: 1.5px var(--ink); }
+  .cs-piece.b { color: var(--ink); }
+
+  .cs-hint { text-align: center; font-size: 0.82rem; color: var(--muted); margin-top: 0.8rem; }
+
+  .cs-promo {
+    margin-top: 1rem;
+    text-align: center;
+  }
+  .cs-promo-label { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+  .cs-promo-options { display: flex; gap: 0.6rem; justify-content: center; }
+  .cs-promo-options button {
+    font-size: 1.8rem;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--ink);
+    background: var(--white);
+    cursor: pointer;
+  }
+
+  .lb-publish { margin-top: 0.8rem; }
+  .lb-publish-result { font-size: 0.82rem; color: var(--muted); margin-top: 0.3rem; }
+  .lb-view-link { display: inline-block; margin-top: 0.6rem; font-size: 0.85rem; color: var(--accent); }
+  .mm-win {
+    margin-top: 1.6rem;
+    padding: 1.2rem;
+    border: 1px solid var(--line);
+    border-radius: 0.8rem;
+    background: var(--surface);
+    text-align: center;
+    animation: mm-win-in 0.4s ease;
+  }
+  .mm-win p { font-family: var(--display); font-weight: 700; font-size: 1.1rem; }
+  @keyframes mm-win-in {
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<script src="{{ url_for('static', filename='games/chess-engine.js') }}"></script>
+<script src="{{ url_for('static', filename='games/chess-ai.js') }}"></script>
+<script>
+(function () {
+  const setupEl = document.getElementById("cs-setup");
+  const gameEl = document.getElementById("cs-game");
+  const mode2pBtn = document.getElementById("cs-mode-2p");
+  const modeCpuBtn = document.getElementById("cs-mode-cpu");
+  const cpuOptionsEl = document.getElementById("cs-cpu-options");
+  const startCpuBtn = document.getElementById("cs-start-cpu");
+  const boardEl = document.getElementById("cs-board");
+  const turnLabelEl = document.getElementById("cs-turn-label");
+  const newGameBtn = document.getElementById("cs-new-game");
+  const hintEl = document.getElementById("cs-2p-hint");
+  const promoEl = document.getElementById("cs-promo");
+  const promoOptionsEl = document.getElementById("cs-promo-options");
+  const endBox = document.getElementById("cs-end-box");
+  const endMessage = document.getElementById("cs-end-message");
+  const publishWrap = document.getElementById("cs-publish-wrap");
+
+  const PIECE_GLYPHS = {
+    wK: "\u2654", wQ: "\u2655", wR: "\u2656", wB: "\u2657", wN: "\u2658", wP: "\u2659",
+    bK: "\u265A", bQ: "\u265B", bR: "\u265C", bB: "\u265D", bN: "\u265E", bP: "\u265F",
+  };
+  const DIFFICULTY_DEPTH = { 1: 1, 2: 2, 3: 3 };
+  const DIFFICULTY_LABEL = { 1: "Easy", 2: "Medium", 3: "Hard" };
+
+  let mode = "2p";       // "2p" | "cpu"
+  let humanColor = "w";
+  let difficulty = 1;
+  let flipped = false;
+  let state = null;
+  let selected = null;
+  let legalForSelected = [];
+  let gameOver = false;
+  let pendingPromoMoves = null; // the 4 promotion-variant moves for the current from/to, awaiting a choice
+  let thinking = false;
+
+  function startGame(newMode) {
+    mode = newMode;
+    if (mode === "cpu") {
+      humanColor = document.querySelector('input[name="cs-color"]:checked').value;
+      difficulty = Number(document.querySelector('input[name="cs-diff"]:checked').value);
+    } else {
+      humanColor = "w";
+    }
+    flipped = mode === "cpu" && humanColor === "b";
+    state = ChessEngine.createInitialState();
+    selected = null;
+    legalForSelected = [];
+    gameOver = false;
+    pendingPromoMoves = null;
+    thinking = false;
+
+    setupEl.hidden = true;
+    gameEl.hidden = false;
+    hintEl.hidden = mode !== "2p";
+    endBox.hidden = true;
+    promoEl.hidden = true;
+
+    render();
+    maybeTriggerAI();
+  }
+
+  mode2pBtn.addEventListener("click", () => startGame("2p"));
+  modeCpuBtn.addEventListener("click", () => { cpuOptionsEl.hidden = false; });
+  startCpuBtn.addEventListener("click", () => startGame("cpu"));
+  newGameBtn.addEventListener("click", backToSetup);
+  document.getElementById("cs-play-again").addEventListener("click", backToSetup);
+
+  function backToSetup() {
+    gameEl.hidden = true;
+    setupEl.hidden = false;
+    cpuOptionsEl.hidden = true;
+  }
+
+  function squareLabel(r, c) {
+    return "abcdefgh"[c] + (8 - r);
+  }
+
+  function render() {
+    boardEl.innerHTML = "";
+    const kingPos = ChessEngine.findKing(state.board, state.turn);
+    const inCheck = kingPos && ChessEngine.isSquareAttacked(state.board, kingPos.r, kingPos.c, state.turn === "w" ? "b" : "w");
+
+    for (let displayRow = 0; displayRow < 8; displayRow++) {
+      for (let displayCol = 0; displayCol < 8; displayCol++) {
+        const r = flipped ? 7 - displayRow : displayRow;
+        const c = flipped ? 7 - displayCol : displayCol;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "cs-sq " + ((r + c) % 2 === 0 ? "light" : "dark");
+        btn.setAttribute("aria-label", squareLabel(r, c));
+
+        const piece = state.board[ChessEngine.sq(r, c)];
+        if (piece) {
+          const span = document.createElement("span");
+          span.className = "cs-piece " + piece[0];
+          span.textContent = PIECE_GLYPHS[piece];
+          btn.appendChild(span);
+        }
+
+        if (selected && selected.r === r && selected.c === c) {
+          btn.classList.add("selected");
+        }
+        if (inCheck && kingPos.r === r && kingPos.c === c) {
+          btn.classList.add("in-check");
+        }
+        const destMove = legalForSelected.find((m) => m.to.r === r && m.to.c === c);
+        if (destMove) {
+          const marker = document.createElement("span");
+          marker.className = destMove.captured || destMove.isEnPassant ? "cs-capture-ring" : "cs-dot";
+          btn.appendChild(marker);
+        }
+
+        btn.addEventListener("click", () => onSquareClick(r, c));
+        boardEl.appendChild(btn);
+      }
+    }
+
+    const statusInfo = ChessEngine.getGameStatus(state);
+    const colorName = state.turn === "w" ? "White" : "Black";
+    turnLabelEl.classList.toggle("cs-check", statusInfo.status === "check");
+    if (thinking) {
+      turnLabelEl.textContent = "Computer is thinking\u2026";
+    } else if (statusInfo.status === "check") {
+      turnLabelEl.textContent = `${colorName} to move \u2014 in check`;
+    } else {
+      turnLabelEl.textContent = `${colorName} to move`;
+    }
+  }
+
+  function isHumanTurn() {
+    return mode === "2p" || state.turn === humanColor;
+  }
+
+  function onSquareClick(r, c) {
+    if (gameOver || thinking || !isHumanTurn() || pendingPromoMoves) return;
+
+    const piece = state.board[ChessEngine.sq(r, c)];
+
+    if (selected && selected.r === r && selected.c === c) {
+      selected = null;
+      legalForSelected = [];
+      render();
+      return;
+    }
+
+    if (piece && piece[0] === state.turn) {
+      selected = { r, c };
+      legalForSelected = ChessEngine.generateLegalMoves(state).filter(
+        (m) => m.from.r === r && m.from.c === c
+      );
+      render();
+      return;
+    }
+
+    if (selected) {
+      const matches = legalForSelected.filter((m) => m.to.r === r && m.to.c === c);
+      if (matches.length === 0) {
+        selected = null;
+        legalForSelected = [];
+        render();
+        return;
+      }
+      if (matches.length > 1) {
+        // Multiple entries = the four promotion-piece variants for this move.
+        pendingPromoMoves = matches;
+        showPromoPicker();
+        return;
+      }
+      makeMove(matches[0]);
+    }
+  }
+
+  function showPromoPicker() {
+    promoOptionsEl.innerHTML = "";
+    const color = state.turn;
+    ["Q", "R", "B", "N"].forEach((p) => {
+      const btn = document.createElement("button");
+      btn.textContent = PIECE_GLYPHS[color + p];
+      btn.className = "cs-piece " + color;
+      btn.addEventListener("click", () => {
+        const chosen = pendingPromoMoves.find((m) => m.promotion === p);
+        promoEl.hidden = true;
+        pendingPromoMoves = null;
+        makeMove(chosen);
+      });
+      promoOptionsEl.appendChild(btn);
+    });
+    promoEl.hidden = false;
+  }
+
+  function makeMove(move) {
+    state = ChessEngine.applyMove(state, move);
+    selected = null;
+    legalForSelected = [];
+    render();
+    checkForGameEnd();
+    if (!gameOver) maybeTriggerAI();
+  }
+
+  function maybeTriggerAI() {
+    if (mode !== "cpu" || gameOver || state.turn === humanColor) return;
+    thinking = true;
+    render();
+    setTimeout(() => {
+      const { move } = ChessAI.pickBestMove(state, DIFFICULTY_DEPTH[difficulty]);
+      thinking = false;
+      if (!move) { checkForGameEnd(); return; }
+      state = ChessEngine.applyMove(state, move);
+      render();
+      checkForGameEnd();
+    }, 350);
+  }
+
+  function checkForGameEnd() {
+    const info = ChessEngine.getGameStatus(state);
+    if (info.status !== "checkmate" && info.status !== "stalemate" && info.status !== "draw") return;
+    gameOver = true;
+
+    let message;
+    let humanWonVsComputer = false;
+    if (info.status === "checkmate") {
+      const winnerName = info.winner === "w" ? "White" : "Black";
+      message = `Checkmate \u2014 ${winnerName} wins!`;
+      humanWonVsComputer = mode === "cpu" && info.winner === humanColor;
+    } else if (info.status === "stalemate") {
+      message = "Stalemate \u2014 it's a draw.";
+    } else {
+      message = `Draw \u2014 ${info.reason}.`;
+    }
+    endMessage.textContent = message;
+    endBox.hidden = false;
+
+    publishWrap.hidden = !humanWonVsComputer;
+    if (humanWonVsComputer) {
+      const publishBtn = document.getElementById("cs-publish");
+      const resultEl = document.getElementById("cs-publish-result");
+      publishBtn.disabled = false;
+      publishBtn.textContent = "Publish score to leaderboard";
+      resultEl.textContent = "";
+      publishBtn.onclick = () => {
+        ChurchLeaderboard.publish("chess", difficulty, resultEl, publishBtn);
+      };
+    }
+  }
+})();
+</script>
+
+{% endblock %}

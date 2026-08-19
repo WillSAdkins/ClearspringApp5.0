@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+<main class="bible">
+  <header class="bible-head">
+    <a href="{{ url_for('more_hub') }}" class="bible-back" aria-label="Back">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Store</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+  <div class="saved-empty">
+    <span class="saved-empty-icon">{{ icon('bookmark', 26) }}</span>
+    <p class="saved-empty-title">The store isn't open yet</p>
+    <p class="saved-empty-sub">Do check back — we'll let you know when it is.</p>
+  </div>
+</main>
+{% endblock %}

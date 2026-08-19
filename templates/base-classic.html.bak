@@ -1,0 +1,176 @@
+{% from "icons.html" import icon %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Applied before anything renders, so switching theme never flashes.
+(function () {
+  try {
+    var t = localStorage.getItem("cs_theme") || "auto";
+    document.documentElement.setAttribute("data-theme", t);
+    var sz = localStorage.getItem("cs_text_size") || "normal";
+    document.documentElement.setAttribute("data-text-size", sz);
+  } catch (e) {
+    document.documentElement.setAttribute("data-theme", "auto");
+  }
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="member-signed-in" content="{{ 'true' if member else 'false' }}">
+<meta name="theme-color" content="#FBF8F3">
+<title>{% block title %}Clearspring — Service Times{% endblock %}</title>
+
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+<link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script>
+// Attach the CSRF token to every same-origin state-changing fetch, so
+// individual scripts don't each have to remember to do it.
+(function () {
+  const TOKEN = "{{ csrf_token() }}";
+  const original = window.fetch;
+  window.fetch = function (input, init) {
+    init = init || {};
+    const method = (init.method || "GET").toUpperCase();
+    const url = typeof input === "string" ? input : (input && input.url) || "";
+    const sameOrigin = url.startsWith("/") || url.startsWith(window.location.origin);
+
+    if (sameOrigin && ["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+      const headers = new Headers(init.headers || {});
+      if (!headers.has("X-CSRF-Token")) headers.set("X-CSRF-Token", TOKEN);
+      init.headers = headers;
+      if (!init.credentials) init.credentials = "same-origin";
+    }
+    return original.call(this, input, init);
+  };
+})();
+</script>
+<script src="{{ url_for('static', filename='sync.js') }}"></script>
+</head>
+{% set nav_endpoints = ['index', 'watch_hub', 'sermon_detail', 'community_hub', 'calendar_page', 'questions', 'ask_question', 'prayer_wall', 'prayer_new', 'prayer_journal', 'bible_hub', 'bible_books', 'bible_chapters', 'bible_read_chapter', 'saved_verses', 'reading_plans', 'reading_plan_detail', 'devotionals', 'devotional_detail', 'more_hub', 'plan_visit', 'giving', 'campaign_detail', 'store', 'product_detail', 'gift_aid_info', 'ministries', 'ministry_detail', 'resources', 'resource_detail', 'notification_settings', 'settings', 'account', 'signin', 'signup', 'magic_link_request', 'magic_link_sent', 'games_hub', 'memory_game', 'trivia_challenge', 'trivia_football', 'manna_maze', 'giant_slayer', 'chess_game', 'verse_builder', 'books_sprint', 'lost_sheep', 'game_leaderboard'] %}
+<body class="{{ 'has-tabbar' if request.endpoint in nav_endpoints }}">
+
+<div id="app-splash" class="app-splash">
+  <video class="app-splash-video" autoplay muted playsinline>
+    <source src="{{ url_for('static', filename='loading-screen.mp4') }}" type="video/mp4">
+  </video>
+</div>
+<script>
+(function () {
+  var splash = document.getElementById("app-splash");
+  if (sessionStorage.getItem("cs_splash_shown")) {
+    splash.remove();
+    return;
+  }
+  sessionStorage.setItem("cs_splash_shown", "1");
+
+  var MAX_MS = 6000; // safety net if the video can't play or load never fires
+  var hidden = false;
+  var pageLoaded = false;
+  var videoPlayedThrough = false;
+
+  function hide() {
+    if (hidden) return;
+    hidden = true;
+    splash.classList.add("app-splash-hide");
+    setTimeout(function () { splash.remove(); }, 400);
+  }
+
+  function maybeHide() {
+    if (pageLoaded && videoPlayedThrough) hide();
+  }
+
+  var video = splash.querySelector("video");
+  // One playthrough is the minimum time the splash stays up. If the page is
+  // still loading when the clip finishes, replay it rather than freezing on
+  // the last frame while we wait.
+  video.addEventListener("ended", function () {
+    videoPlayedThrough = true;
+    maybeHide();
+    if (!pageLoaded) {
+      video.currentTime = 0;
+      video.play().catch(function () {});
+    }
+  });
+  video.addEventListener("error", function () { videoPlayedThrough = true; maybeHide(); });
+  window.addEventListener("load", function () { pageLoaded = true; maybeHide(); });
+  setTimeout(hide, MAX_MS);
+})();
+</script>
+
+{% if request.endpoint in nav_endpoints %}
+<nav class="site-nav">
+  <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}">Home</a>
+  <a href="{{ url_for('watch_hub') }}" class="{{ 'active' if request.endpoint in ['watch_hub','sermon_detail'] }}">Watch</a>
+  <a href="{{ url_for('community_hub') }}" class="{{ 'active' if request.endpoint in ['community_hub','calendar_page','questions','ask_question','prayer_wall','prayer_new','prayer_journal'] }}">Community</a>
+  <a href="{{ url_for('bible_hub') }}" class="{{ 'active' if request.endpoint in ['bible_hub','bible_books','bible_chapters','bible_read_chapter','saved_verses','reading_plans','reading_plan_detail','devotionals','devotional_detail'] }}">Bible</a>
+  <a href="{{ url_for('more_hub') }}" class="{{ 'active' if request.endpoint in ['more_hub', 'plan_visit', 'giving', 'campaign_detail', 'store', 'product_detail', 'gift_aid_info', 'ministries', 'ministry_detail', 'resources', 'resource_detail', 'notification_settings', 'settings', 'account', 'signin', 'signup', 'magic_link_request', 'magic_link_sent','games_hub','memory_game','trivia_challenge','trivia_football','manna_maze', 'giant_slayer', 'chess_game', 'game_leaderboard'] }}">More</a>
+</nav>
+{% endif %}
+
+{#  Back navigation.
+
+    The five tab roots don't get one — there's nowhere above them, and the tab
+    bar already handles moving between them. Everything else does.
+
+    Pages that already draw their own back link inside their header set
+    show_back to false, so this doesn't appear twice. New pages get one by
+    default, which is the safer way round: forgetting the flag gives an extra
+    button rather than a dead end.  #}
+{% set root_endpoints = ['index', 'watch_hub', 'community_hub', 'bible_hub', 'more_hub'] %}
+{% if request.endpoint not in root_endpoints and show_back is not defined %}
+<button type="button" class="global-back" id="globalBack" aria-label="Go back">
+  {{ icon('chevron-left', 20) }}<span>Back</span>
+</button>
+{% endif %}
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="flash">
+      {% for m in messages %}<p>{{ m }}</p>{% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register("/service-worker.js", { scope: "/" });
+  });
+}
+</script>
+<script src="{{ url_for('static', filename='leaderboard.js') }}"></script>
+<script src="{{ url_for('static', filename='navigation.js') }}"></script>
+<script src="{{ url_for('static', filename='motion.js') }}"></script>
+<script src="{{ url_for('static', filename='native-bridge.js') }}"></script>
+<script src="{{ url_for('static', filename='keep-place.js') }}"></script>
+<script>
+// Global back button. history.back() is right when there's somewhere to go
+// back to; arriving cold — a shared link, a notification tap, or a reload
+// after the OS discarded the app — needs a real destination instead.
+(function () {
+  var btn = document.getElementById("globalBack");
+  if (!btn) return;
+  btn.addEventListener("click", function () {
+    var sameSiteReferrer = document.referrer &&
+      document.referrer.indexOf(window.location.origin) === 0;
+    if (window.history.length > 1 && sameSiteReferrer) {
+      window.history.back();
+    } else {
+      window.location.assign(btn.dataset.fallback || "/");
+    }
+  });
+})();
+</script>
+</body>
+</html>

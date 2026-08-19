@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('watch_hub') }}" class="bible-back" aria-label="All sermons">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Message</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  {% if video_embed %}
+    <div class="video-frame">
+      <iframe src="{{ video_embed }}" title="{{ s['title'] }}" frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+    {% if s['video_url'] %}
+      <p class="video-fallback">
+        Trouble playing? <a href="{{ s['video_url'] }}" target="_blank" rel="noopener">Watch on YouTube</a>
+      </p>
+    {% endif %}
+  {% elif s['video_url'] %}
+    <a href="{{ s['video_url'] }}" target="_blank" rel="noopener" class="sermon-external">
+      {{ icon('play', 20) }}<span>Watch this message</span>{{ icon('chevron-right', 16) }}
+    </a>
+  {% endif %}
+
+  <h2 class="sermon-title">{{ s['title'] }}</h2>
+  <p class="sermon-meta">
+    {% if s['speaker'] %}{{ s['speaker'] }} · {% endif %}
+    {{ s['preached_on'] | pretty_date }}
+    {% if duration %} · {{ duration }}{% endif %}
+  </p>
+
+  <div class="sermon-chips">
+    {% if s['series'] %}<a href="{{ url_for('watch_hub', series=s['series']) }}" class="sermon-chip">{{ s['series'] }}</a>{% endif %}
+    {% if s['topic'] %}<a href="{{ url_for('watch_hub', q=s['topic']) }}" class="sermon-chip">{{ s['topic'] }}</a>{% endif %}
+    {% if s['passage'] %}
+      {% if passage_link %}
+        <a href="{{ url_for('bible_read_chapter', book_slug=passage_link[0], chapter=passage_link[1]) }}" class="sermon-chip passage">
+          {{ icon('book', 14) }} {{ s['passage'] }}
+        </a>
+      {% else %}
+        <span class="sermon-chip passage">{{ s['passage'] }}</span>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  {% if s['summary'] %}
+    <p class="sermon-summary">{{ s['summary'] }}</p>
+  {% endif %}
+
+  {% if s['audio_url'] %}
+    <section class="audio-block">
+      <h3 class="sermon-h3">Listen</h3>
+      <audio controls preload="none" src="{{ s['audio_url'] }}" class="audio-player"></audio>
+      <div class="audio-actions">
+        <button type="button" id="dlBtn" class="audio-action" data-url="{{ s['audio_url'] }}" data-id="{{ s['id'] }}">
+          {{ icon('check', 16) }}<span id="dlLabel">Save for offline</span>
+        </button>
+        <a href="{{ url_for('podcast_feed') }}" class="audio-action subtle">
+          {{ icon('play', 16) }}<span>Podcast feed</span>
+        </a>
+      </div>
+      <p class="audio-note" id="dlNote" hidden></p>
+    </section>
+  {% endif %}
+
+  <!-- Notes -->
+  <section class="notes-block">
+    <div class="bible-block-head">
+      <h3 class="sermon-h3">My notes</h3>
+      <span class="notes-saved" id="notesStatus"></span>
+    </div>
+    <p class="notes-privacy">Kept on this device only — nothing is sent to the church.</p>
+    <textarea id="sermonNotes" rows="7" placeholder="Write your notes on this message…"
+              data-sermon="{{ s['id'] }}"></textarea>
+    <div class="notes-actions">
+      <button type="button" id="notesCopy" class="journal-action">Copy notes</button>
+      <button type="button" id="notesClear" class="journal-action">Clear</button>
+    </div>
+  </section>
+
+</main>
+
+<script src="{{ url_for('static', filename='sync.js') }}"></script>
+<script>
+(function () {
+  /* ---- Notes: autosave to this device ---- */
+  const ta = document.getElementById("sermonNotes");
+  if (ta) {
+    const KEY = "cs_notes_" + ta.dataset.sermon;
+    const status = document.getElementById("notesStatus");
+    ta.value = localStorage.getItem(KEY) || "";
+
+    let t;
+    ta.addEventListener("input", () => {
+      clearTimeout(t);
+      status.textContent = "Saving…";
+      t = setTimeout(() => {
+        try { localStorage.setItem(KEY, ta.value); } catch (e) {}
+        status.textContent = ta.value ? "Saved" : "";
+        // Also keep them on the account, so notes follow the person
+        if (window.Sync) {
+          window.Sync.pushSingle("note", "sermon-" + ta.dataset.sermon, ta.value);
+        }
+      }, 600);
+    });
+
+    // If they have notes on their account for this sermon, use those when
+    // this device has none — the usual case on a second device.
+    if (window.Sync) {
+      window.Sync.pullSingle("note", "sermon-" + ta.dataset.sermon).then((remote) => {
+        if (remote && !ta.value) {
+          ta.value = remote;
+          try { localStorage.setItem(KEY, remote); } catch (e) {}
+          status.textContent = "Saved";
+        }
+      });
+    }
+
+    document.getElementById("notesCopy").addEventListener("click", () => {
+      if (navigator.clipboard && ta.value) {
+        navigator.clipboard.writeText(ta.value);
+        status.textContent = "Copied";
+        setTimeout(() => { status.textContent = ta.value ? "Saved" : ""; }, 1500);
+      }
+    });
+
+    document.getElementById("notesClear").addEventListener("click", () => {
+      if (!ta.value || confirm("Clear your notes for this message?")) {
+        ta.value = "";
+        localStorage.removeItem(KEY);
+        status.textContent = "";
+        if (window.Sync) {
+          window.Sync.push("note", "sermon-" + ta.dataset.sermon, null, true);
+        }
+      }
+    });
+  }
+
+  /* ---- Offline download via Cache Storage ---- */
+  const btn = document.getElementById("dlBtn");
+  if (!btn || !("caches" in window)) {
+    if (btn) {
+      btn.disabled = true;
+      document.getElementById("dlLabel").textContent = "Offline saving unavailable";
+    }
+    return;
+  }
+
+  const CACHE = "cs-sermon-audio";
+  const url = btn.dataset.url;
+  const label = document.getElementById("dlLabel");
+  const note = document.getElementById("dlNote");
+
+  async function isCached() {
+    try {
+      const c = await caches.open(CACHE);
+      return !!(await c.match(url));
+    } catch (e) { return false; }
+  }
+
+  function setState(saved) {
+    label.textContent = saved ? "Saved offline" : "Save for offline";
+    btn.classList.toggle("done", saved);
+    note.hidden = !saved;
+    if (saved) {
+      note.textContent = "Your phone may clear this if the app isn't opened for a while. " +
+                         "For permanent offline listening, subscribe via the podcast feed.";
+    }
+  }
+
+  isCached().then(setState);
+
+  btn.addEventListener("click", async () => {
+    const saved = await isCached();
+    const c = await caches.open(CACHE);
+    if (saved) {
+      await c.delete(url);
+      setState(false);
+      return;
+    }
+    label.textContent = "Saving…";
+    btn.disabled = true;
+    try {
+      await c.add(url);
+      setState(true);
+    } catch (e) {
+      label.textContent = "Couldn't save";
+      note.hidden = false;
+      note.textContent = "This file couldn't be saved offline — it may be hosted somewhere " +
+                         "that doesn't allow it. The podcast feed is a reliable alternative.";
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+
+{% endblock %}

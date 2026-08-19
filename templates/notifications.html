@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('more_hub') }}" class="bible-back" aria-label="Back to More">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Notifications</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  {% if not push_configured %}
+    <div class="placeholder-card">
+      <p><strong>Notifications aren't switched on yet.</strong></p>
+      <p>Once the church has set these up, you'll be able to choose what you hear about here.</p>
+    </div>
+  {% else %}
+
+    <p class="bible-lede">
+      Choose what you'd like to hear about. Everything is off unless you turn it on,
+      and you can change your mind at any time.
+    </p>
+
+    <div id="pushUnsupported" class="notif-warning" hidden>
+      {{ icon('check', 16) }}
+      <span>
+        <strong>This browser can't receive notifications.</strong>
+        On iPhone, add Clearspring to your Home Screen first — tap Share, then
+        "Add to Home Screen" — then open it from there.
+      </span>
+    </div>
+
+    <div id="pushBlocked" class="notif-warning" hidden>
+      {{ icon('check', 16) }}
+      <span>
+        <strong>Notifications are blocked.</strong>
+        You'll need to allow them in your browser settings for this site, then come back.
+      </span>
+    </div>
+
+    <div id="pushControls" hidden>
+      <button type="button" id="pushToggle" class="pf-submit">Turn on notifications</button>
+      <p id="pushStatus" class="notif-status"></p>
+
+      <p id="prefsHint" class="notif-status">Turn notifications on to choose what you hear about.</p>
+
+      <div id="prefsList" class="notif-list" hidden>
+        {% for t in types %}
+          <label class="notif-row">
+            <span class="notif-body">
+              <span class="notif-title">{{ t.name }}</span>
+              <span class="notif-sub">{{ t.blurb }}</span>
+            </span>
+            <input type="checkbox" class="notif-check" data-key="{{ t.key }}">
+          </label>
+        {% endfor %}
+      </div>
+
+      <div id="testBlock" hidden>
+        <button type="button" id="testLocal" class="audio-action" style="width:100%; justify-content:center; margin-top:1.2rem;">
+          Show a test notification now
+        </button>
+        <p class="notif-sub" style="margin-top:0.5rem; line-height:1.5;">
+          This one is created by your own browser rather than sent from the church.
+          If this appears but real notifications don't, the problem is delivery.
+          If even this doesn't appear, Windows or your browser is blocking them.
+        </p>
+      </div>
+    </div>
+
+    <p class="notif-privacy">
+      We store only what's needed to send a notification to your device — never your
+      name, and nothing about what you read in the app. Turning notifications off
+      removes it entirely.
+    </p>
+
+  {% endif %}
+
+</main>
+
+{% if push_configured %}
+<script>
+(function () {
+  const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+  const PREF_KEY = "cs_notif_prefs";
+
+  const controls = document.getElementById("pushControls");
+  const unsupported = document.getElementById("pushUnsupported");
+  const blocked = document.getElementById("pushBlocked");
+  const toggle = document.getElementById("pushToggle");
+  const status = document.getElementById("pushStatus");
+  const prefsList = document.getElementById("prefsList");
+  const checks = [...document.querySelectorAll(".notif-check")];
+
+  const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  if (!supported) { unsupported.hidden = false; return; }
+  if (Notification.permission === "denied") { blocked.hidden = false; return; }
+  controls.hidden = false;
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const raw = atob(base64);
+    return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+  }
+
+  function loadPrefs() {
+    try { return JSON.parse(localStorage.getItem(PREF_KEY) || "{}"); }
+    catch (e) { return {}; }
+  }
+  function savePrefs(p) { localStorage.setItem(PREF_KEY, JSON.stringify(p)); }
+
+  function applyPrefsToUI() {
+    const prefs = loadPrefs();
+    checks.forEach((c) => { c.checked = !!prefs[c.dataset.key]; });
+  }
+
+  // Never await serviceWorker.ready without a fallback — if no worker controls
+  // this page, that promise never resolves and the button hangs silently.
+  async function getRegistration() {
+    const existing = await navigator.serviceWorker.getRegistration("/");
+    if (existing && existing.active) return existing;
+
+    // Register it ourselves rather than assuming it already happened.
+    const reg = await navigator.serviceWorker.register("/service-worker.js", { scope: "/" });
+
+    // Wait for it to become active, but give up rather than hang.
+    const ready = navigator.serviceWorker.ready;
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Service worker did not start in time")), 8000)
+    );
+    return Promise.race([ready, timeout]);
+  }
+
+  async function currentSubscription() {
+    const reg = await navigator.serviceWorker.getRegistration("/");
+    if (!reg) return null;
+    return reg.pushManager.getSubscription();
+  }
+
+  async function syncToServer(subscription) {
+    await fetch("/api/push/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subscription, prefs: loadPrefs() }),
+    });
+  }
+
+  async function refreshUI() {
+    const sub = await currentSubscription();
+    const testBlock = document.getElementById("testBlock");
+    if (sub) {
+      toggle.textContent = "Turn off notifications";
+      status.textContent = "Notifications are on for this device.";
+      prefsList.hidden = false;
+      document.getElementById("prefsHint").hidden = true;
+      if (testBlock) testBlock.hidden = false;
+      applyPrefsToUI();
+    } else {
+      toggle.textContent = "Turn on notifications";
+      status.textContent = "";
+      prefsList.hidden = true;
+      document.getElementById("prefsHint").hidden = false;
+      if (testBlock) testBlock.hidden = true;
+    }
+  }
+
+  // Local test: creates a notification directly via the service worker, with no
+  // server or push service involved. Separates delivery problems from display ones.
+  const testBtn = document.getElementById("testLocal");
+  if (testBtn) {
+    testBtn.addEventListener("click", async () => {
+      try {
+        const reg = await getRegistration();
+        await reg.showNotification("Test notification", {
+          body: "If you can see this, notifications work on this device.",
+          icon: "/static/icons/icon-192.png",
+          badge: "/static/icons/icon-192.png",
+          tag: "local-test-" + Date.now(),
+          renotify: true,
+          vibrate: [100, 50, 100],
+        });
+        status.textContent = "Test sent — check your notification area.";
+      } catch (e) {
+        status.textContent = "Test failed: " + (e.message || e);
+      }
+    });
+  }
+
+  toggle.addEventListener("click", async () => {
+    toggle.disabled = true;
+    try {
+      const existing = await currentSubscription();
+
+      if (existing) {
+        await fetch("/api/push/unsubscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: existing.endpoint }),
+        });
+        await existing.unsubscribe();
+        await refreshUI();
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        if (permission === "denied") { blocked.hidden = false; controls.hidden = true; }
+        return;
+      }
+
+      status.textContent = "Setting up…";
+      const reg = await getRegistration();
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+
+      // Default a sensible starting set, still explicitly opt-in from here.
+      const prefs = loadPrefs();
+      if (Object.keys(prefs).length === 0) savePrefs({ service: true, emergency: true });
+
+      await syncToServer(sub);
+      await refreshUI();
+    } catch (e) {
+      console.error("Push setup failed:", e);
+      status.textContent = "Couldn't turn notifications on: " + (e.message || e);
+    } finally {
+      toggle.disabled = false;
+    }
+  });
+
+  checks.forEach((c) => {
+    c.addEventListener("change", async () => {
+      const prefs = loadPrefs();
+      prefs[c.dataset.key] = c.checked;
+      savePrefs(prefs);
+      const sub = await currentSubscription();
+      if (sub) {
+        await syncToServer(sub);
+        status.textContent = "Saved.";
+        setTimeout(() => { status.textContent = "Notifications are on for this device."; }, 1200);
+      }
+    });
+  });
+
+  refreshUI();
+})();
+</script>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow">Ask us anything</p>
+    <h1 class="page-title">Questions &amp; Answers</h1>
+    <p class="tagline">Answered by our pastors and staff</p>
+  </div>
+</header>
+
+<main class="board">
+  <div class="toolbar">
+    <a href="{{ url_for('ask_question') }}" class="subscribe-btn">+ Ask a question</a>
+  </div>
+
+  {% if not questions %}
+    <div class="empty">
+      <p>No questions answered yet.</p>
+      <p class="empty-sub">Be the first to ask something.</p>
+    </div>
+  {% endif %}
+
+  {% for q in questions %}
+    <article class="qa-card">
+      <p class="qa-question">{{ q['question_text'] }}</p>
+      <p class="qa-meta">
+        Asked{% if q['asker_name'] %} by {{ q['asker_name'] }}{% endif %}
+        · answered {{ q['answered_at'] | pretty_datetime }}
+      </p>
+      <div class="qa-answer">{{ q['answer_text'] }}</div>
+    </article>
+  {% endfor %}
+</main>
+
+{% endblock %}

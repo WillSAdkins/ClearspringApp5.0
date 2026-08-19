@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>Store</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('new_product') }}" class="btn-primary">+ Add item</a>
+      <a href="{{ url_for('admin') }}" class="btn-ghost">← Admin</a>
+    </div>
+  </div>
+
+  <div class="admin-alert">
+    <strong>Before you open the store, please check with the trustees.</strong>
+    Selling goods is <em>trading income</em>, which HMRC treats differently from
+    donations. Most churches sit within the small trading exemption, but there
+    are thresholds. Selling to the public online also brings obligations around
+    delivery times, cancellation rights and returns. This isn't legal advice —
+    it's worth a conversation with your treasurer before the store goes live.
+  </div>
+
+  <section class="admin-panel">
+    <h2 class="section-label">Store settings</h2>
+    <p class="empty-sub" style="margin-bottom:1rem;">
+      The app shows your items and sends people to your provider to pay.
+      Card details never touch this app.
+    </p>
+    <form method="post" action="{{ url_for('admin_store_settings') }}" class="event-form" style="max-width:100%;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="admin-check">
+        <input type="checkbox" name="store_enabled" {{ 'checked' if enabled }}>
+        <span>Store is open (visible in the app)</span>
+      </label>
+
+      <label for="store_provider">Provider name</label>
+      <input type="text" id="store_provider" name="store_provider" value="{{ provider }}"
+             placeholder="Square, Shopify, SumUp...">
+      <p class="field-hint">Shown to buyers so they know who handles payment.</p>
+
+      <label for="store_buy_url">Default shop link</label>
+      <input type="url" id="store_buy_url" name="store_buy_url" value="{{ default_buy_url }}"
+             placeholder="https://your-shop-address">
+      <p class="field-hint">Used for any item without its own link.</p>
+
+      <label for="store_delivery_note">Delivery note</label>
+      <input type="text" id="store_delivery_note" name="store_delivery_note" value="{{ delivery_note }}"
+             placeholder="Orders are posted within 3 working days.">
+
+      <label for="store_returns_url">Returns &amp; delivery policy link</label>
+      <input type="url" id="store_returns_url" name="store_returns_url" value="{{ returns_url }}"
+             placeholder="https://clearspringchurch.com/returns">
+      <p class="field-hint">
+        Selling online to consumers normally requires a clear returns policy.
+      </p>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" style="width:auto;">Save settings</button>
+      </div>
+    </form>
+  </section>
+
+  <h2 class="section-label" style="margin-top:2.4rem;">Items ({{ products|length }})</h2>
+  {% if not products %}
+    <p class="empty-sub">Nothing in the store yet.</p>
+  {% endif %}
+
+  <div class="admin-table">
+    {% for p in products %}
+      <div class="admin-row">
+        <div class="admin-row-date">
+          <span class="mono">{{ p['price_pence'] | gbp if p['price_pence'] else '—' }}</span>
+          {% if not p['active'] %}<span class="mono" style="color:var(--muted)">hidden</span>{% endif %}
+        </div>
+        <div class="admin-row-main">
+          <strong>{{ p['name'] }}</strong>
+          <span class="admin-row-loc">
+            {{ p['category'] }}
+            {% if p['featured'] %} · featured{% endif %}
+            {% if p['stock'] != 'available' %} · {{ p['stock'] }}{% endif %}
+            {% if not p['buy_url'] and not default_buy_url %} · no buy link{% endif %}
+          </span>
+        </div>
+        <div class="admin-row-actions">
+          <a href="{{ url_for('edit_product', product_id=p['id']) }}" class="btn-ghost small">Edit</a>
+          <form method="post" action="{{ url_for('delete_product', product_id=p['id']) }}"
+                onsubmit="return confirm('Delete this item?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-danger small">Delete</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}

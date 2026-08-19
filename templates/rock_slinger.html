@@ -1,0 +1,583 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<header class="rs-head">
+  <a href="{{ url_for('games_hub') }}" class="rs-back" aria-label="Back to games">
+    {{ icon('chevron-left', 20) }}
+  </a>
+  <div>
+    <p class="rs-eyebrow">Kids Games</p>
+    <h1 class="rs-title">Rock Slinger</h1>
+  </div>
+</header>
+
+<main class="rs-main">
+
+  {#  The game is an 11 MB download, which is far larger than anything else
+      in the app. Loading that automatically on a phone data plan would be
+      rude, so it waits behind a tap and says what it costs.  #}
+  <div id="rsIntro" class="rs-intro">
+    <span class="rs-emoji" aria-hidden="true">🪨</span>
+    <p class="rs-lead">Five smooth stones. One giant.</p>
+    <p class="rs-note">
+      This one is a proper game, so it's a larger download — about 11 MB.
+      Best on wifi. It may take a moment to load the first time.
+    </p>
+    <button type="button" id="rsStart" class="btn-primary" style="width:auto;">
+      Load the game
+    </button>
+    <p class="rs-credit">Made by Finn</p>
+    <button type="button" id="rsCheck" class="rs-check">Will it work on this device?</button>
+    <div id="rsReport" class="rs-report" hidden></div>
+  </div>
+
+  <div id="rsStage" class="rs-stage" hidden>
+    <div id="rsLoading" class="rs-loading">
+      <div class="rs-bar"><div id="rsBar" class="rs-bar-fill"></div></div>
+      <p id="rsPercent" class="rs-percent">Loading… 0%</p>
+    </div>
+    <canvas id="unity-canvas" class="rs-canvas" width="1080" height="1920" tabindex="-1"></canvas>
+    <div id="rsError" class="rs-error" hidden></div>
+    <div id="rsNotice" class="rs-notice" hidden></div>
+  </div>
+
+  <div id="rsScore" class="rs-score" hidden>
+    <p id="rsScoreMsg" class="rs-score-msg" aria-live="polite"></p>
+    <a href="{{ url_for('game_leaderboard', game_key='rock_slinger') }}"
+       class="rs-score-link">See the leaderboard →</a>
+  </div>
+
+  <div id="rsControls" class="rs-controls" hidden>
+    <button type="button" id="rsFull" class="btn-ghost small">Fullscreen</button>
+    <a href="{{ url_for('games_hub') }}" class="btn-ghost small">Back to games</a>
+  </div>
+
+</main>
+
+<style>
+  .rs-head {
+    display: flex; align-items: center; gap: 0.7rem;
+    padding: 1rem 1.1rem 0.6rem;
+  }
+  .rs-back {
+    width: 2.2rem; height: 2.2rem; border-radius: var(--r-full, 999px);
+    display: grid; place-items: center; flex: none;
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .rs-eyebrow {
+    font-family: var(--label); font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--muted); margin: 0;
+  }
+  .rs-title {
+    font-family: var(--display); font-size: 1.35rem; font-weight: 800;
+    letter-spacing: -0.03em; margin: 0.1rem 0 0;
+  }
+  .rs-main { padding: 0 1.1rem 2rem; }
+
+  .rs-intro {
+    text-align: center; padding: 2.4rem 1rem;
+    border-radius: var(--r-md, 12px);
+    background: linear-gradient(155deg, var(--quest-mid), var(--quest-deep));
+    color: #FFFFFF;
+  }
+  .rs-emoji { font-size: 2.8rem; display: block; margin-bottom: 0.6rem; }
+  .rs-lead {
+    font-family: var(--display); font-size: 1.2rem; font-weight: 700;
+    letter-spacing: -0.02em; margin: 0 0 0.5rem;
+  }
+  .rs-note {
+    font-size: 0.83rem; line-height: 1.55; margin: 0 auto 1.2rem;
+    max-width: 22rem; color: rgba(255,255,255,0.72);
+  }
+  .rs-credit {
+    font-size: 0.75rem; color: rgba(255,255,255,0.5);
+    margin: 1.1rem 0 0;
+  }
+
+  .rs-check {
+    background: none; border: 0; padding: 0.4rem;
+    font: inherit; font-size: 0.78rem; cursor: pointer;
+    color: rgba(255,255,255,0.55); text-decoration: underline;
+  }
+  .rs-report {
+    margin: 0.8rem auto 0; max-width: 21rem; text-align: left;
+    background: rgba(0,0,0,0.35); border-radius: 0.5rem;
+    padding: 0.7rem 0.85rem; font-size: 0.76rem; line-height: 1.6;
+  }
+  .rs-report dt { color: rgba(255,255,255,0.55); }
+  .rs-report .ok { color: #7BE0B8; }
+  .rs-report .no { color: #FF9B8A; }
+  .rs-report .verdict {
+    margin-top: 0.6rem; padding-top: 0.6rem;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    font-weight: 600; line-height: 1.5;
+  }
+  .rs-stage {
+    position: relative;
+    /* JavaScript sets the real width and height in pixels before Unity
+       starts — see sizeCanvas(). These values only cover the moment before
+       that runs, so the box doesn't jump. */
+    width: 100%;
+    aspect-ratio: 1080 / 1920;
+    max-height: 78vh;
+    margin: 0 auto;
+    background: #000;
+    border-radius: var(--r-md, 12px);
+    overflow: hidden;
+  }
+
+  .rs-canvas {
+    width: 100%; height: 100%; display: block;
+    touch-action: none;   /* stop the page scrolling under a drag */
+  }
+  .rs-loading {
+    position: absolute; inset: 0; display: grid; place-content: center;
+    gap: 0.7rem; padding: 2rem; background: var(--quest-deep);
+  }
+  .rs-bar {
+    width: 12rem; height: 5px; border-radius: 999px;
+    background: rgba(255,255,255,0.16); overflow: hidden;
+  }
+  .rs-bar-fill {
+    height: 100%; width: 0%; background: var(--quest-ember);
+    transition: width 0.25s ease;
+  }
+  .rs-percent {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: rgba(255,255,255,0.7); margin: 0; text-align: center;
+  }
+  .rs-error {
+    position: absolute; inset: 0; display: grid; place-content: center;
+    padding: 2rem; text-align: center; background: var(--quest-deep);
+    color: #FFFFFF; font-size: 0.88rem; line-height: 1.55;
+  }
+  .rs-notice {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 0.8rem 1rem; text-align: center;
+    background: rgba(0,0,0,0.82); color: #FFFFFF;
+    font-size: 0.85rem; line-height: 1.5;
+  }
+  .rs-score {
+    margin-top: 0.9rem; padding: 0.85rem 1rem;
+    border-radius: var(--r-md, 12px);
+    background: var(--surface); border: 1px solid var(--line);
+    text-align: center;
+  }
+  .rs-score-msg {
+    font-family: var(--display); font-weight: 700; font-size: 1rem;
+    letter-spacing: -0.02em; margin: 0 0 0.4rem; color: var(--ink);
+  }
+  .rs-score-link {
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--accent); text-decoration: none;
+  }
+  .rs-controls {
+    display: flex; gap: 0.5rem; justify-content: center;
+    margin-top: 0.9rem; flex-wrap: wrap;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rs-bar-fill { transition: none; }
+  }
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  // Served through a dedicated route rather than /static, so the brotli
+  // headers are set explicitly rather than guessed from the file extension.
+  var BUILD = "{{ url_for('rockslinger_build', filename='') }}";
+
+  // Cache-busting version tag. Unity build files keep the same names between
+  // versions (2DDGWebgl.data.br etc.), so a browser that cached the old ones
+  // will happily serve them forever — and mixing an old cached file with a
+  // new one crashes the game with a wasm stack overflow. Bumping this number
+  // changes every file URL, forcing the browser to fetch the new build fresh.
+  // WHENEVER FINN SENDS A NEW BUILD, increase this by one (v=2 -> v=3).
+  var BUILD_VERSION = "2";
+  var VTAG = "?v=" + BUILD_VERSION;
+  var started = false;
+  var confirmedAnyway = false;
+
+  var intro = document.getElementById("rsIntro");
+  var stage = document.getElementById("rsStage");
+  var controls = document.getElementById("rsControls");
+  var bar = document.getElementById("rsBar");
+  var percent = document.getElementById("rsPercent");
+  var loading = document.getElementById("rsLoading");
+  var errorBox = document.getElementById("rsError");
+  var notice = document.getElementById("rsNotice");
+  var canvas = document.getElementById("unity-canvas");
+  var unity = null;
+  var GAME_W = 1080, GAME_H = 1920;   // the game's own portrait dimensions
+
+  /* Size the canvas in real pixels, not percentages.
+
+     Unity reads the canvas size once, when it starts, and then never watches
+     it again — the build has no ResizeObserver and only listens to window
+     resize to detect orientation. So a canvas sized with width:100% can be
+     measured before the browser has resolved that percentage, and Unity ends
+     up rendering into a viewport it thinks is empty. That's why it stayed
+     blank until fullscreen, which hands Unity a concrete size of its own.
+
+     Setting explicit pixels removes the guesswork. It's what Unity's own
+     template does, and it's deterministic at any moment. */
+  function sizeCanvas() {
+    var avail = stage.parentElement ? stage.parentElement.clientWidth : window.innerWidth;
+    var maxH = window.innerHeight * 0.78;
+
+    var w = Math.min(avail, maxH * (GAME_W / GAME_H));
+    var h = w * (GAME_H / GAME_W);
+
+    stage.style.width = Math.round(w) + "px";
+    stage.style.height = Math.round(h) + "px";
+    canvas.style.width = Math.round(w) + "px";
+    canvas.style.height = Math.round(h) + "px";
+  }
+
+  // Keep it right when the window changes shape.
+  var resizeTimer = null;
+  function onViewportChange() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      // Unity manages its own canvas while fullscreen; don't fight it.
+      if (document.fullscreenElement || document.webkitFullscreenElement) return;
+      sizeCanvas();
+    }, 150);
+  }
+  window.addEventListener("resize", onViewportChange);
+  window.addEventListener("orientationchange", onViewportChange);
+  ["fullscreenchange", "webkitfullscreenchange"].forEach(function (evt) {
+    document.addEventListener(evt, function () {
+      // Coming back out of fullscreen, restore our own sizing.
+      setTimeout(function () {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          sizeCanvas();
+        }
+      }, 120);
+    });
+  });
+  var scoreBox = document.getElementById("rsScore");
+  var scoreMsg = document.getElementById("rsScoreMsg");
+
+  var SIGNED_IN = {{ 'true' if member else 'false' }};
+
+  /* ------------------------------------------------------------------ *
+   * The bridge Unity calls when a game ends.
+   *
+   * Unity can't POST to our endpoint itself — it has no session cookie and
+   * no CSRF token. So the game calls out to this function, and the page
+   * does the submitting.
+   *
+   * Exposed on window because the .jslib plugin inside Unity reaches it
+   * that way. Kept deliberately small and forgiving: it is called from
+   * compiled game code that can't easily be changed once shipped.
+   * ------------------------------------------------------------------ */
+  window.ClearspringGame = {
+    // Read by the .jslib plugin so the game can decide whether to offer a
+    // "save my score" prompt at all.
+    signedIn: SIGNED_IN,
+
+    submitScore: function (raw) {
+      var score = parseInt(raw, 10);
+      if (!isFinite(score) || score < 0) return;
+
+      scoreBox.hidden = false;
+
+      if (!SIGNED_IN) {
+        scoreMsg.textContent =
+          "You scored " + score + ". Sign in to put it on the leaderboard.";
+        return;
+      }
+
+      scoreMsg.textContent = "You scored " + score + ". Saving…";
+
+      // The global fetch wrapper in base.html attaches the CSRF token.
+      fetch("/games/rock_slinger/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ score: score }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.ok) {
+            scoreMsg.textContent = "You scored " + score + ", but it couldn't be saved.";
+            return;
+          }
+          scoreMsg.textContent = d.improved
+            ? "New best — " + score + " points!"
+            : "You scored " + score + ". Your best is still " + d.best + ".";
+          if (window.GameFeel) window.GameFeel.celebrate();
+        })
+        .catch(function () {
+          scoreMsg.textContent = "You scored " + score + ", but it couldn't be saved.";
+        });
+    },
+  };
+
+  function fail(message) {
+    loading.hidden = true;
+    errorBox.hidden = false;
+    // Unity's default template calls alert() here. A modal alert on a
+    // child's phone is a poor way to say "this didn't work".
+    errorBox.textContent =
+      "The game couldn't load. It needs a fairly recent phone or computer, " +
+      "and a decent connection. " + (message || "");
+  }
+
+
+  /* ------------------------------------------------------------------ *
+   * Device check
+   *
+   * Unity's own documentation says WebGL content is not supported on
+   * mobile devices — it may work on a high-end phone, but many don't have
+   * the memory. When it fails, it usually fails silently, which is worse
+   * than being told.
+   *
+   * These are the same tests Unity's loader runs, so the answer here is
+   * the answer the game will get.
+   * ------------------------------------------------------------------ */
+  function checkDevice() {
+    var out = {};
+
+    // WebGL 2 — this build requires it, WebGL 1 won't do.
+    try {
+      var c = document.createElement("canvas");
+      out.webgl2 = !!c.getContext("webgl2");
+    } catch (e) { out.webgl2 = false; }
+
+    out.wasm = (typeof WebAssembly === "object" &&
+                typeof WebAssembly.compile === "function");
+
+    /* The bulk-memory feature, tested with the exact module Unity uses.
+       Without it the loader refuses to start at all. */
+    try {
+      out.bulkMemory = out.wasm && WebAssembly.validate(new Uint8Array([
+        // These are Unity's own bytes, copied from the loader rather than
+        // written from memory — a module that tests the wrong feature, or
+        // doesn't validate at all, would report a false failure.
+        0,97,115,109,1,0,0,0,1,4,1,96,0,0,3,2,1,0,5,3,1,0,1,10,13,1,11,0,65,0,65,0,65,1,252,11,0,11
+      ]));
+    } catch (e) { out.bulkMemory = false; }
+
+    out.mobile = /Mobile|Android|iP(ad|hone)/.test(navigator.appVersion);
+    out.memory = navigator.deviceMemory || null;
+
+    // Can we actually reserve what the game asks for? This is the one that
+    // catches an iPhone that passes every feature test and still dies.
+    try {
+      var probe = new WebAssembly.Memory({ initial: 512, maximum: 4096 });
+      out.canAllocate = !!probe;
+      probe = null;
+    } catch (e) { out.canAllocate = false; }
+
+    return out;
+  }
+
+  document.getElementById("rsCheck").addEventListener("click", function () {
+    var r = checkDevice();
+    var box = document.getElementById("rsReport");
+    box.hidden = false;
+    box.textContent = "";
+
+    function row(label, good, detail) {
+      var d = document.createElement("div");
+      var t = document.createElement("span");
+      t.className = good ? "ok" : "no";
+      t.textContent = good ? "✓ " : "✗ ";
+      d.appendChild(t);
+      d.appendChild(document.createTextNode(label + (detail ? " — " + detail : "")));
+      box.appendChild(d);
+    }
+
+    row("WebGL 2 graphics", r.webgl2);
+    row("WebAssembly", r.wasm);
+    row("Bulk memory support", r.bulkMemory);
+    row("Can reserve 32 MB", r.canAllocate);
+    if (r.memory) row("Device memory", r.memory >= 4, r.memory + " GB");
+
+    var verdict = document.createElement("p");
+    verdict.className = "verdict";
+    if (!r.webgl2) {
+      verdict.textContent = "This browser can't run the game — it needs WebGL 2. On iPhone that means iOS 15 or later.";
+    } else if (!r.bulkMemory || !r.wasm) {
+      verdict.textContent = "This browser is missing a WebAssembly feature the game needs. Updating it may fix that.";
+    } else if (!r.canAllocate) {
+      verdict.textContent = "This device won't give the game enough memory. That's a hardware limit, not something a setting will fix.";
+    } else if (r.mobile) {
+      verdict.textContent = "Everything the game needs is here, but Unity games are heavy for a phone and may still run out of memory. A tablet or computer is more reliable.";
+    } else {
+      verdict.textContent = "This device should run the game fine.";
+    }
+    box.appendChild(verdict);
+  });
+
+  document.getElementById("rsStart").addEventListener("click", function () {
+    if (started) return;
+
+    /* On a phone, check before spending 11 MB of someone's data on a
+       download that may not run. Unity's own docs say WebGL isn't supported
+       on mobile, so this is a real possibility rather than a remote one.
+       They can still choose to try — it's their call, not ours. */
+    var caps = checkDevice();
+    var hopeless = !caps.webgl2 || !caps.wasm || !caps.bulkMemory || !caps.canAllocate;
+    if (hopeless && !confirmedAnyway) {
+      document.getElementById("rsCheck").click();
+      var btn = this;
+      btn.textContent = "Load it anyway (11 MB)";
+      confirmedAnyway = true;
+      return;
+    }
+
+    started = true;
+
+    intro.hidden = true;
+    stage.hidden = false;
+    controls.hidden = false;
+
+    // Give the canvas a real size before Unity measures it. The stage has
+    // only just been revealed, so this must happen after that, not before.
+    sizeCanvas();
+
+    var config = {
+      dataUrl: BUILD + "2DDGWebgl.data.br" + VTAG,
+      frameworkUrl: BUILD + "2DDGWebgl.framework.js.br" + VTAG,
+      codeUrl: BUILD + "2DDGWebgl.wasm.br" + VTAG,
+      streamingAssetsUrl: BUILD + "../StreamingAssets",
+      companyName: "Clearspring Church",
+      productName: "Rock Slinger",
+      productVersion: "1.0",
+      // Unity's showBanner writes msg straight into innerHTML. Route it
+      // through textContent instead.
+      showBanner: function (msg, type) {
+        if (type === "error") fail(String(msg));
+      },
+
+      /* Without this, Unity's loader calls alert() on any runtime error.
+         A raw stack trace in a modal dialog is a poor thing to put in front
+         of a child mid-game, and it blocks the page until they dismiss it.
+
+         Returning true tells Unity we've handled it. The game keeps running
+         where it can — a non-fatal error shouldn't end play — and the detail
+         goes to the console for whoever is debugging. */
+      errorHandler: function (message, url, line) {
+        console.error("[Rock Slinger]", message, url, line);
+
+        var text = String(message || "");
+        // "null function" and "abort" mean the game itself has stopped;
+        // anything else may be recoverable, so don't interrupt play.
+        var fatal = /null function|abort\(|unreachable/i.test(text);
+        if (fatal) {
+          notice.hidden = false;
+          notice.textContent =
+            "The game hit a problem and had to stop. Your score up to now is "
+            + "safe. Tap Back to games, or reload to play again.";
+        }
+        return true;
+      },
+    };
+
+    var script = document.createElement("script");
+    script.src = BUILD + "2DDGWebgl.loader.js" + VTAG;
+
+    script.onerror = function () { fail(); };
+    script.onload = function () {
+      if (typeof createUnityInstance !== "function") { fail(); return; }
+      createUnityInstance(canvas, config, function (progress) {
+        var pct = Math.round(progress * 100);
+        bar.style.width = pct + "%";
+        percent.textContent = "Loading… " + pct + "%";
+      }).then(function (instance) {
+        loading.hidden = true;
+        unity = instance;
+
+        /* Unity sizes its render target from the canvas's DOM size, but it
+           reads that when it starts — and at that moment the stage has only
+           just been revealed, so the measurement can be stale or zero. The
+           result is a canvas that stays blank until something forces a
+           relayout, which is why entering fullscreen "fixed" it.
+
+           Dispatching a resize gives it that nudge without the user having
+           to find it. Twice, because the first can land before the browser
+           has finished laying the revealed element out. */
+        // Re-apply once more after the first frame: some browsers finish
+        // laying out the revealed stage a beat after Unity starts.
+        setTimeout(sizeCanvas, 200);
+
+        document.getElementById("rsFull").addEventListener("click", function () {
+          instance.SetFullscreen(1);
+        });
+      }).catch(function (message) {
+        fail(String(message));
+      });
+    };
+    document.body.appendChild(script);
+  });
+
+  /* ------------------------------------------------------------------ *
+   * Clean exit.
+   *
+   * A running Unity WebGL instance holds a lot of memory and a live WebGL
+   * context. If the page simply navigates away (a plain link click) while
+   * the game is still running, the browser has to tear all that down mid-
+   * frame — which on many devices freezes or crashes the tab, especially
+   * right after a game has ended.
+   *
+   * Unity gives us instance.Quit() to shut the game down cleanly first. So
+   * we intercept clicks on any link that leaves this page, call Quit(), and
+   * only then follow the link. Quit() returns a promise; we navigate when it
+   * settles, and — crucially — navigate anyway if anything goes wrong, so a
+   * failed shutdown can never trap someone on the page.
+   * ------------------------------------------------------------------ */
+  (function () {
+    // Every link on this page that navigates away from the game.
+    var exitLinks = document.querySelectorAll('a.rs-back, a.btn-ghost, a.rs-score-link');
+
+    exitLinks.forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        // If the game never loaded, there's nothing to shut down — let the
+        // link behave normally.
+        if (!unity || typeof unity.Quit !== 'function') return;
+
+        var href = link.getAttribute('href');
+        if (!href) return;
+
+        // Take over navigation so we can shut Unity down first.
+        e.preventDefault();
+
+        var navigated = false;
+        function go() {
+          if (navigated) return;
+          navigated = true;
+          window.location.href = href;
+        }
+
+        // Safety net: if Quit() hangs for any reason, don't strand the user —
+        // navigate anyway after a short wait.
+        var failsafe = setTimeout(go, 1500);
+
+        try {
+          var result = unity.Quit();
+          if (result && typeof result.then === 'function') {
+            result.then(function () { clearTimeout(failsafe); go(); },
+                        function () { clearTimeout(failsafe); go(); });
+          } else {
+            clearTimeout(failsafe);
+            go();
+          }
+        } catch (err) {
+          // Quit threw — still leave cleanly.
+          clearTimeout(failsafe);
+          go();
+        }
+      });
+    });
+  })();
+})();
+</script>
+
+{% endblock %}

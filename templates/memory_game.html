@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow"><a href="{{ url_for('games_hub') }}" style="color:inherit;">← Kids Games</a></p>
+    <h1 class="page-title">Memory Match</h1>
+    <p class="tagline">Flip two cards at a time to find the pairs</p>
+  </div>
+</header>
+
+<main class="board">
+  <div class="mm-stats">
+    <span>Moves: <strong id="mm-moves">0</strong></span>
+    <span>Pairs found: <strong id="mm-pairs">0</strong> / 8</span>
+    <button id="mm-restart" class="btn-ghost small">Restart</button>
+  </div>
+
+  <div id="mm-board" class="mm-board"></div>
+
+  <div id="mm-win" class="mm-win" hidden>
+    <p>🎉 You found them all in <span id="mm-final-moves"></span> moves!</p>
+    <button id="mm-play-again" class="btn-primary" style="width:auto;">Play again</button>
+    <div class="lb-publish">
+      <button id="mm-publish" class="btn-ghost small">Publish score to leaderboard</button>
+      <p id="mm-publish-result" class="lb-publish-result"></p>
+    </div>
+    <a href="{{ url_for('game_leaderboard', game_key='memory_game') }}" class="lb-view-link">View leaderboard →</a>
+  </div>
+</main>
+
+<style>
+  .mm-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
+  }
+  .mm-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+    max-width: 26rem;
+  }
+  .mm-card {
+    aspect-ratio: 1;
+    border-radius: 0.8rem;
+    background: var(--ink);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.15s ease;
+    border: none;
+  }
+  .mm-card:active { transform: scale(0.94); }
+  .mm-card.flipped, .mm-card.matched {
+    background: var(--ink-soft, var(--surface));
+    color: var(--ink);
+    border: 2px solid var(--ink);
+  }
+  .mm-card.matched { opacity: 0.45; cursor: default; }
+  .mm-win {
+    margin-top: 1.6rem;
+    padding: 1.2rem;
+    border: 1px solid var(--line);
+    border-radius: 0.8rem;
+    background: var(--surface);
+    text-align: center;
+  }
+  .mm-win p { font-family: var(--display); font-weight: 700; font-size: 1.1rem; }
+</style>
+
+<script>
+(function () {
+  const SYMBOLS = ["🕊️", "✝️", "🐟", "❤️", "⭐", "☀️", "🌈", "⛵"];
+  const boardEl = document.getElementById("mm-board");
+  const movesEl = document.getElementById("mm-moves");
+  const pairsEl = document.getElementById("mm-pairs");
+  const winEl = document.getElementById("mm-win");
+  const finalMovesEl = document.getElementById("mm-final-moves");
+
+  let cards = [];
+  let flipped = [];
+  let matched = 0;
+  let moves = 0;
+  let lock = false;
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function render() {
+    boardEl.innerHTML = "";
+    cards.forEach((symbol, i) => {
+      const btn = document.createElement("button");
+      btn.className = "mm-card";
+      btn.setAttribute("aria-label", "Card");
+      btn.dataset.index = i;
+      btn.textContent = "";
+      btn.addEventListener("click", () => onFlip(i));
+      boardEl.appendChild(btn);
+    });
+  }
+
+  function onFlip(i) {
+    if (lock) return;
+    const btn = boardEl.children[i];
+    if (btn.classList.contains("flipped") || btn.classList.contains("matched")) return;
+    if (flipped.length === 2) return;
+
+    btn.classList.add("flipped");
+    btn.textContent = cards[i];
+    flipped.push(i);
+
+    if (flipped.length === 2) {
+      moves += 1;
+      movesEl.textContent = moves;
+      const [a, b] = flipped;
+      if (cards[a] === cards[b]) {
+        lock = true;
+        setTimeout(() => {
+          boardEl.children[a].classList.add("matched");
+          boardEl.children[b].classList.add("matched");
+          matched += 1;
+          pairsEl.textContent = matched;
+          flipped = [];
+          lock = false;
+          if (matched === SYMBOLS.length) {
+            finalMovesEl.textContent = moves;
+            winEl.hidden = false;
+            const publishBtn = document.getElementById("mm-publish");
+            const resultEl = document.getElementById("mm-publish-result");
+            publishBtn.disabled = false;
+            publishBtn.textContent = "Publish score to leaderboard";
+            resultEl.textContent = "";
+            publishBtn.onclick = () => {
+              ChurchLeaderboard.publish("memory_game", moves, resultEl, publishBtn);
+            };
+          }
+        }, 400);
+      } else {
+        lock = true;
+        setTimeout(() => {
+          boardEl.children[a].classList.remove("flipped");
+          boardEl.children[b].classList.remove("flipped");
+          boardEl.children[a].textContent = "";
+          boardEl.children[b].textContent = "";
+          flipped = [];
+          lock = false;
+        }, 700);
+      }
+    }
+  }
+
+  function newGame() {
+    cards = shuffle([...SYMBOLS, ...SYMBOLS]);
+    flipped = [];
+    matched = 0;
+    moves = 0;
+    lock = false;
+    movesEl.textContent = 0;
+    pairsEl.textContent = 0;
+    winEl.hidden = true;
+    render();
+  }
+
+  document.getElementById("mm-restart").addEventListener("click", newGame);
+  document.getElementById("mm-play-again").addEventListener("click", newGame);
+
+  newGame();
+})();
+</script>
+
+{% endblock %}

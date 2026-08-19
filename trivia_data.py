@@ -1,0 +1,32 @@
+TRIVIA_LADDER = [
+    {"q": "Who built a big boat to survive a great flood?", "choices": ["Noah", "Moses", "Abraham", "David"], "answer": 0},
+    {"q": "How many days and nights did it rain during the flood?", "choices": ["7", "40", "100", "3"], "answer": 1},
+    {"q": "Who led the Israelites out of Egypt?", "choices": ["Joshua", "Moses", "Aaron", "Elijah"], "answer": 1},
+    {"q": "What did David use to defeat Goliath?", "choices": ["A sword", "A spear", "A sling and stone", "A bow"], "answer": 2},
+    {"q": "In whose belly did Jonah spend three days?", "choices": ["A whale/great fish", "A lion", "A bear", "A crocodile"], "answer": 0},
+    {"q": "How many disciples did Jesus have?", "choices": ["10", "12", "7", "14"], "answer": 1},
+    {"q": "What town was Jesus born in?", "choices": ["Nazareth", "Jerusalem", "Bethlehem", "Jericho"], "answer": 2},
+    {"q": "Who was thrown into a den of lions?", "choices": ["Daniel", "Samuel", "Elijah", "Peter"], "answer": 0},
+    {"q": "What did God create on the first day?", "choices": ["Animals", "Light", "Plants", "The sea"], "answer": 1},
+    {"q": "Who was swallowed by a big fish for running from God?", "choices": ["Jonah", "Job", "Noah", "Peter"], "answer": 0},
+    {"q": "How many plagues struck Egypt?", "choices": ["7", "10", "12", "3"], "answer": 1},
+    {"q": "Who was known for his coat of many colors?", "choices": ["Joseph", "Benjamin", "Judah", "Reuben"], "answer": 0},
+    {"q": "On what mountain did Moses receive the Ten Commandments?", "choices": ["Mount Sinai", "Mount Ararat", "Mount Carmel", "Mount Zion"], "answer": 0},
+    {"q": "Who denied knowing Jesus three times?", "choices": ["John", "Peter", "Thomas", "Andrew"], "answer": 1},
+    {"q": "What is the first book of the Bible?", "choices": ["Exodus", "Genesis", "Matthew", "Psalms"], "answer": 1},
+]
+
+TRIVIA_FOOTBALL = [
+    {"q": "Who was the first man, according to Genesis?", "choices": ["Adam", "Abel", "Cain", "Seth"], "answer": 0},
+    {"q": "What did God ask Abraham to sacrifice, then provided a ram instead?", "choices": ["His flock", "His son Isaac", "His tent", "His wealth"], "answer": 1},
+    {"q": "Who interpreted Pharaoh's dreams about seven years of plenty and famine?", "choices": ["Joseph", "Moses", "Daniel", "Solomon"], "answer": 0},
+    {"q": "What sea did Moses part for the Israelites to cross?", "choices": ["The Dead Sea", "The Red Sea", "The Sea of Galilee", "The Mediterranean"], "answer": 1},
+    {"q": "Who was famous for his great wisdom as king of Israel?", "choices": ["Saul", "David", "Solomon", "Rehoboam"], "answer": 2},
+    {"q": "What did Jesus turn water into at a wedding?", "choices": ["Bread", "Oil", "Wine", "Milk"], "answer": 2},
+    {"q": "How many loaves and fish fed the 5,000?", "choices": ["2 loaves, 5 fish", "5 loaves, 2 fish", "7 loaves, 3 fish", "3 loaves, 7 fish"], "answer": 1},
+    {"q": "Who betrayed Jesus for thirty pieces of silver?", "choices": ["Judas", "Thomas", "Pilate", "Barabbas"], "answer": 0},
+    {"q": "On what day did Jesus rise from the dead?", "choices": ["Friday", "Saturday", "Sunday", "Monday"], "answer": 2},
+    {"q": "Who was struck blind on the road to Damascus?", "choices": ["Peter", "Paul (Saul)", "Stephen", "Barnabas"], "answer": 1},
+    {"q": "What was the name of the garden where Adam and Eve lived?", "choices": ["Eden", "Gethsemane", "Canaan", "Bethany"], "answer": 0},
+    {"q": "Who was known for his great strength and long hair?", "choices": ["Samson", "Gideon", "Saul", "Boaz"], "answer": 0},
+]

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('bible_hub') }}" class="bible-back" aria-label="Back to Bible">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Saved</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <div id="sv-empty" class="saved-empty" hidden>
+    <span class="saved-empty-icon">{{ icon('bookmark', 26) }}</span>
+    <p class="saved-empty-title">Nothing saved yet</p>
+    <p class="saved-empty-sub">While reading, tap any verse and choose Save to keep it here.</p>
+    <a href="{{ url_for('bible_books') }}" class="saved-empty-cta">Start reading</a>
+  </div>
+
+  <div id="sv-list" class="saved-list"></div>
+
+</main>
+
+<script src="{{ url_for('static', filename='saved-verses.js') }}"></script>
+<script>
+(function () {
+  const listEl = document.getElementById("sv-list");
+  const emptyEl = document.getElementById("sv-empty");
+
+  function render() {
+    const verses = window.SavedVerses.getAll();
+    listEl.innerHTML = "";
+    emptyEl.hidden = verses.length > 0;
+
+    verses.forEach((v) => {
+      const item = document.createElement("article");
+      item.className = "saved-item";
+
+      const ref = document.createElement("p");
+      ref.className = "saved-item-ref";
+      ref.textContent = `${v.ref} · ${v.translation.toUpperCase()}`;
+
+      const text = document.createElement("p");
+      text.className = "saved-item-text";
+      text.textContent = v.text;
+
+      const remove = document.createElement("button");
+      remove.className = "saved-item-remove";
+      remove.type = "button";
+      remove.textContent = "Remove";
+      remove.addEventListener("click", () => {
+        window.SavedVerses.remove(v.ref, v.translation);
+        render();
+      });
+
+      item.append(ref, text, remove);
+      listEl.appendChild(item);
+    });
+  }
+
+  render();
+
+  // Bring in verses saved on another device
+  if (window.SavedVerses.syncWithAccount) {
+    window.SavedVerses.syncWithAccount().then((signedIn) => {
+      if (signedIn) render();
+    });
+  }
+})();
+</script>
+
+{% endblock %}

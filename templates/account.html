@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+<main class="bible">
+  <header class="bible-head">
+    <a href="{{ url_for('more_hub') }}" class="bible-back" aria-label="Back">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Your account</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <p class="bible-lede">
+    Signed in as <strong>{{ m['email'] }}</strong>{% if m['name'] %} ({{ m['name'] }}){% endif %}.
+  </p>
+
+  <section class="admin-panel">
+    <h2 class="section-label">Saved to your account</h2>
+    <div class="notif-counts">
+      {% for label, n in counts.items() %}
+        <div class="notif-count-row"><span>{{ label }}</span><strong>{{ n }}</strong></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <nav class="bible-list" style="margin-top:1.6rem;">
+    <a href="{{ url_for('member_progress') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('sunrise', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Your progress</span>
+        <span class="bible-row-sub">Streak and badges</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+
+    <a href="{{ url_for('saved_verses') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('bookmark', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Saved verses</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+    <a href="{{ url_for('reading_plans') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('calendar', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Reading plans</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+    <a href="{{ url_for('prayer_journal') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('book', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Prayer journal</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+  </nav>
+
+  <form method="post" action="{{ url_for('signout') }}" style="margin-top:2rem;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn-ghost" style="width:100%;">Sign out</button>
+  </form>
+
+  <details style="margin-top:2.5rem;">
+    <summary style="cursor:pointer; opacity:.65; font-size:.9rem;">Delete my account</summary>
+    <form method="post" action="{{ url_for('account_delete') }}" style="margin-top:1rem;"
+          onsubmit="return confirm('This permanently deletes your account, saved verses, notes, journal and scores. There is no undo. Delete it?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <p style="font-size:.9rem; opacity:.75; margin:0 0 .75rem;">
+        This permanently removes your account and everything saved to it —
+        saved verses, notes, prayer journal, reading progress and game scores.
+        It cannot be undone.
+      </p>
+      {% if member.password_hash %}
+        <label style="display:block; font-size:.9rem; margin-bottom:.35rem;" for="del-pw">Confirm your password</label>
+        <input id="del-pw" type="password" name="password" required autocomplete="current-password"
+               style="width:100%; margin-bottom:.75rem;">
+      {% else %}
+        {# No password on this account — they sign in by emailed link. Typing
+           the address is the confirmation instead, so deletion stays possible. #}
+        <label style="display:block; font-size:.9rem; margin-bottom:.35rem;" for="del-em">
+          Type your email address to confirm
+        </label>
+        <input id="del-em" type="email" name="confirm_email" required
+               placeholder="{{ member.email }}" autocomplete="off"
+               style="width:100%; margin-bottom:.75rem;">
+      {% endif %}
+      <button type="submit" class="btn-ghost" style="width:100%; color:#b3261e; border-color:#b3261e;">
+        Permanently delete my account
+      </button>
+    </form>
+  </details>
+</main>
+{% endblock %}

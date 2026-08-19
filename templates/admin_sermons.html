@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>Sermons</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('new_sermon') }}" class="btn-primary">+ Add sermon</a>
+      <a href="{{ url_for('admin') }}" class="btn-ghost">← Admin</a>
+    </div>
+  </div>
+
+  <section class="admin-panel">
+    <h2 class="section-label">Live stream</h2>
+    <p class="empty-sub" style="margin-bottom:1rem;">
+      Paste the URL of your live stream (YouTube, Vimeo or Facebook). Tick "We're live"
+      on a Sunday to show the player at the top of the Watch tab.
+    </p>
+    <form method="post" action="{{ url_for('admin_live_settings') }}" class="event-form" style="max-width:100%;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="live_stream_url">Live stream URL</label>
+      <input type="url" id="live_stream_url" name="live_stream_url" value="{{ live_url }}"
+             placeholder="https://www.youtube.com/live/...">
+      <label class="admin-check">
+        <input type="checkbox" name="live_is_on" {{ 'checked' if live_on }}>
+        <span>We're live right now</span>
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" style="width:auto;">Save</button>
+      </div>
+    </form>
+  </section>
+
+  <h2 class="section-label" style="margin-top:2.4rem;">Archive ({{ sermons|length }})</h2>
+  {% if not sermons %}
+    <p class="empty-sub">No sermons yet. Add the first one.</p>
+  {% endif %}
+
+  <div class="admin-table">
+    {% for s in sermons %}
+      <div class="admin-row">
+        <div class="admin-row-date">
+          <span class="mono">{{ s['preached_on'] }}</span>
+          {% if not s['published'] %}<span class="mono" style="color:var(--muted)">draft</span>{% endif %}
+        </div>
+        <div class="admin-row-main">
+          <strong>{{ s['title'] }}</strong>
+          <span class="admin-row-loc">
+            {% if s['speaker'] %}{{ s['speaker'] }}{% endif %}
+            {% if s['series'] %} · {{ s['series'] }}{% endif %}
+            {% if s['audio_url'] %} · audio{% endif %}
+            {% if s['video_url'] %} · video{% endif %}
+          </span>
+        </div>
+        <div class="admin-row-actions">
+          <a href="{{ url_for('edit_sermon', sermon_id=s['id']) }}" class="btn-ghost small">Edit</a>
+          <form method="post" action="{{ url_for('delete_sermon', sermon_id=s['id']) }}"
+                onsubmit="return confirm('Delete this sermon?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-danger small">Delete</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}

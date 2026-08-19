@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('prayer_wall') }}" class="bible-back" aria-label="Back to Prayer">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Share a request</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  {% if sent %}
+    <div class="prayer-sent">
+      {% if held %}
+        <p class="prayer-sent-title">Thank you for sharing this.</p>
+        <p class="prayer-sent-sub">Because of what you've written, one of our pastors will read
+        this personally before anything is shared. Someone will be in touch. You are not alone in this.</p>
+      {% else %}
+        <p class="prayer-sent-title">Your request has been shared.</p>
+        <p class="prayer-sent-sub">Our church family will be praying.</p>
+      {% endif %}
+      <a href="{{ url_for('prayer_wall') }}" class="saved-empty-cta">Back to prayer wall</a>
+    </div>
+  {% else %}
+
+  <form method="post" class="prayer-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="body" class="pf-label">What would you like prayer for?</label>
+    <textarea id="body" name="body" rows="5" required
+              placeholder="Share as much or as little as you'd like."></textarea>
+
+    <fieldset class="pf-group">
+      <legend class="pf-label">Who can see this?</legend>
+
+      <label class="pf-radio">
+        <input type="radio" name="visibility" value="public" checked>
+        <span class="pf-radio-body">
+          <span class="pf-radio-title">Share with the church</span>
+          <span class="pf-radio-sub">Appears on the prayer wall for everyone</span>
+        </span>
+      </label>
+
+      <label class="pf-radio">
+        <input type="radio" name="visibility" value="team">
+        <span class="pf-radio-body">
+          <span class="pf-radio-title">Prayer team only</span>
+          <span class="pf-radio-sub">Seen by our prayer team, not shown publicly</span>
+        </span>
+      </label>
+
+      <label class="pf-radio">
+        <input type="radio" name="visibility" value="pastors">
+        <span class="pf-radio-body">
+          <span class="pf-radio-title">Pastors only</span>
+          <span class="pf-radio-sub">Private — read only by our pastoral staff</span>
+        </span>
+      </label>
+    </fieldset>
+
+    <fieldset class="pf-group">
+      <legend class="pf-label">Type</legend>
+      <div class="pf-chips">
+        <label class="pf-chip">
+          <input type="radio" name="kind" value="request" checked>
+          <span>Prayer request</span>
+        </label>
+        <label class="pf-chip">
+          <input type="radio" name="kind" value="praise">
+          <span>Praise report</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <label for="author_name" class="pf-label">Your name (optional)</label>
+    <input type="text" id="author_name" name="author_name" placeholder="Leave blank to stay anonymous">
+
+    <div style="position:absolute; left:-9999px;" aria-hidden="true">
+      <label for="website">Leave blank</label>
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+    </div>
+
+    <button type="submit" class="pf-submit">Share request</button>
+  </form>
+
+  <aside class="crisis-note">
+    <p class="crisis-line">{{ crisis.line }}</p>
+    <ul class="crisis-list">
+      {% for label, number in crisis.contacts %}
+        <li><span>{{ label }}</span><a href="tel:{{ number|replace(' ','') }}">{{ number }}</a></li>
+      {% endfor %}
+    </ul>
+  </aside>
+
+  {% endif %}
+
+</main>
+
+{% endblock %}

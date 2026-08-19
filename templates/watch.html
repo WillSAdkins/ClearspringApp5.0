@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <h1 class="bible-title">Watch</h1>
+    <a href="{{ url_for('podcast_feed') }}" class="bible-search" aria-label="Podcast feed" title="Podcast feed">
+      {{ icon('play', 20) }}
+    </a>
+  </header>
+
+  {% if live_on and live_embed %}
+    <section class="live-block">
+      <p class="live-badge"><span class="live-dot"></span>Live now</p>
+      <div class="video-frame">
+        <iframe src="{{ live_embed }}" title="Live stream" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </div>
+    </section>
+  {% endif %}
+
+  <section id="wpoll" class="wpoll" hidden>
+    <p class="wpoll-badge"><span class="wpoll-dot"></span><span id="wpoll-badge-text">Live poll</span></p>
+    <p id="wpoll-question" class="wpoll-question"></p>
+    <div id="wpoll-options" class="wpoll-options"></div>
+    <p id="wpoll-total" class="wpoll-total"></p>
+  </section>
+
+  <form method="get" class="sermon-search" role="search">
+    {{ icon('search', 18) }}
+    <input type="search" name="q" value="{{ q }}" placeholder="Search by title, speaker, topic or passage" aria-label="Search sermons">
+    {% if active_speaker %}<input type="hidden" name="speaker" value="{{ active_speaker }}">{% endif %}
+    {% if active_series %}<input type="hidden" name="series" value="{{ active_series }}">{% endif %}
+  </form>
+
+  {% if speakers or all_series %}
+    <div class="filter-row">
+      {% if active_speaker or active_series or q %}
+        <a href="{{ url_for('watch_hub') }}" class="filter-pill clear">Clear</a>
+      {% endif %}
+      {% for sp in speakers %}
+        <a href="{{ url_for('watch_hub', speaker=sp) }}"
+           class="filter-pill {{ 'on' if active_speaker == sp }}">{{ sp }}</a>
+      {% endfor %}
+      {% for se in all_series %}
+        <a href="{{ url_for('watch_hub', series=se) }}"
+           class="filter-pill {{ 'on' if active_series == se }}">{{ se }}</a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if latest %}
+    <a href="{{ url_for('sermon_detail', sermon_id=latest.row['id']) }}" class="sermon-feature">
+      <div class="sermon-feature-media">
+        {% if latest.thumb %}
+          <img src="{{ latest.thumb }}" alt="" loading="lazy">
+        {% endif %}
+        <span class="sermon-play">{{ icon('play', 26) }}</span>
+      </div>
+      <div class="sermon-feature-body">
+        <span class="sermon-tag">Latest message</span>
+        <h2 class="sermon-feature-title">{{ latest.row['title'] }}</h2>
+        <p class="sermon-feature-meta">
+          {% if latest.row['speaker'] %}{{ latest.row['speaker'] }} · {% endif %}
+          {{ latest.row['preached_on'] | pretty_date }}
+          {% if latest.duration %} · {{ latest.duration }}{% endif %}
+        </p>
+      </div>
+    </a>
+  {% endif %}
+
+  {% if q or active_speaker or active_series %}
+    <p class="sermon-result-count">{{ total }} sermon{{ 's' if total != 1 }} found</p>
+  {% endif %}
+
+  {% if not sermons and not latest %}
+    <div class="saved-empty">
+      <span class="saved-empty-icon">{{ icon('play', 26) }}</span>
+      <p class="saved-empty-title">
+        {% if q or active_speaker or active_series %}Nothing matches that search{% else %}No sermons yet{% endif %}
+      </p>
+      <p class="saved-empty-sub">
+        {% if q or active_speaker or active_series %}
+          Try a different word, speaker or passage.
+        {% else %}
+          Once messages are added they'll appear here to watch and listen back.
+        {% endif %}
+      </p>
+    </div>
+  {% endif %}
+
+  <div class="sermon-list">
+    {% for item in sermons %}
+      <a href="{{ url_for('sermon_detail', sermon_id=item.row['id']) }}" class="sermon-row">
+        <span class="sermon-row-thumb">
+          {% if item.thumb %}<img src="{{ item.thumb }}" alt="" loading="lazy">{% else %}{{ icon('play', 18) }}{% endif %}
+        </span>
+        <span class="sermon-row-body">
+          <span class="sermon-row-title">{{ item.row['title'] }}</span>
+          <span class="sermon-row-meta">
+            {% if item.row['speaker'] %}{{ item.row['speaker'] }} · {% endif %}
+            {{ item.row['preached_on'] | pretty_date }}
+            {% if item.duration %} · {{ item.duration }}{% endif %}
+          </span>
+          {% if item.row['passage'] %}<span class="sermon-row-passage">{{ item.row['passage'] }}</span>{% endif %}
+        </span>
+        {{ icon('chevron-right', 18) }}
+      </a>
+    {% endfor %}
+  </div>
+
+</main>
+
+<style>
+  .wpoll {
+    margin-bottom: 1.6rem;
+    padding: 1.2rem;
+    border: 1px solid var(--line);
+    border-radius: 0.9rem;
+    background: var(--surface);
+    animation: wpoll-in 0.4s ease;
+  }
+  @keyframes wpoll-in {
+    0% { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .wpoll-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--label);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.6rem;
+  }
+  .wpoll-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: wpollPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes wpollPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .wpoll.wpoll-closed .wpoll-dot { animation: none; background: var(--muted); }
+  .wpoll-question {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin: 0 0 0.8rem;
+  }
+  .wpoll-options { display: grid; gap: 0.5rem; }
+  .wpoll-option-btn {
+    text-align: left;
+    padding: 0.7rem 0.9rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--ink);
+    background: var(--white);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .wpoll-option-btn:disabled { cursor: default; }
+  .wpoll-result {
+    position: relative;
+    border-radius: 0.6rem;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    overflow: hidden;
+    padding: 0.6rem 0.9rem;
+  }
+  .wpoll-result-fill {
+    position: absolute;
+    inset: 0;
+    width: 0%;
+    background: var(--line);
+    z-index: 0;
+    transition: width 0.4s ease;
+  }
+  .wpoll-result.wpoll-mine { border-color: var(--accent); border-left-width: 3px; }
+  .wpoll-result.wpoll-mine .wpoll-result-fill { background: var(--accent-soft); opacity: 0.35; }
+  .wpoll-result-row {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.6rem;
+    font-size: 0.92rem;
+  }
+  .wpoll-result.wpoll-mine .wpoll-result-row { font-weight: 700; }
+  .wpoll-result-pct { font-family: var(--mono); color: var(--muted); flex-shrink: 0; }
+  .wpoll-total { margin-top: 0.7rem; font-size: 0.8rem; color: var(--muted); }
+  .wpoll-thanks { font-size: 0.9rem; color: var(--muted); margin: 0; }
+</style>
+
+<script>
+(function () {
+  const section = document.getElementById("wpoll");
+  const badgeText = document.getElementById("wpoll-badge-text");
+  const questionEl = document.getElementById("wpoll-question");
+  const optionsEl = document.getElementById("wpoll-options");
+  const totalEl = document.getElementById("wpoll-total");
+
+  let currentPollId = null;
+  let voting = false;
+
+  function renderOptions(poll) {
+    optionsEl.innerHTML = "";
+    if (!poll.reveal && poll.voted_option_id !== null) {
+      const note = document.createElement("p");
+      note.className = "wpoll-thanks";
+      note.textContent = "Your vote is in — results will show when the poll closes.";
+      optionsEl.appendChild(note);
+      return;
+    }
+    poll.options.forEach((opt) => {
+      if (poll.reveal) {
+        const row = document.createElement("div");
+        row.className = "wpoll-result" + (opt.id === poll.voted_option_id ? " wpoll-mine" : "");
+        row.innerHTML =
+          '<span class="wpoll-result-fill" style="width:' + (opt.pct || 0) + '%"></span>' +
+          '<span class="wpoll-result-row"><span>' + opt.label + '</span>' +
+          '<span class="wpoll-result-pct">' + (opt.pct || 0) + '%</span></span>';
+        optionsEl.appendChild(row);
+      } else {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "wpoll-option-btn";
+        btn.textContent = opt.label;
+        btn.disabled = voting || poll.status !== "live";
+        btn.addEventListener("click", () => vote(poll.id, opt.id));
+        optionsEl.appendChild(btn);
+      }
+    });
+  }
+
+  function render(poll) {
+    if (!poll) {
+      section.hidden = true;
+      currentPollId = null;
+      return;
+    }
+    section.hidden = false;
+    section.classList.toggle("wpoll-closed", poll.status !== "live");
+    badgeText.textContent = poll.status === "live" ? "Live poll" : "Poll closed";
+    questionEl.textContent = poll.question;
+    renderOptions(poll);
+    totalEl.textContent = poll.reveal
+      ? `${poll.total_votes} vote${poll.total_votes === 1 ? "" : "s"}`
+      : (poll.voted_option_id ? "" : "Tap an option to vote");
+    currentPollId = poll.id;
+  }
+
+  function vote(pollId, optionId) {
+    if (voting) return;
+    voting = true;
+    fetch(`/poll/${pollId}/vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ option_id: optionId }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        voting = false;
+        if (data.ok) render(data.poll);
+      })
+      .catch(() => { voting = false; });
+  }
+
+  function poll() {
+    fetch("/poll/active")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok) render(data.poll);
+      })
+      .catch(() => {});
+  }
+
+  poll();
+  setInterval(poll, 4000);
+})();
+</script>
+
+{% endblock %}

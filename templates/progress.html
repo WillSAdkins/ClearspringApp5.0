@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow"><a href="{{ url_for('account') }}" style="color:inherit;">← Account</a></p>
+    <h1 class="page-title">Your progress</h1>
+    <p class="tagline">A record of showing up, not a scoreboard</p>
+  </div>
+</header>
+
+<main class="board">
+
+  <div class="pg-stats">
+    <div class="pg-stat {{ 'lit' if streak else '' }}">
+      <span class="pg-num">{{ streak }}</span>
+      <span class="pg-lab">day{{ "s" if streak != 1 }} running</span>
+    </div>
+    <div class="pg-stat">
+      <span class="pg-num">{{ month }}</span>
+      <span class="pg-lab">days this month</span>
+    </div>
+    <div class="pg-stat">
+      <span class="pg-num">{{ longest }}</span>
+      <span class="pg-lab">longest run</span>
+    </div>
+  </div>
+
+  {% if streak and not active_today %}
+    <p class="pg-note">
+      Your run is still going. Read anything today to keep it moving.
+    </p>
+  {% elif active_today %}
+    <p class="pg-note good">You've been here today.</p>
+  {% elif not streak and longest %}
+    <p class="pg-note">
+      Nothing running at the moment — but {{ longest }} day{{ "s" if longest != 1 }}
+      is still your best, and it stays yours. Pick it back up whenever.
+    </p>
+  {% else %}
+    <p class="pg-note">
+      Read a chapter, save a verse or write a journal entry and this starts filling in.
+    </p>
+  {% endif %}
+
+  <p class="pg-grace">
+    Missing a day won't reset anything — you've room for
+    {{ grace_days }} missed day{{ "s" if grace_days != 1 }} before a run ends.
+  </p>
+
+  <h2 class="pg-h2">Badges <span class="pg-count">{{ earned_count }} of {{ total_count }}</span></h2>
+
+  <div class="pg-badges">
+    {% for b in badges %}
+    <div class="pg-badge {{ 'got' if b.earned else 'not' }}">
+      <span class="pg-badge-icon">{{ icon(b.icon, 22) }}</span>
+      <span class="pg-badge-body">
+        <span class="pg-badge-name">{{ b.name }}</span>
+        <span class="pg-badge-desc">{{ b.desc }}</span>
+        {% if b.earned and b.earned_at %}
+          <span class="pg-badge-date">Earned {{ b.earned_at[:10] }}</span>
+        {% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+
+</main>
+
+<style>
+  .pg-stats { display: grid; grid-template-columns: repeat(3, 1fr);
+              gap: 0.6rem; margin-bottom: 1rem; }
+  .pg-stat { background: var(--surface); border: 1px solid var(--line);
+             border-radius: 0.8rem; padding: 0.9rem 0.6rem; text-align: center; }
+  .pg-stat.lit { border-color: var(--accent); }
+  .pg-num { display: block; font-family: var(--display); font-size: 1.9rem;
+            line-height: 1.1; font-weight: 600; }
+  .pg-stat.lit .pg-num { color: var(--accent); }
+  .pg-lab { display: block; font-size: 0.74rem; color: var(--muted);
+            margin-top: 0.2rem; line-height: 1.3; }
+  .pg-note { font-size: 0.92rem; line-height: 1.55; margin: 0 0 0.6rem;
+             max-width: 34rem; }
+  .pg-note.good { color: var(--accent); font-weight: 600; }
+  .pg-grace { font-size: 0.82rem; color: var(--muted); line-height: 1.5;
+              margin: 0 0 1.8rem; max-width: 34rem; }
+  .pg-h2 { font-family: var(--display); font-size: 1.15rem;
+           margin: 0 0 0.9rem; display: flex; align-items: baseline; gap: 0.6rem; }
+  .pg-count { font-family: var(--body); font-size: 0.82rem;
+              font-weight: 400; color: var(--muted); }
+  .pg-badges { display: grid; gap: 0.55rem; }
+  .pg-badge { display: flex; align-items: flex-start; gap: 0.7rem;
+              padding: 0.75rem 0.85rem; border-radius: 0.7rem;
+              border: 1px solid var(--line); background: var(--surface); }
+  .pg-badge.not { opacity: 0.5; }
+  .pg-badge.got { border-color: var(--accent); }
+  .pg-badge-icon { flex: none; width: 2.3rem; height: 2.3rem;
+                   border-radius: 50%; display: grid; place-items: center;
+                   background: var(--surface-2); color: var(--muted); }
+  /* The accent flips between dark brown (light mode) and gold (dark mode),
+     so the text on it has to flip too. Using one variable here is what made
+     the study chat bubble invisible. */
+  .pg-badge.got .pg-badge-icon { background: var(--accent); color: #F6F2EC; }
+  [data-theme="dark"] .pg-badge.got .pg-badge-icon { color: #2B2622; }
+  @media (prefers-color-scheme: dark) {
+    [data-theme="auto"] .pg-badge.got .pg-badge-icon { color: #2B2622; }
+  }
+  .pg-badge-body { display: flex; flex-direction: column; }
+  .pg-badge-name { font-weight: 600; font-size: 0.94rem; }
+  .pg-badge-desc { font-size: 0.83rem; color: var(--muted); margin-top: 0.1rem; }
+  .pg-badge-date { font-size: 0.75rem; color: var(--accent); margin-top: 0.25rem; }
+</style>
+
+{% endblock %}

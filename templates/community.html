@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <h1 class="bible-title">Community</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <p class="bible-lede">Everything happening together — services, prayer, and getting connected.</p>
+
+  <nav class="bible-list">
+    <a href="{{ url_for('calendar_page') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('calendar', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Calendar</span>
+        <span class="bible-row-sub">Services &amp; upcoming events</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+
+    <a href="{{ url_for('prayer_wall') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('hands', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Prayer</span>
+        <span class="bible-row-sub">Requests, praise reports &amp; your journal</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+
+    <a href="{{ url_for('questions') }}" class="bible-row">
+      <span class="bible-row-icon">{{ icon('message', 20) }}</span>
+      <span class="bible-row-body">
+        <span class="bible-row-title">Questions &amp; Answers</span>
+        <span class="bible-row-sub">Ask our pastors anything</span>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+  </nav>
+
+  <h2 class="coming-head">Coming soon</h2>
+  <div class="coming-list">
+    <div class="coming-row">
+      <span class="coming-icon">{{ icon('users', 18) }}</span>
+      <span class="coming-body">
+        <span class="coming-title">Small groups</span>
+        <span class="coming-sub">Find a life group near you</span>
+      </span>
+    </div>
+    <div class="coming-row">
+      <span class="coming-icon">{{ icon('handshake', 18) }}</span>
+      <span class="coming-body">
+        <span class="coming-title">Volunteering</span>
+        <span class="coming-sub">Serve on a team</span>
+      </span>
+    </div>
+  </div>
+
+</main>
+
+{% endblock %}

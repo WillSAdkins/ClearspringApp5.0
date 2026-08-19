@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow"><a href="{{ url_for('games_hub') }}" style="color:inherit;">← Kids Games</a></p>
+    <h1 class="page-title">Bible Trivia Football</h1>
+    <p class="tagline">Answer right to gain yards. Score before you run out of downs!</p>
+  </div>
+</header>
+
+<main class="board">
+  <div class="fb-scoreboard">
+    <span>Down: <strong id="fb-down">1</strong> / 4</span>
+    <span>Yard line: <strong id="fb-yards">0</strong> / 100</span>
+    <span>Touchdowns: <strong id="fb-tds">0</strong></span>
+  </div>
+
+  <div class="fb-field">
+    <div id="fb-marker" class="fb-marker"></div>
+  </div>
+
+  <div id="fb-question-box" class="tc-question-box" style="margin-top:1.2rem;">
+    <p id="fb-play-label" class="tc-level-label"></p>
+    <p id="fb-question" class="tc-question"></p>
+    <div id="fb-choices" class="tc-choices"></div>
+  </div>
+
+  <div id="fb-end-box" class="mm-win" hidden>
+    <p id="fb-end-message"></p>
+    <button id="fb-continue" class="btn-primary" style="width:auto;" hidden>Next drive</button>
+    <button id="fb-play-again" class="btn-primary" style="width:auto;">Restart game</button>
+    <div id="fb-publish-row" class="lb-publish" hidden>
+      <button id="fb-publish" class="btn-ghost small">Publish score to leaderboard</button>
+      <p id="fb-publish-result" class="lb-publish-result"></p>
+    </div>
+    <a href="{{ url_for('game_leaderboard', game_key='trivia_football') }}" class="lb-view-link">View leaderboard →</a>
+  </div>
+
+  <button id="fb-restart" class="btn-ghost small" style="margin-top:1rem;">Restart</button>
+</main>
+
+<style>
+  .fb-scoreboard {
+    display: flex;
+    gap: 1.2rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .fb-field {
+    position: relative;
+    height: 1.4rem;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .fb-marker {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 0%;
+    background: var(--ink);
+    transition: width 0.5s ease;
+  }
+</style>
+
+<script>
+(function () {
+  const QUESTIONS = {{ questions | tojson }};
+  const YARDS_PER_CORRECT = 20;
+  const MAX_DOWNS = 4;
+
+  let order = [];
+  let qIndex = 0;
+  let yards = 0;
+  let down = 1;
+  let touchdowns = 0;
+
+  const downEl = document.getElementById("fb-down");
+  const yardsEl = document.getElementById("fb-yards");
+  const tdsEl = document.getElementById("fb-tds");
+  const markerEl = document.getElementById("fb-marker");
+  const playLabel = document.getElementById("fb-play-label");
+  const qBox = document.getElementById("fb-question");
+  const choicesBox = document.getElementById("fb-choices");
+  const questionBox = document.getElementById("fb-question-box");
+  const endBox = document.getElementById("fb-end-box");
+  const endMessage = document.getElementById("fb-end-message");
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function updateScoreboard() {
+    downEl.textContent = down;
+    yardsEl.textContent = yards;
+    tdsEl.textContent = touchdowns;
+    markerEl.style.width = Math.min(yards, 100) + "%";
+  }
+
+  function nextQuestion() {
+    if (qIndex >= order.length) order = shuffle(order.concat(order));
+    const q = QUESTIONS[order[qIndex % order.length]];
+    qIndex += 1;
+    playLabel.textContent = `Down ${down} — gain ${YARDS_PER_CORRECT} yards if you're right`;
+    qBox.textContent = q.q;
+    choicesBox.innerHTML = "";
+    q.choices.forEach((choice, i) => {
+      const btn = document.createElement("button");
+      btn.className = "tc-choice-btn";
+      btn.textContent = choice;
+      btn.addEventListener("click", () => onAnswer(i, q));
+      choicesBox.appendChild(btn);
+    });
+  }
+
+  function onAnswer(i, q) {
+    const buttons = [...choicesBox.children];
+    buttons.forEach((b) => (b.disabled = true));
+    buttons[q.answer].classList.add("correct");
+
+    if (i === q.answer) {
+      buttons[i].classList.add("correct");
+      yards = Math.min(100, yards + YARDS_PER_CORRECT);
+      updateScoreboard();
+      if (yards >= 100) {
+        touchdowns += 1;
+        setTimeout(() => scoreDrive(), 700);
+        return;
+      }
+      down = 1;
+      setTimeout(nextQuestion, 700);
+    } else {
+      buttons[i].classList.add("wrong");
+      down += 1;
+      updateScoreboard();
+      if (down > MAX_DOWNS) {
+        setTimeout(() => endGame(false), 700);
+      } else {
+        setTimeout(nextQuestion, 700);
+      }
+    }
+  }
+
+  function scoreDrive() {
+    questionBox.hidden = true;
+    endBox.hidden = false;
+    document.getElementById("fb-continue").hidden = false;
+    document.getElementById("fb-publish-row").hidden = true;
+    endMessage.textContent = `🏈 Touchdown! That's ${touchdowns} on the day.`;
+  }
+
+  function nextDrive() {
+    yards = 0;
+    down = 1;
+    questionBox.hidden = false;
+    endBox.hidden = true;
+    updateScoreboard();
+    nextQuestion();
+  }
+
+  function endGame(scored) {
+    questionBox.hidden = true;
+    endBox.hidden = false;
+    document.getElementById("fb-continue").hidden = true;
+    endMessage.textContent = `Turnover on downs at the ${yards} yard line. Touchdowns this game: ${touchdowns}.`;
+
+    const publishRow = document.getElementById("fb-publish-row");
+    publishRow.hidden = false;
+    const publishBtn = document.getElementById("fb-publish");
+    const resultEl = document.getElementById("fb-publish-result");
+    publishBtn.disabled = false;
+    publishBtn.textContent = "Publish score to leaderboard";
+    resultEl.textContent = "";
+    publishBtn.onclick = () => {
+      ChurchLeaderboard.publish("trivia_football", touchdowns, resultEl, publishBtn);
+    };
+  }
+
+  function restart() {
+    order = shuffle(QUESTIONS.map((_, i) => i));
+    qIndex = 0;
+    yards = 0;
+    down = 1;
+    touchdowns = 0;
+    questionBox.hidden = false;
+    endBox.hidden = true;
+    document.getElementById("fb-continue").hidden = true;
+    updateScoreboard();
+    nextQuestion();
+  }
+
+  document.getElementById("fb-restart").addEventListener("click", restart);
+  document.getElementById("fb-play-again").addEventListener("click", restart);
+  document.getElementById("fb-continue").addEventListener("click", nextDrive);
+
+  restart();
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,5239 @@
+/* ============================================================
+   Clearspring — design tokens
+
+   Direction taken from passioncitychurch.com and the church's own site:
+   dark, cinematic, photograph-led, with almost no interface furniture.
+   Type does the work. The signature is one word of a heading set in
+   italic serif inside a sans headline.
+
+   The previous warm cream-and-brown palette is kept intact at
+   static/style-classic.css if this needs reverting.
+   ============================================================ */
+
+:root {
+  /* Light is the equivalent of the dark scheme, not an inversion of it.
+     Near-white and near-black, so photography still carries the colour. */
+  --bg: #FFFFFF;
+  --surface: #F5F5F6;
+  --surface-2: #EBEBED;
+  --ink: #0B0B0D;
+  --muted: #5E5E66;
+  --line: #E2E2E5;
+  --white: #FFFFFF;
+
+  /* Turquoise, in two weights, because one value can't do both jobs.
+
+     --accent is the text-safe deep turquoise: 5.6:1 on white, so it can be
+     used for links and small labels. The bright turquoise everyone pictures
+     (#2DD4BF) is only 1.9:1 on white and is unreadable as text.
+
+     --accent-fill is that bright turquoise, used only as a background — and
+     it takes BLACK text, not white. That's counterintuitive but it's what
+     the numbers say: black on #14B8A6 is 7.9:1, white is 2.5:1. */
+  --accent: #0D7377;
+  --accent-soft: #14908F;
+  --on-accent: #FFFFFF;
+  --accent-fill: #14B8A6;
+  --on-accent-fill: #06201F;
+
+  /* Kids Games sits in the same family — turquoise over near-black. */
+  --quest-deep: #06201F;
+  --quest-mid: #0D5C5E;
+  --quest-ember: #2DD4BF;
+
+  /* Flatter than before. Depth comes from imagery and contrast, not shadow. */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 16px -8px rgba(0,0,0,0.14);
+  --shadow-lg: 0 12px 32px -12px rgba(0,0,0,0.22);
+
+  --invert-bg: #0B0B0D;
+  --invert-ink: #FFFFFF;
+  --invert-muted: rgba(255,255,255,0.62);
+
+  /* Three radii, not eight. */
+  --r-sm: 3px;
+  --r-md: 10px;
+  --r-full: 999px;
+
+  --display: "Archivo", system-ui, -apple-system, sans-serif;
+  --emph: "Instrument Serif", Georgia, serif;
+  --body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --label: "Archivo", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  /* Long-form scripture reading. A warm, modern serif drawn for on-screen
+     text, kept separate from --emph so the reader can be tuned on its own. */
+  --reading: "Newsreader", Georgia, "Times New Roman", serif;
+}
+
+/* Dark is the designed state. Everything was drawn here first. */
+[data-theme="dark"] {
+  --bg: #08080A;
+  --surface: #131316;
+  --surface-2: #1C1C21;
+  --ink: #FFFFFF;
+  --muted: #9A9AA2;
+  --line: #2A2A31;
+  --white: #131316;
+
+  /* On near-black the bright turquoise is safe as text (10.6:1), so one
+     value does both jobs here. It still takes black text when used as a
+     fill — white on turquoise fails in either theme. */
+  --accent: #2DD4BF;
+  --accent-soft: #5EEAD4;
+  --on-accent: #06201F;
+  --accent-fill: #2DD4BF;
+  --on-accent-fill: #06201F;
+
+  --quest-deep: #041514;
+  --quest-mid: #0A4A4C;
+  --quest-ember: #5EEAD4;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
+  --shadow-md: 0 6px 20px -10px rgba(0,0,0,0.7);
+  --shadow-lg: 0 16px 40px -16px rgba(0,0,0,0.8);
+
+  --invert-bg: #FFFFFF;
+  --invert-ink: #08080A;
+  --invert-muted: rgba(11,11,13,0.64);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] {
+    --bg: #08080A;
+    --surface: #131316;
+    --surface-2: #1C1C21;
+    --ink: #FFFFFF;
+    --muted: #9A9AA2;
+    --line: #2A2A31;
+    --white: #131316;
+    --accent: #2DD4BF;
+    --accent-soft: #5EEAD4;
+    --on-accent: #06201F;
+    --accent-fill: #2DD4BF;
+    --on-accent-fill: #06201F;
+
+    --quest-deep: #041514;
+    --quest-mid: #0A4A4C;
+    --quest-ember: #5EEAD4;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
+    --shadow-md: 0 6px 20px -10px rgba(0,0,0,0.7);
+    --shadow-lg: 0 16px 40px -16px rgba(0,0,0,0.8);
+    --invert-bg: #FFFFFF;
+    --invert-ink: #08080A;
+    --invert-muted: rgba(11,11,13,0.64);
+  }
+}
+
+/* Colour changes shouldn't flash when switching theme */
+html[data-theme] body,
+html[data-theme] .bible-row,
+html[data-theme] .game-tile,
+html[data-theme] .qa-card {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  padding: 3rem 1.5rem 2.2rem;
+  text-align: center;
+  border-bottom: 1px solid var(--line);
+}
+
+.hero-arch { max-width: 34rem; margin: 0 auto; }
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 0.9rem;
+}
+
+.hero h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(2.4rem, 9vw, 3.4rem);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.logo-mark {
+  display: block;
+  height: clamp(2.4rem, 8vw, 3.2rem);
+  width: auto;
+  margin: 0 auto;
+}
+
+.tagline {
+  color: var(--muted);
+  margin: 0.9rem 0 0;
+  font-size: 1.02rem;
+}
+
+/* ---------- Board / schedule ---------- */
+
+.board {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.day-group { margin-bottom: 2.4rem; }
+
+.day-label {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0 0 0.6rem;
+  color: var(--ink);
+}
+
+.day-rule {
+  height: 1px;
+  background: var(--line);
+  margin-bottom: 1.1rem;
+}
+
+.card {
+  display: flex;
+  gap: 1rem;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.card:last-child { border-bottom: none; }
+
+.card-time {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+  min-width: 4.6rem;
+  padding-top: 0.15rem;
+}
+
+.card-body { flex: 1; }
+
+.card-tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white);
+  background: var(--ink);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  margin-bottom: 0.4rem;
+}
+
+.card.event .card-tag {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+}
+
+.card h3 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  margin: 0 0 0.3rem;
+}
+
+.card-location, .card-desc {
+  margin: 0.15rem 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.card-recurring {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--muted);
+}
+.empty-sub { font-size: 0.9rem; }
+
+.site-footer {
+  text-align: center;
+  padding: 2rem 0 3rem;
+}
+.site-footer a {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--muted);
+}
+
+/* ---------- Flash messages ---------- */
+
+.flash {
+  max-width: 40rem;
+  margin: 1rem auto 0;
+  padding: 0.8rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--ink);
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+}
+.flash p { margin: 0.2rem 0; }
+
+/* ---------- Auth / admin ---------- */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 22rem;
+  padding: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--surface);
+}
+
+.auth-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.6rem;
+  margin: 0 0 1.4rem;
+}
+
+form label {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0.9rem 0 0.35rem;
+}
+
+form input, form select, form textarea {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 0.95rem;
+}
+
+form input:focus, form select:focus, form textarea:focus {
+  border-color: var(--ink);
+}
+
+.btn-primary, .btn-ghost, .btn-danger {
+  display: inline-block;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--white);
+  margin-top: 1.4rem;
+  width: 100%;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.btn-danger {
+  background: transparent;
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.btn-primary.small, .btn-ghost.small, .btn-danger.small {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.admin-page {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 2rem;
+  margin: 0.2rem 0 0;
+}
+
+.admin-actions { display: flex; gap: 0.6rem; }
+
+.admin-table { border-top: 1px solid var(--line); }
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.admin-row-date {
+  display: flex;
+  flex-direction: column;
+  min-width: 6rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.mono { font-family: var(--mono); }
+
+.admin-row-main { flex: 1; min-width: 10rem; }
+.admin-row-main strong { display: block; font-family: var(--display); font-weight: 700; font-size: 1.05rem; margin-top: 0.2rem; }
+.admin-row-loc { font-size: 0.82rem; color: var(--muted); }
+
+.admin-row-actions { display: flex; gap: 0.5rem; }
+.admin-row-actions form { margin: 0; }
+
+.event-form { max-width: 26rem; margin-top: 1.5rem; }
+.form-row { display: flex; gap: 1rem; }
+.form-row > div { flex: 1; }
+.form-actions { display: flex; gap: 0.8rem; margin-top: 1.6rem; align-items: center; }
+.form-actions .btn-primary { width: auto; margin-top: 0; }
+
+/* ---------- Toolbar ---------- */
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-bottom: 1.4rem;
+}
+
+.filter-chips { display: flex; gap: 0.5rem; }
+
+.chip {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.chip.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--white);
+  font-weight: 600;
+}
+
+.subscribe-btn {
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* ---------- Calendar grid ---------- */
+
+.calendar {
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  padding: 1.1rem;
+  margin-bottom: 2.4rem;
+  background: var(--surface);
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+
+.cal-month-label {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.cal-nav-btn {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  color: var(--ink);
+  text-decoration: none;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.4rem;
+  border: 1px solid var(--line);
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.2rem;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 0.85rem;
+}
+
+.cal-day.out-of-month { color: var(--muted); opacity: 0.4; }
+
+.cal-day.is-today .cal-day-num {
+  background: var(--ink);
+  color: var(--white);
+  border-radius: 999px;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.cal-day.has-events { background: var(--surface-2); }
+
+.cal-dots { display: flex; gap: 0.25rem; }
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--ink);
+}
+.dot.event {
+  background: transparent;
+  border: 1px solid var(--ink);
+  width: 4px;
+  height: 4px;
+}
+
+/* ---------- Add to calendar ---------- */
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.add-to-cal {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--ink);
+}
+
+/* ---------- Site nav ---------- */
+
+.site-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.6rem 0.4rem calc(0.6rem + env(safe-area-inset-bottom));
+  background: var(--white);
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.site-nav a {
+  flex: 1;
+  text-align: center;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0.3rem 0.1rem;
+  border-radius: 0.5rem;
+}
+
+.site-nav a.active {
+  color: var(--white);
+  background: var(--ink);
+  font-weight: 700;
+}
+
+body { padding-bottom: 0; }
+body.has-tabbar { padding-bottom: 4.2rem; }
+
+/* ---------- Small page hero (non-home pages) ---------- */
+
+.hero-small { padding: 2.6rem 1.5rem 2rem; }
+.page-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(1.9rem, 7vw, 2.6rem);
+  margin: 0;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 1rem;
+}
+
+/* ---------- Q&A ---------- */
+
+.qa-card, .qa-admin-card {
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  padding: 1.1rem 1.2rem;
+  margin-bottom: 1rem;
+  background: var(--surface);
+}
+
+.qa-question {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.08rem;
+  margin: 0 0 0.4rem;
+}
+
+.qa-meta {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin: 0 0 0.7rem;
+}
+
+.qa-answer {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink);
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--ink);
+}
+
+.qa-answer-form { margin-top: 0.6rem; }
+.qa-answer-form textarea { margin-bottom: 0.6rem; }
+
+.qa-admin-actions { display: flex; gap: 0.6rem; }
+.qa-admin-card form:last-child { margin-top: 0.8rem; }
+
+@media (max-width: 480px) {
+  .hero { padding: 2.2rem 1.25rem 1.8rem; }
+  .card { gap: 0.75rem; }
+}
+
+/* ---------- Games hub ---------- */
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 1rem;
+}
+
+.game-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.4rem;
+  padding: 1.6rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  text-decoration: none;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.game-tile-emoji { font-size: 2.2rem; }
+.game-tile-title { font-family: var(--display); font-weight: 700; font-size: 1rem; }
+.game-tile-desc { font-size: 0.8rem; color: var(--muted); }
+
+.game-tile-soon { opacity: 0.5; }
+
+.game-note {
+  margin-top: 1.6rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* ---------- Home ---------- */
+
+.verse-card {
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  padding: 1.4rem 1.3rem;
+  margin-bottom: 1.8rem;
+  background: var(--invert-bg);
+  color: var(--white);
+}
+.verse-text {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  margin: 0 0 0.6rem;
+}
+.verse-ref {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  margin: 0;
+}
+
+.home-section { margin-bottom: 2rem; }
+.home-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.8rem;
+}
+.home-see-all {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.home-event-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
+}
+.home-event-date {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.72rem;
+  color: var(--muted);
+  min-width: 5.5rem;
+}
+.home-event-title { display: block; font-family: var(--display); font-size: 1rem; margin-top: 0.15rem; }
+
+.placeholder-card {
+  border: 1px dashed var(--line);
+  border-radius: 0.8rem;
+  padding: 1.1rem 1.2rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.quicklink-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+}
+.quicklink-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.9rem 0.4rem;
+  border-radius: 0.7rem;
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  text-align: center;
+}
+.quicklink-emoji { font-size: 1.4rem; }
+
+/* ---------- Bible reader ---------- */
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.5rem;
+}
+.book-tile {
+  padding: 0.75rem 0.6rem;
+  border-radius: 0.6rem;
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.8rem, 1fr));
+  gap: 0.5rem;
+}
+.chapter-tile {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.reader-text {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  line-height: 1.85;
+}
+.reader-text p { margin: 0 0 0.7rem; }
+.verse-num {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-right: 0.3rem;
+}
+.reader-note {
+  margin-top: 1.4rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.reader-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.6rem;
+}
+
+.translation-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.4rem;
+}
+
+.verse-line { position: relative; padding-right: 1.6rem; }
+.save-star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--muted);
+  vertical-align: middle;
+  margin-left: 0.3rem;
+  line-height: 1;
+}
+.save-star.is-saved { color: var(--ink); }
+
+/* ============================================================
+   WARMTH LAYER — softer, cleaner, more editorial
+   Overrides that sit on top of the base styles above.
+   ============================================================ */
+
+/* Softer, warmer section labels (were hard uppercase mono) */
+.section-label,
+.eyebrow {
+  font-family: var(--label);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  font-size: 0.7rem;
+  color: var(--accent);
+}
+
+/* Headings: warm serif, more character */
+.page-title,
+.hero h1,
+.qa-question,
+.verse-text,
+.game-tile-title,
+.book-tile,
+.home-event-title,
+.mm-win p {
+  font-family: var(--display);
+  letter-spacing: -0.01em;
+}
+
+/* Hero softening */
+.hero {
+  border-bottom: none;
+  padding-bottom: 1.4rem;
+}
+.hero-small { padding: 2.4rem 1.5rem 1.4rem; }
+.tagline { color: var(--muted); }
+
+/* Cards: soft shadow + warmer corners instead of hard borders */
+.verse-card {
+  border: none;
+  border-radius: 1.25rem;
+  background: linear-gradient(160deg, var(--invert-bg), var(--surface-2));
+  box-shadow: 0 12px 30px -12px rgba(43, 38, 34, 0.35);
+}
+.verse-text { font-weight: 500; }
+
+.game-tile,
+.book-tile,
+.chapter-tile,
+.quicklink-tile {
+  border: none;
+  border-radius: 1rem;
+  background: var(--white);
+  box-shadow: 0 4px 16px -8px rgba(43, 38, 34, 0.18);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.game-tile:hover,
+.book-tile:hover,
+.quicklink-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -10px rgba(43, 38, 34, 0.25);
+}
+.chapter-tile { border-radius: 0.7rem; }
+
+.qa-card,
+.qa-admin-card {
+  border: none;
+  border-radius: 1rem;
+  background: var(--white);
+  box-shadow: 0 4px 16px -8px rgba(43, 38, 34, 0.15);
+}
+
+.placeholder-card {
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+
+/* Cards on the calendar/agenda */
+.card { border-color: var(--line); }
+.card-tag {
+  font-family: var(--label);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+/* Calendar container softening */
+.calendar {
+  border: none;
+  border-radius: 1.25rem;
+  background: var(--white);
+  box-shadow: 0 6px 20px -10px rgba(43, 38, 34, 0.18);
+}
+.cal-day.is-today .cal-day-num,
+.cal-day.has-events { border-radius: 0.6rem; }
+
+/* Buttons: pill-shaped, warmer */
+.btn-primary {
+  background: var(--accent);
+  border-radius: 999px;
+  box-shadow: 0 6px 16px -8px rgba(176, 136, 86, 0.6);
+}
+.btn-ghost {
+  border-radius: 999px;
+  border-color: var(--line);
+}
+.btn-danger { border-radius: 999px; }
+
+/* Chips / filter pills */
+.chip {
+  font-family: var(--label);
+  border-radius: 999px;
+  border-color: var(--line);
+}
+.chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--white);
+}
+.subscribe-btn {
+  border-radius: 999px;
+  border-color: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Bottom tab bar: soft, floating, warm */
+.site-nav {
+  background: rgba(251, 248, 243, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line);
+  font-family: var(--label);
+  font-size: 0.64rem;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+.site-nav a.active {
+  background: var(--accent);
+  color: var(--white);
+}
+
+/* Reader typography — warmer, more readable */
+.reader-text { font-family: var(--display); font-weight: 400; }
+.verse-num { color: var(--accent); font-family: var(--label); font-weight: 600; }
+.save-star.is-saved { color: var(--accent); }
+
+/* Day labels on calendar */
+.day-label { font-family: var(--display); }
+
+/* Verse reference small caps */
+.verse-ref,
+.reader-note,
+.qa-meta,
+.card-time,
+.mono {
+  font-family: var(--label);
+}
+
+/* ============================================================
+   V2 — EDITORIAL HOME: photographic hero, bento grid, motion
+   ============================================================ */
+
+/* --- Motion primitives --- */
+[data-load], [data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+[data-load].in, [data-reveal].in {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-load], [data-reveal] { opacity: 1; transform: none; transition: none; }
+}
+
+/* --- Hero --- */
+.v2-hero {
+  position: relative;
+  min-height: 82vh;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  isolation: isolate;
+}
+.v2-hero-bg {
+  position: absolute;
+  inset: 0;
+  background: url("/static/hero-worship.jpg") center top/cover no-repeat;
+  transform: scale(calc(1 + (var(--scroll, 0) * 0.08)));
+  transition: transform 0.1s linear;
+  z-index: -3;
+}
+.v2-hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    rgba(20, 24, 30, 0.12) 0%,
+    rgba(20, 24, 30, 0.0) 45%,
+    rgba(20, 24, 30, 0.30) 100%);
+  z-index: -2;
+}
+.v2-hero-fade {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 20%;
+  background: linear-gradient(180deg, rgba(251,248,243,0) 0%, var(--bg) 96%);
+  z-index: -1;
+}
+.v2-hero-inner {
+  width: 100%;
+  padding: 0 1rem 1.4rem;
+  text-align: center;
+}
+.v2-hero-panel {
+  margin: 0 auto;
+  max-width: 22rem;
+  padding: 1.6rem 1.5rem 1.7rem;
+  border-radius: 1.5rem;
+  background: rgba(18, 21, 27, 0.68);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.65);
+}
+.v2-eyebrow {
+  font-family: var(--label);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--accent-soft);
+  margin: 0 0 1rem;
+}
+.v2-hero-logo {
+  height: clamp(2.4rem, 11vw, 3.4rem);
+  width: auto;
+  margin: 0 auto 0.9rem;
+  display: block;
+  filter: brightness(0) invert(1) drop-shadow(0 2px 16px rgba(0,0,0,0.4));
+}
+.v2-hero-sub {
+  font-family: var(--display);
+  font-size: clamp(1.02rem, 4.2vw, 1.3rem);
+  font-weight: 500;
+  color: #FBF8F3;
+  margin: 0 0 1.3rem;
+  font-style: italic;
+}
+/* Hero call-to-action.
+   These colours are deliberately fixed rather than themed. The button sits on
+   a photograph with a dark scrim, which looks identical in light and dark
+   mode — so tying it to var(--ink) made it follow the app theme while its
+   actual backdrop never changed. In dark mode that put near-white text on a
+   cream background: a contrast ratio of 1.1:1, effectively invisible.
+
+   Bright turquoise with near-black text is 10.6:1 and unmistakably the brand
+   colour. Note the text is BLACK: white on turquoise is 1.9:1 and fails. */
+.v2-hero-cta {
+  display: inline-block;
+  background: #2DD4BF;
+  color: #06201F;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 0.85rem 1.8rem;
+  border-radius: 999px;
+  text-decoration: none;
+  /* A hairline keeps the edge defined over the brighter parts of the photo. */
+  box-shadow:
+    0 0 0 1px rgba(43, 38, 34, 0.14),
+    0 12px 34px -8px rgba(0, 0, 0, 0.55);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.v2-hero-cta:hover {
+  background: #DCB07A;
+}
+.v2-hero-cta:active { transform: scale(0.96); }
+.v2-hero-cta:focus-visible {
+  outline: 3px solid #FBF8F3;
+  outline-offset: 3px;
+}
+
+.v2-main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 0 1.15rem 3rem;
+  position: relative;
+}
+
+/* --- Verse centerpiece --- */
+.v2-verse {
+  position: relative;
+  text-align: center;
+  padding: 1.5rem 1rem 2.6rem;
+  margin-bottom: 1rem;
+}
+.v2-verse-mark {
+  font-family: var(--display);
+  font-size: 5rem;
+  line-height: 0.5;
+  color: var(--accent-soft);
+  opacity: 0.5;
+  display: block;
+  height: 2.2rem;
+}
+.v2-verse-text {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: clamp(1.3rem, 5.5vw, 1.75rem);
+  line-height: 1.45;
+  color: var(--ink);
+  margin: 0 0 1rem;
+  letter-spacing: -0.01em;
+}
+.v2-verse-ref {
+  font-family: var(--label);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0;
+}
+
+/* --- Bento grid --- */
+.v2-bento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 2.6rem;
+}
+.v2-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding: 1.2rem;
+  border-radius: 1.35rem;
+  background: var(--white);
+  box-shadow: 0 10px 30px -16px rgba(43, 38, 34, 0.25);
+  text-decoration: none;
+  color: var(--ink);
+  overflow: hidden;
+  transition: transform 0.22s cubic-bezier(0.16,1,0.3,1), box-shadow 0.22s ease;
+  min-height: 9.5rem;
+}
+.v2-cell:active { transform: scale(0.975); }
+@media (hover: hover) {
+  .v2-cell:hover { transform: translateY(-3px); box-shadow: 0 18px 38px -16px rgba(43,38,34,0.3); }
+}
+.v2-cell-emoji { font-size: 1.9rem; }
+.v2-cell-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.12rem;
+  margin: 0;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+.v2-cell-sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0.1rem 0 0;
+  line-height: 1.4;
+}
+.v2-arrow {
+  font-family: var(--label);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 0.3rem;
+}
+.v2-arrow.light { color: rgba(255,255,255,0.92); }
+
+/* Feature cell spans full width, has media band */
+.v2-cell-feature {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: stretch;
+  padding: 0;
+  min-height: 7.5rem;
+}
+.v2-cell-feature-media {
+  flex: 0 0 38%;
+  background: url("/static/sermon-latest.jpg") center/cover no-repeat;
+  position: relative;
+}
+.v2-cell-feature-media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(20,24,30,0.1), rgba(20,24,30,0.45));
+}
+.v2-cell-feature-media::after {
+  content: "▶";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.95);
+  font-size: 1.4rem;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+.v2-cell-feature-body {
+  flex: 1;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+/* Tall cell spans two rows on the right */
+.v2-cell-tall { grid-row: span 2; justify-content: flex-start; }
+
+/* Accent cell — deep, inverted */
+.v2-cell-accent {
+  background: linear-gradient(155deg, var(--accent), #6E4620);
+  color: #fff;
+}
+.v2-cell-accent .v2-cell-title { color: #fff; }
+
+.v2-tag {
+  display: inline-block;
+  align-self: flex-start;
+  font-family: var(--label);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.v2-tag.service { background: var(--ink); color: var(--bg); }
+.v2-tag.event { background: var(--accent); color: #fff; }
+
+/* --- Sections --- */
+.v2-section { margin-bottom: 2.4rem; }
+.v2-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1.1rem;
+}
+.v2-section-label {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.35rem;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.v2-section-link {
+  font-family: var(--label);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.v2-empty { color: var(--muted); font-size: 0.92rem; }
+
+/* --- Event list --- */
+.v2-events { display: flex; flex-direction: column; gap: 0.7rem; }
+.v2-event {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1.1rem;
+  background: var(--white);
+  box-shadow: 0 6px 20px -14px rgba(43,38,34,0.22);
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.v2-event:active { transform: scale(0.985); }
+@media (hover: hover) {
+  .v2-event:hover { transform: translateX(3px); box-shadow: 0 10px 26px -14px rgba(43,38,34,0.28); }
+}
+.v2-event-when {
+  flex: 0 0 3rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  padding: 0.35rem 0;
+  background: var(--surface);
+  border-radius: 0.7rem;
+}
+.v2-event-day {
+  font-family: var(--label);
+  text-transform: uppercase;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--accent);
+}
+.v2-event-date {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--ink);
+}
+.v2-event-body { flex: 1; min-width: 0; }
+.v2-event-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.02rem;
+  margin: 0.25rem 0 0.15rem;
+  line-height: 1.2;
+}
+.v2-event-meta { font-size: 0.8rem; color: var(--muted); margin: 0; }
+.v2-event-chevron {
+  font-size: 1.6rem;
+  color: var(--muted);
+  opacity: 0.5;
+  font-family: var(--display);
+}
+
+/* ============================================================
+   V2 — SECONDARY PAGES: richer hero + tiles (Community/Bible/More/Watch/Games)
+   ============================================================ */
+
+/* Refined secondary hero with subtle gradient wash */
+.hero-small {
+  position: relative;
+  padding: 3rem 1.5rem 1.8rem;
+  background:
+    radial-gradient(120% 80% at 50% -20%, rgba(138,90,43,0.08), transparent 60%);
+  border-bottom: none;
+}
+.hero-small .page-title {
+  font-size: clamp(2.1rem, 8vw, 2.9rem);
+  line-height: 1.02;
+}
+
+/* Upgrade the tile grid into a warmer bento-ish feel */
+.game-grid {
+  gap: 0.75rem;
+}
+.game-tile {
+  position: relative;
+  align-items: flex-start;
+  text-align: left;
+  padding: 1.3rem 1.2rem 1.2rem;
+  border-radius: 1.35rem;
+  min-height: 8.5rem;
+  justify-content: flex-end;
+  gap: 0.3rem;
+  box-shadow: 0 10px 30px -16px rgba(43,38,34,0.25);
+  overflow: hidden;
+}
+.game-tile::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  right: -30%;
+  width: 70%;
+  height: 70%;
+  background: radial-gradient(circle, rgba(138,90,43,0.06), transparent 70%);
+  pointer-events: none;
+}
+.game-tile-emoji {
+  font-size: 2rem;
+  margin-bottom: auto;
+}
+.game-tile-title {
+  font-size: 1.1rem;
+  line-height: 1.1;
+}
+.game-tile-desc {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+.game-tile-soon {
+  background: var(--surface);
+  box-shadow: none;
+  border: 1px solid var(--line);
+}
+.game-tile-soon .game-tile-emoji { opacity: 0.55; }
+
+/* Give live (non-soon) tiles a small "enter" arrow that slides on hover */
+.game-tile:not(.game-tile-soon)::after {
+  content: "→";
+  position: absolute;
+  right: 1.1rem;
+  bottom: 1.15rem;
+  font-family: var(--label);
+  font-weight: 700;
+  color: var(--accent);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+@media (hover: hover) {
+  .game-tile:not(.game-tile-soon):hover::after { opacity: 1; transform: translateX(0); }
+}
+
+/* ============================================================
+   BIBLE SECTION — rebuilt. Content-first, list-based, no emoji.
+   Benchmark: YouVersion. Restraint over decoration.
+   ============================================================ */
+
+.icn { display: block; flex: none; }
+
+.bible {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.15rem 3rem;
+}
+
+/* Header: title + search, no oversized hero */
+.bible-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.bible-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.9rem;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--ink);
+}
+.bible-search {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  color: var(--muted);
+  background: var(--surface);
+  text-decoration: none;
+}
+
+/* Verse of the day — the page's hero content */
+.votd {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 2rem;
+}
+/* On Home the page already supplies top spacing, so drop it here to avoid
+   doubling up. The Bible page keeps its own padding. */
+.home-main .votd { padding-top: 0; }
+.votd-label {
+  font-family: var(--label);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.85rem;
+}
+.votd-text {
+  font-family: var(--display);
+  font-size: 1.32rem;
+  line-height: 1.55;
+  font-weight: 400;
+  color: var(--ink);
+  margin: 0 0 1.1rem;
+  letter-spacing: -0.005em;
+}
+.votd-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.votd-ref {
+  font-family: var(--label);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.votd-action {
+  font-family: var(--label);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* Section blocks */
+.bible-block { margin-bottom: 2rem; }
+.bible-block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+.bible-h2 {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.bible-more {
+  font-family: var(--label);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* Horizontal plan rail — varies layout rhythm vs vertical lists */
+.plan-rail {
+  display: flex;
+  gap: 0.7rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.3rem;
+  margin: 0 -1.15rem;
+  padding-left: 1.15rem;
+  padding-right: 1.15rem;
+  scrollbar-width: none;
+}
+.plan-rail::-webkit-scrollbar { display: none; }
+.plan-card {
+  flex: 0 0 9.5rem;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.95rem 1rem 1.05rem;
+  border-radius: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
+  transition: background 0.18s ease;
+}
+.plan-card:active { background: var(--surface-2); }
+.plan-card-days {
+  font-family: var(--label);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.plan-card-title {
+  font-family: var(--display);
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.plan-card-sub {
+  font-size: 0.76rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+/* Devotional feature — editorial, text-led */
+.devo-feature {
+  display: block;
+  padding: 1.2rem 1.25rem 1.3rem;
+  border-radius: 1rem;
+  background: var(--invert-bg);
+  color: var(--invert-ink);
+  text-decoration: none;
+  transition: transform 0.18s ease;
+}
+.devo-feature:active { transform: scale(0.985); }
+.devo-feature-ref {
+  font-family: var(--label);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+}
+.devo-feature-title {
+  font-family: var(--display);
+  font-size: 1.18rem;
+  font-weight: 600;
+  margin: 0.4rem 0 0.5rem;
+  letter-spacing: -0.01em;
+}
+.devo-feature-excerpt {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  margin: 0 0 0.9rem;
+  color: rgba(246, 242, 236, 0.72);
+}
+.devo-feature-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--label);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--invert-ink);
+}
+
+/* Utility list rows — a real list, not tiles */
+.bible-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+}
+.bible-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.95rem 0.15rem;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
+}
+.bible-row:active { background: var(--surface); }
+.bible-row-icon {
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 0.65rem;
+  background: var(--surface);
+  color: var(--accent);
+  flex: none;
+}
+.bible-row-body { flex: 1; display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.bible-row-title { font-family: var(--body); font-weight: 600; font-size: 0.95rem; }
+.bible-row-sub { font-size: 0.78rem; color: var(--muted); }
+.bible-row > .icn { color: var(--muted); opacity: 0.6; }
+
+/* --- Back button in bible header --- */
+.bible-back {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  margin-left: -0.5rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* --- Book search + list --- */
+.book-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.7rem;
+  background: var(--surface);
+  color: var(--muted);
+  margin-bottom: 1.6rem;
+}
+.book-search input {
+  flex: 1;
+  border: none;
+  background: none;
+  font-family: var(--body);
+  font-size: 0.95rem;
+  color: var(--ink);
+  padding: 0;
+  outline: none;
+  -webkit-appearance: none;
+}
+.book-search input::placeholder { color: var(--muted); }
+
+.book-group-label {
+  font-family: var(--label);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 1.4rem 0 0.5rem;
+}
+.book-group-label:first-child { margin-top: 0; }
+
+.book-list { display: flex; flex-direction: column; }
+.book-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.82rem 0.15rem;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
+}
+.book-row:active { background: var(--surface); }
+.book-row-name { font-size: 0.98rem; font-weight: 500; }
+.book-row-meta {
+  font-family: var(--label);
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.book-empty { color: var(--muted); font-size: 0.9rem; padding: 1.5rem 0; text-align: center; }
+
+/* --- Chapter picker --- */
+.chapter-hint {
+  font-family: var(--label);
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0 0 1.1rem;
+}
+.chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(3.1rem, 1fr));
+  gap: 0.5rem;
+}
+.chapter-cell {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 0.6rem;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  font-family: var(--body);
+  font-weight: 500;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.15s ease;
+}
+.chapter-cell:active { background: var(--accent); color: #fff; }
+
+/* ============================================================
+   READER — text is the interface
+   ============================================================ */
+
+.reader-bar {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  background: rgba(251, 248, 243, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.reader-bar-back {
+  display: grid; place-items: center;
+  width: 2.1rem; height: 2.1rem;
+  color: var(--ink); text-decoration: none;
+  margin-left: -0.35rem;
+}
+.reader-bar-ref {
+  flex: 1;
+  text-align: left;
+  background: none;
+  border: none;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.02rem;
+  color: var(--ink);
+  padding: 0;
+  letter-spacing: -0.01em;
+}
+.reader-bar-trans { display: flex; gap: 0.25rem; }
+.trans-pill {
+  font-family: var(--label);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.45rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+.trans-pill.on { background: var(--ink); color: var(--bg); }
+
+.reader {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 1.6rem 1.3rem 4rem;
+}
+
+/* Flowing scripture text — verses inline, like a real Bible page */
+.scripture {
+  font-family: var(--display);
+  font-size: 1.12rem;
+  line-height: 1.85;
+  color: var(--ink);
+  letter-spacing: -0.003em;
+}
+.v {
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: background 0.15s ease;
+  padding: 0.05em 0;
+}
+.v.saved { background: rgba(138, 90, 43, 0.10); }
+.v.sel { background: rgba(138, 90, 43, 0.22); }
+.vn {
+  font-family: var(--label);
+  font-size: 0.6em;
+  font-weight: 700;
+  color: var(--accent);
+  vertical-align: super;
+  line-height: 0;
+  margin-right: 0.18em;
+  font-variant-numeric: tabular-nums;
+}
+
+.reader-credit {
+  font-family: var(--label);
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.reader-error {
+  padding: 1.2rem;
+  border-radius: 0.8rem;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.reader-error strong { color: var(--ink); }
+
+.reader-paging {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 2rem;
+}
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  font-family: var(--body);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.page-btn:active { background: var(--surface); }
+
+/* Verse action sheet */
+.vsheet {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: 0;
+  z-index: 40;
+  padding: 0 0.75rem calc(0.75rem + env(safe-area-inset-bottom));
+  transform: translateY(110%);
+  transition: transform 0.24s cubic-bezier(0.16,1,0.3,1);
+}
+.vsheet.up { transform: translateY(0); }
+.vsheet-inner {
+  background: var(--invert-bg);
+  color: var(--invert-ink);
+  border-radius: 1.1rem;
+  padding: 0.9rem 1rem 1rem;
+  box-shadow: 0 18px 40px -14px rgba(0,0,0,0.5);
+}
+.vsheet-ref {
+  font-family: var(--label);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  margin: 0 0 0.7rem;
+}
+.vsheet-actions { display: flex; gap: 0.5rem; }
+.vsheet-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.65rem 0.5rem;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(246,242,236,0.18);
+  background: rgba(246,242,236,0.06);
+  color: var(--invert-ink);
+  font-family: var(--body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.vsheet-btn:active { background: rgba(246,242,236,0.16); }
+
+/* Reader pages hide the bottom tab bar chrome conflict */
+body.has-tabbar .vsheet { bottom: 3.6rem; }
+
+/* --- Bible section shared lede + plan stack --- */
+.bible-lede {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 0 0 1.6rem;
+}
+.bible-lede--flush { margin: 0; }
+
+.plan-stack { display: flex; flex-direction: column; }
+.plan-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.05rem 0.15rem;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
+}
+.plan-item:first-child { border-top: 1px solid var(--line); }
+.plan-item:active { background: var(--surface); }
+.plan-item-body { flex: 1; min-width: 0; }
+.plan-item-days {
+  font-family: var(--label);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.plan-item-title {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0.22rem 0 0.18rem;
+  letter-spacing: -0.01em;
+}
+.plan-item-sub { font-size: 0.82rem; color: var(--muted); margin: 0; line-height: 1.4; }
+.plan-item > .icn { color: var(--muted); opacity: 0.55; }
+
+/* --- Saved verses --- */
+.saved-list { display: flex; flex-direction: column; }
+.saved-item {
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.saved-item:first-child { border-top: 1px solid var(--line); }
+.saved-item-ref {
+  font-family: var(--label);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.45rem;
+}
+.saved-item-text {
+  font-family: var(--display);
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 0 0 0.7rem;
+}
+.saved-item-remove {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--label);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+.saved-item-remove:active { color: var(--ink); }
+
+.saved-empty {
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+}
+.saved-empty-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 3.4rem; height: 3.4rem;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+.saved-empty-title {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+}
+.saved-empty-sub {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0 0 1.4rem;
+  max-width: 18rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+.saved-empty-cta {
+  display: inline-block;
+  padding: 0.7rem 1.4rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg);
+  text-decoration: none;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+/* --- Devotional reading view --- */
+.devo-read { padding-bottom: 1rem; }
+.devo-read-label {
+  font-family: var(--label);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.6rem;
+}
+.devo-read-title {
+  font-family: var(--display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.8rem;
+}
+.devo-read-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-family: var(--label);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  margin-bottom: 1.4rem;
+}
+.devo-read-body {
+  font-family: var(--display);
+  font-size: 1.04rem;
+  line-height: 1.75;
+  color: var(--ink);
+}
+.devo-read-body p { margin: 0 0 1.1rem; }
+
+.devo-archive-head {
+  font-family: var(--label);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 2.2rem 0 0.6rem;
+}
+.devo-archive-list { display: flex; flex-direction: column; }
+.devo-archive-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 0.15rem;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
+}
+.devo-archive-row:first-child { border-top: 1px solid var(--line); }
+.devo-archive-row:active { background: var(--surface); }
+.devo-archive-body { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.devo-archive-title { font-family: var(--display); font-weight: 600; font-size: 0.98rem; }
+.devo-archive-ref { font-family: var(--label); font-size: 0.75rem; color: var(--muted); }
+.devo-archive-row > .icn { color: var(--muted); opacity: 0.55; }
+
+/* ============================================================
+   PRAYER
+   ============================================================ */
+
+.prayer-cta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  background: var(--invert-bg);
+  color: var(--invert-ink);
+  text-decoration: none;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+}
+.prayer-cta > span { flex: 1; }
+.prayer-cta .icn { color: var(--accent-soft); }
+.prayer-cta > .icn:last-child { color: var(--invert-muted); }
+
+.prayer-block { margin-bottom: 2.2rem; }
+.prayer-h2 {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.9rem;
+  letter-spacing: -0.01em;
+}
+
+/* Praise reports rail */
+.praise-rail {
+  display: flex;
+  gap: 0.7rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  margin: 0 -1.15rem;
+  padding: 0 1.15rem 0.3rem;
+  scrollbar-width: none;
+}
+.praise-rail::-webkit-scrollbar { display: none; }
+.praise-card {
+  flex: 0 0 15rem;
+  scroll-snap-align: start;
+  padding: 1rem 1.1rem 1.1rem;
+  border-radius: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.praise-label {
+  font-family: var(--label);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.praise-body {
+  font-family: var(--display);
+  font-size: 0.94rem;
+  line-height: 1.55;
+  margin: 0.45rem 0 0.5rem;
+}
+.praise-author { font-size: 0.78rem; color: var(--muted); margin: 0; }
+
+/* Prayer request list */
+.prayer-list { display: flex; flex-direction: column; }
+.prayer-item {
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.prayer-item:first-child { border-top: 1px solid var(--line); }
+.prayer-body {
+  font-family: var(--display);
+  font-size: 1.02rem;
+  line-height: 1.6;
+  margin: 0 0 0.7rem;
+  color: var(--ink);
+}
+.prayer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.prayer-author {
+  font-family: var(--label);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.pray-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.42rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink);
+  font-family: var(--label);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pray-btn .icn { color: var(--accent); }
+.pray-btn.done {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.pray-btn.done .icn { color: #fff; }
+.pray-count { font-variant-numeric: tabular-nums; opacity: 0.75; }
+
+/* Prayer form */
+.prayer-form { margin-bottom: 2rem; }
+.pf-label {
+  display: block;
+  font-family: var(--label);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 1.3rem 0 0.5rem;
+  padding: 0;
+}
+.prayer-form textarea,
+.prayer-form input[type="text"],
+.journal-form textarea {
+  width: 100%;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--line);
+  background: var(--white);
+  font-family: var(--body);
+  font-size: 0.95rem;
+  color: var(--ink);
+  resize: vertical;
+}
+.prayer-form textarea:focus,
+.prayer-form input:focus,
+.journal-form textarea:focus { border-color: var(--accent); outline: none; }
+
+.pf-group { border: none; padding: 0; margin: 0; }
+.pf-radio {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  background: var(--white);
+}
+.pf-radio input { margin-top: 0.2rem; accent-color: var(--accent); }
+.pf-radio-body { display: flex; flex-direction: column; gap: 0.12rem; }
+.pf-radio-title { font-weight: 600; font-size: 0.92rem; }
+.pf-radio-sub { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+.pf-radio:has(input:checked) { border-color: var(--accent); background: var(--surface); }
+
+.pf-chips { display: flex; gap: 0.5rem; }
+.pf-chip {
+  flex: 1;
+  text-align: center;
+  padding: 0.6rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--white);
+}
+.pf-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.pf-chip:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.pf-chip:has(input:checked) {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
+.pf-submit {
+  width: 100%;
+  margin-top: 1.6rem;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+/* Crisis support note */
+.crisis-note {
+  padding: 1rem 1.1rem;
+  border-radius: 0.8rem;
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+}
+.crisis-line {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0 0 0.6rem;
+  color: var(--ink);
+  font-weight: 500;
+}
+.crisis-list { list-style: none; margin: 0; padding: 0; }
+.crisis-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3rem 0;
+  font-size: 0.85rem;
+}
+.crisis-list span { color: var(--muted); }
+.crisis-list a { font-weight: 700; color: var(--accent); text-decoration: none; }
+
+.prayer-sent { text-align: center; padding: 2.5rem 1rem; }
+.prayer-sent-title {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.6rem;
+}
+.prayer-sent-sub {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 20rem;
+  margin: 0 auto 1.5rem;
+}
+
+/* Journal */
+.journal-privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.7rem;
+  background: var(--surface);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--muted);
+  margin: 0 0 1.4rem;
+}
+.journal-privacy .icn { color: var(--accent); flex: none; margin-top: 0.1rem; }
+.journal-form { margin-bottom: 2rem; }
+.journal-list { display: flex; flex-direction: column; }
+.journal-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.journal-item:first-child { border-top: 1px solid var(--line); }
+.journal-item.answered .journal-body { color: var(--muted); }
+.journal-meta {
+  font-family: var(--label);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.4rem;
+}
+.journal-body {
+  font-family: var(--display);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 0.6rem;
+}
+.journal-actions { display: flex; gap: 1rem; }
+.journal-action {
+  background: none; border: none; padding: 0;
+  font-family: var(--label);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+.journal-action:active { color: var(--ink); }
+
+/* Admin prayer */
+.admin-alert {
+  padding: 0.9rem 1.1rem;
+  border-radius: 0.7rem;
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin-bottom: 1.6rem;
+}
+.prayer-admin.held { border-left: 3px solid var(--accent); }
+.prayer-admin-reason {
+  font-family: var(--label);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+}
+.prayer-admin-tag {
+  font-family: var(--label);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 0.4rem;
+}
+
+/* ============================================================
+   SERMONS / WATCH
+   ============================================================ */
+
+.video-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.9rem;
+  overflow: hidden;
+  background: #000;
+  margin-bottom: 1.4rem;
+}
+.video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.live-block { margin-bottom: 1.6rem; }
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--label);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #C0392B;
+  margin: 0 0 0.6rem;
+}
+.live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #C0392B;
+  animation: livePulse 1.8s ease-in-out infinite;
+}
+@keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+
+/* Search + filters */
+.sermon-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.7rem;
+  background: var(--surface);
+  color: var(--muted);
+  margin-bottom: 0.9rem;
+}
+.sermon-search input {
+  flex: 1;
+  border: none; background: none; outline: none;
+  font-family: var(--body);
+  font-size: 0.92rem;
+  color: var(--ink);
+  -webkit-appearance: none;
+}
+.filter-row {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  margin: 0 -1.15rem 1.5rem;
+  padding: 0 1.15rem 0.3rem;
+  scrollbar-width: none;
+}
+.filter-row::-webkit-scrollbar { display: none; }
+.filter-pill {
+  flex: none;
+  padding: 0.38rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-family: var(--label);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.filter-pill.on { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.filter-pill.clear { color: var(--accent); border-color: var(--accent); }
+
+/* Featured sermon */
+.sermon-feature {
+  display: block;
+  border-radius: 1.1rem;
+  overflow: hidden;
+  background: var(--white);
+  box-shadow: 0 8px 26px -14px rgba(43,38,34,0.28);
+  text-decoration: none;
+  color: var(--ink);
+  margin-bottom: 1.8rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.sermon-feature:active {
+  transform: scale(0.985);
+  box-shadow: 0 4px 16px -10px rgba(43,38,34,0.28);
+}
+.sermon-feature-media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+}
+.sermon-feature-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sermon-play {
+  position: absolute;
+  display: grid; place-items: center;
+  width: 3.2rem; height: 3.2rem;
+  border-radius: 50%;
+  background: rgba(251,248,243,0.92);
+  color: var(--ink);
+  box-shadow: 0 6px 18px -6px rgba(0,0,0,0.4);
+}
+.sermon-feature-body { padding: 1rem 1.1rem 1.2rem; }
+.sermon-tag {
+  font-family: var(--label);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.sermon-feature-title {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0.35rem 0 0.3rem;
+  line-height: 1.2;
+}
+.sermon-feature-meta { font-size: 0.82rem; color: var(--muted); margin: 0; }
+
+.sermon-result-count {
+  font-family: var(--label);
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0 0 0.8rem;
+}
+
+/* Archive list */
+.sermon-list { display: flex; flex-direction: column; }
+.sermon-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 0.15rem;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
+}
+.sermon-row:first-child { border-top: 1px solid var(--line); }
+.sermon-row:active { background: var(--surface); }
+.sermon-row-thumb {
+  flex: none;
+  width: 4.2rem;
+  aspect-ratio: 16 / 10;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.sermon-row-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.sermon-row-body { flex: 1; display: flex; flex-direction: column; gap: 0.12rem; min-width: 0; }
+.sermon-row-title { font-family: var(--display); font-weight: 600; font-size: 0.96rem; line-height: 1.25; }
+.sermon-row-meta { font-size: 0.76rem; color: var(--muted); }
+.sermon-row-passage {
+  font-family: var(--label);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.sermon-row > .icn { color: var(--muted); opacity: 0.5; flex: none; }
+
+/* Sermon detail */
+.sermon-title {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 0.4rem;
+}
+.sermon-meta { font-size: 0.85rem; color: var(--muted); margin: 0 0 1rem; }
+.sermon-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.2rem; }
+.sermon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  background: var(--surface);
+  font-family: var(--label);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+.sermon-chip.passage { background: var(--accent); color: #fff; }
+.sermon-summary {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--ink);
+  margin: 0 0 1.8rem;
+}
+.sermon-external {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.8rem;
+  background: var(--invert-bg);
+  color: var(--invert-ink);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 1.4rem;
+}
+.sermon-external > span { flex: 1; }
+
+.sermon-h3 {
+  font-family: var(--display);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.7rem;
+}
+.audio-block { margin-bottom: 2rem; }
+.audio-player { width: 100%; margin-bottom: 0.8rem; }
+.audio-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.audio-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink);
+  font-family: var(--label);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.audio-action.done { background: var(--accent); border-color: var(--accent); color: #fff; }
+.audio-action.subtle { color: var(--muted); }
+.audio-action:disabled { opacity: 0.5; cursor: default; }
+.audio-note {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0.7rem 0 0;
+}
+
+/* Notes */
+.notes-block { margin-bottom: 2rem; }
+.notes-privacy { font-size: 0.78rem; color: var(--muted); margin: 0 0 0.7rem; }
+.notes-saved {
+  font-family: var(--label);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+#sermonNotes {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--line);
+  background: var(--white);
+  font-family: var(--body);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink);
+  resize: vertical;
+}
+#sermonNotes:focus { border-color: var(--accent); outline: none; }
+.notes-actions { display: flex; gap: 1rem; margin-top: 0.6rem; }
+
+/* Admin extras */
+.admin-panel {
+  padding: 1.2rem;
+  border-radius: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.admin-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+}
+.admin-check input { width: auto; accent-color: var(--accent); }
+.field-hint {
+  font-size: 0.76rem;
+  color: var(--muted);
+  margin: 0.35rem 0 0;
+  line-height: 1.4;
+}
+
+.video-fallback {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: -0.8rem 0 1.4rem;
+  text-align: center;
+}
+.video-fallback a { color: var(--accent); font-weight: 600; }
+
+/* ============================================================
+   HOME — aligned to the app-wide list style
+   ============================================================ */
+
+.home-main { padding-top: 1.25rem; }
+
+.home-live {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.8rem;
+  background: #FBEDEA;
+  border: 1px solid #E8C4BC;
+  color: #8E2C1B;
+  text-decoration: none;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.88rem;
+  margin-bottom: 2rem;
+}
+.home-live > span:nth-child(2) { flex: 1; }
+.home-live .icn { color: #8E2C1B; opacity: 0.6; }
+
+.home-events { display: flex; flex-direction: column; }
+.home-event {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.8rem 0.15rem;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
+}
+.home-event:first-child { border-top: 1px solid var(--line); }
+.home-event:active { background: var(--surface); }
+.home-event-when {
+  flex: none;
+  width: 2.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.35rem 0;
+  border-radius: 0.55rem;
+  background: var(--surface);
+}
+.home-event-day {
+  font-family: var(--label);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.home-event-date {
+  font-family: var(--display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.05;
+}
+.home-event-body { flex: 1; display: flex; flex-direction: column; gap: 0.12rem; min-width: 0; }
+.home-event-title { font-family: var(--display); font-weight: 600; font-size: 0.98rem; line-height: 1.25; }
+.home-event-meta { font-size: 0.78rem; color: var(--muted); }
+.home-event > .icn { color: var(--muted); opacity: 0.5; flex: none; }
+
+/* Home reuses .sermon-feature but without the "latest message" tag row */
+.home-main .sermon-feature { margin-bottom: 0; }
+
+/* ============================================================
+   GIVING
+   ============================================================ */
+
+.give-actions { display: flex; flex-direction: column; gap: 0.6rem; }
+.give-primary, .give-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  text-decoration: none;
+}
+.give-primary { background: var(--invert-bg); color: var(--invert-ink); }
+.give-primary .icn:first-child { color: var(--accent-soft); }
+.give-secondary { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+.give-secondary .icn:first-child { color: var(--accent); }
+.give-primary > span, .give-secondary > span { flex: 1; display: flex; flex-direction: column; gap: 0.1rem; }
+.give-primary strong, .give-secondary strong { font-family: var(--body); font-weight: 600; font-size: 0.98rem; }
+.give-primary small { font-size: 0.78rem; color: var(--invert-muted); }
+.give-secondary small { font-size: 0.78rem; color: var(--muted); }
+.give-primary > .icn:last-child { color: var(--invert-muted); }
+.give-secondary > .icn:last-child { color: var(--muted); opacity: 0.6; }
+
+.give-secure {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0.9rem 0 0;
+}
+.give-secure .icn { color: var(--accent); flex: none; margin-top: 0.12rem; }
+
+.charity-note {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+  margin: 2.4rem 0 0;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--line);
+}
+
+/* Campaigns */
+.campaign-list { display: flex; flex-direction: column; gap: 0.7rem; }
+.campaign-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 1.1rem 1.15rem;
+  border-radius: 1rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
+}
+.campaign-card:active { background: var(--surface); }
+.campaign-title { font-family: var(--display); font-weight: 600; font-size: 1.05rem; line-height: 1.2; }
+.campaign-blurb { font-size: 0.83rem; color: var(--muted); line-height: 1.45; }
+.campaign-bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+  margin-top: 0.2rem;
+}
+.campaign-bar.big { height: 9px; }
+.campaign-fill { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.campaign-figures {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-family: var(--label);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.campaign-figures strong { font-size: 0.95rem; color: var(--ink); font-weight: 700; }
+.campaign-figures.big { margin-top: 0.6rem; }
+.campaign-figures.big strong { font-size: 1.3rem; font-family: var(--display); }
+
+.campaign-detail-title {
+  font-family: var(--display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0 0 1.2rem;
+}
+.campaign-progress { margin-bottom: 1.2rem; }
+.campaign-closes {
+  font-family: var(--label);
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0 0 1.2rem;
+}
+.campaign-body { font-size: 0.95rem; line-height: 1.7; margin-bottom: 1.8rem; }
+.campaign-body p { margin: 0 0 1rem; }
+
+/* Gift Aid */
+.giftaid-hero { text-align: center; padding: 1.4rem 0 1.6rem; }
+.giftaid-figure {
+  font-family: var(--display);
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.giftaid-strap {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 0.8rem auto 0;
+  max-width: 22rem;
+}
+.giftaid-example {
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  overflow: hidden;
+}
+.giftaid-example-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.8rem 1.1rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.92rem;
+}
+.giftaid-example-row:last-child { border-bottom: none; }
+.giftaid-example-row span { color: var(--muted); }
+.giftaid-example-row strong { font-family: var(--display); font-weight: 600; }
+.giftaid-example-row.total { background: var(--surface); }
+.giftaid-example-row.total span { color: var(--ink); font-weight: 600; }
+.giftaid-example-row.total strong { color: var(--accent); font-size: 1.05rem; }
+
+.giftaid-body { font-size: 0.92rem; line-height: 1.65; color: var(--ink); margin: 0 0 0.9rem; }
+.giftaid-footnote {
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 1.6rem 0 0;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border-radius: 0.7rem;
+}
+.giftaid-footnote a { color: var(--accent); font-weight: 600; }
+
+/* ============================================================
+   MINISTRIES
+   ============================================================ */
+
+.ministry-tagline {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  color: var(--muted);
+  margin: 0 0 1.3rem;
+  line-height: 1.45;
+}
+.ministry-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.95rem 1.05rem;
+  border-radius: 0.8rem;
+  background: var(--surface);
+  margin-bottom: 1.5rem;
+}
+.ministry-fact {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+.ministry-fact-icon { color: var(--accent); flex: none; display: grid; place-items: center; }
+.ministry-body { font-size: 0.95rem; line-height: 1.7; margin-bottom: 1.8rem; }
+.ministry-body p { margin: 0 0 1rem; }
+
+.ministry-contact {
+  padding: 1.2rem 1.15rem;
+  border-radius: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  margin-top: 1.8rem;
+}
+.ministry-contact .bible-h2 { margin-bottom: 0.7rem; }
+.ministry-contact-name { font-weight: 600; font-size: 0.95rem; margin: 0 0 0.7rem; }
+.ministry-contact-links { display: flex; flex-direction: column; gap: 0.5rem; }
+.ministry-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.6rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  word-break: break-word;
+}
+.ministry-contact-btn .icn { color: var(--accent); flex: none; }
+
+.ministry-safeguard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 1.6rem 0 0;
+  padding: 0.85rem 1rem;
+  background: var(--surface);
+  border-radius: 0.7rem;
+}
+.ministry-safeguard .icn { color: var(--accent); flex: none; margin-top: 0.15rem; }
+
+/* ============================================================
+   RESOURCES
+   ============================================================ */
+
+.resource-group-blurb {
+  font-size: 0.83rem;
+  color: var(--muted);
+  line-height: 1.45;
+  margin: -0.5rem 0 0.9rem;
+}
+
+.resource-article { padding-bottom: 1rem; }
+.resource-article-title {
+  font-family: var(--display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.18;
+  margin: 0 0 0.6rem;
+}
+.resource-article-summary {
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0 0 0.5rem;
+}
+.resource-article-author {
+  font-family: var(--label);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 0 1.4rem;
+}
+.resource-article-body {
+  font-family: var(--display);
+  font-size: 1.03rem;
+  line-height: 1.75;
+  color: var(--ink);
+}
+.resource-article-body p { margin: 0 0 1.1rem; }
+.resource-h3 {
+  font-family: var(--display);
+  font-size: 1.08rem;
+  font-weight: 600;
+  margin: 1.8rem 0 0.6rem;
+  letter-spacing: -0.01em;
+}
+.resource-note {
+  font-family: var(--body);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--muted);
+  background: var(--surface);
+  padding: 0.85rem 1rem;
+  border-radius: 0.7rem;
+  border-left: 3px solid var(--accent-soft);
+}
+.resource-rule {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 2rem 0 1.4rem;
+}
+
+/* ============================================================
+   NOTIFICATIONS
+   ============================================================ */
+
+.notif-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.95rem 1.05rem;
+  border-radius: 0.8rem;
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  margin-bottom: 1.4rem;
+}
+.notif-warning .icn { color: var(--accent); flex: none; margin-top: 0.15rem; }
+.notif-warning strong { display: block; margin-bottom: 0.15rem; }
+
+.notif-status {
+  font-family: var(--label);
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+  margin: 0.8rem 0 0;
+}
+
+.notif-list { display: flex; flex-direction: column; margin-top: 1.6rem; }
+.notif-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.95rem 0.15rem;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.notif-row:first-child { border-top: 1px solid var(--line); }
+.notif-body { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; }
+.notif-title { font-weight: 600; font-size: 0.93rem; }
+.notif-sub { font-size: 0.78rem; color: var(--muted); line-height: 1.45; }
+.notif-check {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.15rem;
+  accent-color: var(--accent);
+}
+
+.notif-privacy {
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 1.8rem 0 0;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border-radius: 0.7rem;
+}
+
+.notif-counts { display: flex; flex-direction: column; }
+.notif-count-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.88rem;
+}
+.notif-count-row:last-child { border-bottom: none; }
+.notif-count-row strong { font-family: var(--label); font-variant-numeric: tabular-nums; }
+
+/* Notification diagnostics */
+.check-list { display: flex; flex-direction: column; }
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.8rem 0.15rem;
+  border-bottom: 1px solid var(--line);
+}
+.check-row:first-child { border-top: 1px solid var(--line); }
+.check-mark {
+  font-weight: 700;
+  font-size: 1rem;
+  flex: none;
+  width: 1.2rem;
+  text-align: center;
+}
+.check-row.ok .check-mark { color: #2E7D32; }
+.check-row.bad .check-mark { color: #C0392B; }
+.check-body { flex: 1; display: flex; flex-direction: column; gap: 0.2rem; }
+.check-label { font-weight: 600; font-size: 0.92rem; }
+.check-fix {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: var(--label);
+}
+
+.data-path {
+  font-family: var(--label);
+  font-size: 0.8rem;
+  word-break: break-all;
+  background: var(--white);
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--line);
+  margin: 0;
+}
+
+/* ---- Multi-verse selection & word highlights ---- */
+
+.vsheet-hint {
+  font-size: 0.78rem;
+  color: var(--invert-muted);
+  margin: -0.4rem 0 0.7rem;
+}
+
+.vsheet-actions { flex-wrap: wrap; }
+.vsheet-btn { min-width: 4.5rem; }
+
+/* A highlighted word or phrase inside the scripture text */
+mark.hl {
+  background: rgba(212, 175, 55, 0.38);
+  color: inherit;
+  padding: 0.05em 0.08em;
+  border-radius: 0.2em;
+}
+
+/* Let people select text normally — needed for phrase highlighting */
+.scripture {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* The hidden attribute must win over display:flex on buttons */
+.vsheet-btn[hidden] { display: none !important; }
+
+/* ============================================================
+   STUDY ASSISTANT
+   ============================================================ */
+
+.study-fab {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(4.6rem + env(safe-area-inset-bottom));
+  z-index: 25;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--invert-bg);
+  color: var(--invert-ink);
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.85rem;
+  box-shadow: 0 10px 26px -10px rgba(0,0,0,0.5);
+  cursor: pointer;
+}
+.study-fab .icn { color: var(--accent-soft); }
+.study-fab:active { transform: scale(0.96); }
+
+.study-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(20, 24, 30, 0.45);
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  transition: opacity 0.24s ease;
+}
+.study-panel.up { opacity: 1; }
+.study-inner {
+  width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-radius: 1.3rem 1.3rem 0 0;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.16,1,0.3,1);
+}
+.study-panel.up .study-inner { transform: translateY(0); }
+
+.study-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+.study-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin: 0;
+}
+.study-ref {
+  font-family: var(--label);
+  font-size: 0.76rem;
+  color: var(--accent);
+  margin: 0.1rem 0 0;
+}
+.study-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+
+.study-disclaimer {
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--muted);
+  background: var(--surface);
+  border-left: 3px solid var(--accent-soft);
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+.study-thread {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.2rem 0 0.8rem;
+  min-height: 8rem;
+}
+
+.study-suggestions { display: flex; flex-direction: column; gap: 0.45rem; }
+.study-chip {
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--line);
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+.study-chip:active { background: var(--surface); }
+
+.study-bubble {
+  max-width: 88%;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.9rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.study-bubble p { margin: 0 0 0.6rem; }
+.study-bubble p:last-child { margin-bottom: 0; }
+/* Your own messages.
+
+   This previously paired background:var(--ink) with color:var(--invert-ink).
+   Those two look opposed but aren't: in dark mode both resolve to near-white,
+   giving a contrast ratio of 1.00:1 — the text was there, painted in exactly
+   the background colour.
+
+   The accent works in both themes and, unlike --invert-bg, keeps the bubble
+   clearly distinct from the page behind it. The text colour flips with it:
+   deep turquoise takes white, bright turquoise takes near-black. */
+.study-bubble.me {
+  align-self: flex-end;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-bottom-right-radius: 0.3rem;
+}
+.study-bubble.ai {
+  align-self: flex-start;
+  background: var(--surface);
+  color: var(--ink);
+  border-bottom-left-radius: 0.3rem;
+}
+.study-bubble.thinking { opacity: 0.6; font-style: italic; }
+
+.study-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding-top: 0.8rem;
+}
+.study-form input {
+  flex: 1;
+  padding: 0.75rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--white);
+  font-family: var(--body);
+  font-size: 0.92rem;
+  color: var(--ink);
+  outline: none;
+}
+.study-form input:focus { border-color: var(--accent); }
+.study-send {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  flex: none;
+}
+.study-send:disabled { opacity: 0.5; }
+
+/* A hidden panel must not swallow clicks meant for the button underneath */
+.study-panel[hidden] { display: none !important; }
+
+/* ============================================================
+   NAVIGATION FEEL — smooth transitions, instant tap response
+   ============================================================ */
+
+/* Cross-page view transitions. Supported browsers slide between pages
+   instead of flashing white; others simply ignore this. */
+@view-transition {
+  navigation: auto;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: vt-out 0.18s cubic-bezier(0.4, 0, 1, 1) both;
+  }
+  ::view-transition-new(root) {
+    animation: vt-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes vt-out {
+  to { opacity: 0; transform: translateY(-6px); }
+}
+@keyframes vt-in {
+  from { opacity: 0; transform: translateY(10px); }
+}
+
+/* The bottom tab bar shouldn't slide with the page — it's persistent chrome */
+.site-nav { view-transition-name: tabbar; }
+::view-transition-old(tabbar),
+::view-transition-new(tabbar) { animation: none; opacity: 1; }
+
+/* Instant response to a tap, before the server has replied */
+.pressed {
+  transform: scale(0.985);
+  opacity: 0.75;
+  transition: transform 0.08s ease, opacity 0.08s ease;
+}
+.chapter-cell.pressed,
+.plan-card.pressed { transform: scale(0.94); }
+
+/* Thin loading bar for slower navigations */
+.nav-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  width: 0;
+  background: var(--accent);
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+}
+.nav-progress.active {
+  opacity: 1;
+  width: 70%;
+  transition: width 1.4s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+.nav-progress.done {
+  width: 100%;
+  opacity: 0;
+  transition: width 0.15s ease, opacity 0.3s ease 0.1s;
+}
+
+/* ---- Continue reading card ---- */
+
+.continue-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1.1rem;
+  background: var(--invert-bg);
+  color: var(--invert-ink);
+  text-decoration: none;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 26px -14px rgba(43,38,34,0.5);
+}
+.continue-body { flex: 1; min-width: 0; }
+.continue-label {
+  font-family: var(--label);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  margin: 0 0 0.2rem;
+}
+.continue-ref {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  margin: 0;
+  line-height: 1.15;
+}
+.continue-note {
+  font-size: 0.76rem;
+  color: var(--invert-muted);
+  margin: 0.25rem 0 0;
+}
+.continue-card .icn { color: var(--invert-muted); flex: none; }
+
+/* ---- Recent books strip ---- */
+
+.recent-strip {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  margin: 0 -1.15rem 1.4rem;
+  padding: 0 1.15rem 0.3rem;
+  scrollbar-width: none;
+}
+.recent-strip::-webkit-scrollbar { display: none; }
+.recent-chip {
+  flex: none;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.recent-chip:active { background: var(--surface-2); }
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+
+.set-block { margin-bottom: 2.2rem; }
+.set-label {
+  font-family: var(--label);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 0.9rem;
+}
+.set-hint {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0.8rem 0 0;
+}
+
+/* Theme picker */
+.theme-choices { display: flex; gap: 0.6rem; }
+.theme-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.9rem 0.5rem;
+  border-radius: 0.9rem;
+  border: 2px solid var(--line);
+  background: var(--white);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--body);
+  min-height: 44px;
+}
+.theme-option.on {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+.theme-name { font-size: 0.8rem; font-weight: 600; }
+.theme-swatch {
+  display: flex;
+  width: 2.6rem;
+  height: 1.7rem;
+  border-radius: 0.4rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.theme-swatch span { flex: 1; }
+.theme-swatch.light span:first-child { background: #FBF8F3; }
+.theme-swatch.light span:last-child  { background: #EBE3D6; }
+.theme-swatch.dark  span:first-child { background: #141210; }
+.theme-swatch.dark  span:last-child  { background: #2A2521; }
+.theme-swatch.auto  span:first-child { background: #FBF8F3; }
+.theme-swatch.auto  span:last-child  { background: #141210; }
+
+/* Text size picker */
+.set-row { display: flex; padding: 0 0 0.8rem; }
+.set-row-body { display: flex; flex-direction: column; gap: 0.15rem; }
+.set-row-title { font-weight: 600; font-size: 0.95rem; }
+.set-row-sub { font-size: 0.78rem; color: var(--muted); }
+
+.size-choices { display: flex; gap: 0.5rem; }
+.size-option {
+  flex: 1;
+  min-height: 46px;
+  border-radius: 0.7rem;
+  border: 2px solid var(--line);
+  background: var(--white);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--display);
+  font-weight: 600;
+}
+.size-option.on { border-color: var(--accent); background: var(--surface); }
+.size-option[data-size="small"]  { font-size: 0.85rem; }
+.size-option[data-size="normal"] { font-size: 1rem; }
+.size-option[data-size="large"]  { font-size: 1.2rem; }
+.size-option[data-size="xlarge"] { font-size: 1.45rem; }
+
+.set-preview {
+  font-family: var(--display);
+  line-height: 1.75;
+  color: var(--ink);
+  background: var(--surface);
+  padding: 1rem 1.1rem;
+  border-radius: 0.8rem;
+  margin: 1rem 0 0;
+  font-size: var(--reading-size, 1.05rem);
+}
+
+.set-danger {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: none;
+  color: #C0392B;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+[data-theme="dark"] .set-danger { color: #E88B7D; }
+
+/* ---- Reading text size, applied app-wide ---- */
+
+html { --reading-size: 1.12rem; }
+html[data-text-size="small"]  { --reading-size: 0.98rem; }
+html[data-text-size="normal"] { --reading-size: 1.12rem; }
+html[data-text-size="large"]  { --reading-size: 1.3rem; }
+html[data-text-size="xlarge"] { --reading-size: 1.5rem; }
+
+.scripture,
+.resource-article-body,
+.devo-read-body,
+.qa-answer {
+  font-size: var(--reading-size);
+}
+
+/* ============================================================
+   TOUCH TARGETS — every tappable thing at least 44px tall
+   (Apple HIG and Android guidance both use 44–48px)
+   ============================================================ */
+
+.site-nav a {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.15rem;
+}
+
+.bible-row,
+.book-row,
+.sermon-row,
+.plan-item,
+.home-event,
+.devo-archive-row,
+.admin-row-actions a,
+.admin-row-actions button {
+  min-height: 44px;
+}
+
+.chapter-cell { min-height: 44px; min-width: 44px; }
+
+.trans-pill,
+.filter-pill,
+.recent-chip,
+.chip {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.bible-back,
+.bible-search,
+.reader-bar-back,
+.study-close {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.pray-btn,
+.audio-action,
+.journal-action,
+.saved-item-remove {
+  min-height: 40px;
+}
+
+/* Small text buttons need padding rather than a taller box, so they don't
+   look oversized next to their labels */
+.journal-action,
+.saved-item-remove {
+  padding: 0.5rem 0;
+}
+
+/* ---- Visible focus for keyboard and switch-control users ---- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="radio"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 0.3rem;
+}
+
+/* Secondary inline links are still tap targets on a phone. Give them a
+   comfortable hit area using padding, so the visual size stays small. */
+.bible-more,
+.votd-action,
+.home-see-all,
+.section-link,
+.v2-section-link,
+.site-footer a,
+.bible-lede a,
+.reader-credit a,
+.study-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding-block: 0.5rem;
+}
+
+/* The eyebrow back-links sit above page titles */
+.eyebrow a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding-block: 0.4rem;
+}
+
+/* Calendar month arrows are frequently tapped */
+.cal-nav-btn {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.subscribe-btn { min-height: 40px; display: inline-flex; align-items: center; }
+.site-footer a { min-height: 44px; }
+
+/* ============================================================
+   STORE
+   ============================================================ */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+}
+.product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-decoration: none;
+  color: var(--ink);
+  min-height: 44px;
+}
+.product-media {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 0.9rem;
+  overflow: hidden;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  margin-bottom: 0.15rem;
+}
+.product-media img { width: 100%; height: 100%; object-fit: cover; }
+.product-name {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+.product-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.product-price {
+  font-family: var(--label);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+.product-price-note { font-size: 0.75rem; color: var(--muted); }
+.product-price-row.big { margin-bottom: 0.6rem; }
+.product-price-row.big .product-price { font-size: 1.35rem; font-family: var(--display); }
+
+.product-stock {
+  position: absolute;
+  left: 0.45rem;
+  bottom: 0.45rem;
+  font-family: var(--label);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--invert-bg);
+  color: var(--invert-ink);
+}
+.product-stock.out { background: #8E2C1B; color: #fff; }
+.product-stock.low { background: var(--accent); color: #fff; }
+
+.product-stock-line {
+  font-family: var(--label);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 0 1rem;
+}
+.product-stock-line.out { color: #8E2C1B; }
+[data-theme="dark"] .product-stock-line.out { color: #E88B7D; }
+
+/* Featured item */
+.product-feature {
+  display: block;
+  border-radius: 1.1rem;
+  overflow: hidden;
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+  text-decoration: none;
+  color: var(--ink);
+  margin-bottom: 1.6rem;
+}
+.product-feature-media { display: block; aspect-ratio: 16/10; background: var(--surface); }
+.product-feature-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.product-feature-body { display: block; padding: 1rem 1.1rem 1.2rem; }
+.product-tag {
+  display: inline-block;
+  font-family: var(--label);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+.product-feature-name {
+  display: block;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.2rem;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+.product-feature-sub {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.45;
+  margin-bottom: 0.5rem;
+}
+
+/* Detail page */
+.product-hero {
+  aspect-ratio: 1;
+  border-radius: 1.1rem;
+  overflow: hidden;
+  background: var(--surface);
+  margin-bottom: 1.2rem;
+  max-height: 20rem;
+}
+.product-hero img { width: 100%; height: 100%; object-fit: cover; }
+.product-detail-name {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+}
+.product-summary {
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0 0 1.2rem;
+}
+.product-body { font-size: 0.95rem; line-height: 1.7; margin-bottom: 1.6rem; }
+.product-body p { margin: 0 0 1rem; }
+
+
+/* ============================================================
+   MERGED FROM THE DESIGN PASS
+   Reading plan detail (was unstyled), devotional typography,
+   games hero palette, leaderboard styles.
+   ============================================================ */
+
+/* Devotional reading — editorial typography, previously unstyled (just
+   inherited browser defaults). A drop cap on the opening line nods to the
+   illuminated-manuscript tradition of devotional reading without being twee. */
+.devo-body {
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.devo-body p {
+  font-family: var(--body);
+  font-size: 1.02rem;
+  line-height: 1.78;
+  color: var(--ink);
+  margin: 0 0 1.35rem;
+}
+
+.devo-single p:first-of-type::first-letter {
+  font-family: var(--display);
+  font-size: 3.6rem;
+  font-weight: 600;
+  float: left;
+  line-height: 0.82;
+  padding: 0.15rem 0.55rem 0 0.05rem;
+  color: var(--accent);
+}
+
+.lb-publish { margin-top: 0.8rem; }
+
+.lb-publish-result { font-size: 0.82rem; color: var(--muted); margin-top: 0.3rem; }
+
+.lb-view-link { display: inline-block; margin-top: 0.6rem; font-size: 0.85rem; color: var(--accent); }
+
+/* ============================================================
+   Kids Games — signature bleed hero
+   Full-bleed so it breaks past the app's usual padded container;
+   the motifs are the actual game pieces (sling stone, shield,
+   manna dove, trivia star/target) rather than generic shapes.
+   ============================================================ */
+.quest-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 2.6rem 1.15rem 2.2rem;
+  margin: 0 calc(-1 * (100vw - 100%) / 2 - 1px) 0 calc(-1 * (100vw - 100%) / 2 - 1px);
+  width: 100vw;
+  background:
+    radial-gradient(120% 90% at 18% 0%, var(--quest-mid) 0%, var(--quest-deep) 55%, #241a34 100%);
+  color: var(--white);
+}
+
+.quest-hero-back {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--white);
+  margin-bottom: 1.4rem;
+}
+
+.quest-hero-motifs {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.quest-hero-motifs span {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  font-size: calc(2.6rem * var(--s, 1));
+  transform:
+    translate(-50%, -50%)
+    rotate(var(--r))
+    translateY(calc(var(--scroll, 0) * -18px));
+  opacity: 0.22;
+  filter: saturate(0.85);
+  transition: transform 0.1s linear;
+}
+
+.quest-hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 26rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.quest-hero-eyebrow {
+  font-family: var(--label);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--quest-ember);
+  margin: 0 0 0.6rem;
+}
+
+.quest-hero-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(2.2rem, 10vw, 2.8rem);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.6rem;
+}
+
+.quest-hero-sub {
+  font-family: var(--body);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0 auto;
+  max-width: 22rem;
+}
+
+/* Reading plan detail — progress bar + day checklist. Previously unstyled. */
+.plan-progress { margin-bottom: 1.7rem; }
+
+.plan-progress-bar {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+  margin-bottom: 0.6rem;
+}
+
+.plan-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent-soft), var(--accent));
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.plan-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plan-progress-count {
+  font-family: var(--label);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.plan-days { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.55rem; }
+
+.plan-day {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.plan-day.done { background: var(--surface-2); border-color: var(--accent-soft); }
+
+.plan-check {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--white);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.plan-check-box {
+  opacity: 0;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--white);
+  transition: opacity 0.15s ease;
+}
+
+.plan-day.done .plan-check { background: var(--accent); border-color: var(--accent); }
+
+.plan-day.done .plan-check-box { opacity: 1; }
+
+.plan-day-body { flex: 1; min-width: 0; padding-top: 0.15rem; }
+
+.plan-day-label {
+  display: block;
+  font-family: var(--label);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.plan-day-passages { display: flex; flex-wrap: wrap; gap: 0.5rem 0.8rem; }
+
+.plan-passage {
+  font-family: var(--display);
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1.5px solid var(--accent-soft);
+  line-height: 1.3;
+}
+
+span.plan-passage { color: var(--muted); border-bottom-color: var(--line); }
+
+/* Leaderboard */
+.lb-publish { margin-top: 0.8rem; }
+
+.lb-publish-result { font-size: 0.82rem; color: var(--muted); margin-top: 0.3rem; }
+
+.lb-view-link { display: inline-block; margin-top: 0.6rem; font-size: 0.85rem; color: var(--accent); }
+
+/* ---------- App loading splash ---------- */
+.app-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  transition: opacity 0.4s ease;
+}
+.app-splash-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.app-splash-hide {
+  opacity: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-splash-video { display: none; }
+}
+
+/* Lists inside a study answer. The model uses them for "different traditions
+   read this differently", so they need to sit tidily inside the bubble. */
+.study-bubble ul {
+  margin: 0 0 0.6rem;
+  padding-left: 1.15rem;
+}
+.study-bubble ul:last-child { margin-bottom: 0; }
+.study-bubble li { margin-bottom: 0.3rem; }
+.study-bubble li:last-child { margin-bottom: 0; }
+.study-bubble strong { font-weight: 650; }
+
+/* ---------- Global back button ----------
+   Sits above content but below the tab bar, and clears the notch on phones.
+   Pages that draw their own back link inside their header opt out of this
+   in the template rather than hiding it here, so there's never a hidden
+   button sitting under the layout catching taps. */
+.global-back {
+  position: sticky;
+  top: calc(0.6rem + env(safe-area-inset-top));
+  z-index: 40;
+  margin: 0.6rem 0 -2.4rem 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-family: var(--body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.42rem 0.9rem 0.42rem 0.6rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s ease, background 0.2s ease;
+}
+.global-back:active { transform: scale(0.95); }
+.global-back:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Give the following content room, since the button overlaps upward. */
+.global-back + * { padding-top: 2.6rem; }
+@media (prefers-reduced-motion: reduce) {
+  .global-back { transition: none; }
+}
+
+/* Publisher attribution under scripture. Small, but it has to be legible —
+   licensed translations require the notice to be shown, not buried. */
+.reader-copyright {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0.35rem 0 0;
+  max-width: 34rem;
+}
+
+.reader-fallback {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--muted);
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+  padding: 0.5rem 0.7rem;
+  border-radius: 0 0.4rem 0.4rem 0;
+  margin: 0.8rem 0 0;
+  max-width: 34rem;
+}
+
+/* ============================================================
+   Direction overrides
+   Appended so these win over the earlier rules without having to
+   unpick 4,000 lines. Everything above still supplies layout.
+   ============================================================ */
+
+/* ---------- Typography ---------- */
+
+body { font-family: var(--body); }
+
+h1, h2, h3, h4,
+.page-title, .hero h1, .section-title {
+  font-family: var(--display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+
+/* The signature. One word of a heading in italic serif inside the sans.
+   Wrap it in <em> and it happens: <h1>There is a place <em>for you</em></h1> */
+h1 em, h2 em, .page-title em, .statement em {
+  font-family: var(--emph);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  font-size: 1.06em;
+}
+
+/* Eyebrows become structural labels rather than decorative italics. */
+.eyebrow {
+  font-family: var(--label);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Numerals get a real monospace at last — scores, streaks, verse numbers,
+   timers. The old build declared a --mono that was just Inter. */
+.vn, .mm-stats strong, .bs-stats strong, .ls-stats strong,
+.pg-num, .lb-score, .board .slot i {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+/* Scripture gets the dedicated reading serif — a warm, modern face drawn for
+   long-form on-screen text, because reading a chapter is a different act from
+   tapping a menu. */
+.scripture {
+  font-family: var(--reading);
+  font-style: normal;
+}
+
+/* ---------- Shape ---------- */
+
+/* Collapse eight radii onto three. */
+.card, .bible-row, .game-tile, .qa-card, .st-item, .em-card,
+.pg-badge, .pg-stat, .vs-map-btn, .ls-cell, .bs-choice, .vb-answer {
+  border-radius: var(--r-md);
+}
+.btn-primary, .btn-ghost, .v2-hero-cta, .cta, .study-chip, .vsheet-btn {
+  border-radius: var(--r-sm);
+}
+.study-bubble, .avatar, .live-badge, .pill { border-radius: var(--r-full); }
+
+/* ---------- Buttons ---------- */
+
+.btn-primary, .v2-hero-cta {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 0;
+  box-shadow: none;
+}
+.btn-ghost {
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+/* ---------- Surfaces ---------- */
+
+/* Cards lose their tint and shadow; a hairline is enough. */
+.card, .bible-row, .qa-card, .st-item, .em-card, .pg-badge {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+/* The hero is a photograph with type on it, not a tinted panel. */
+.hero-arch .page-title, .v2-hero h1 {
+  font-size: clamp(2rem, 9vw, 2.9rem);
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+}
+
+/* Statement band, the way both reference sites break up a page. */
+.statement-band {
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 2rem 1.15rem;
+  margin: 1.6rem -1.15rem;
+}
+.statement-band p {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  margin: 0 0 0.4rem;
+}
+.statement-band small { font-size: 0.75rem; color: var(--muted); }
+
+/* ---------- Chat bubbles ---------- */
+/* Ink is now the accent, so the earlier per-theme text colour is wrong. */
+.study-bubble.me { background: var(--accent); color: var(--on-accent); }
+[data-theme="dark"] .study-bubble.me { color: var(--on-accent); }
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] .study-bubble.me { color: var(--on-accent); }
+}
+
+/* Badge icons, same reason. */
+.pg-badge.got .pg-badge-icon { background: var(--accent); color: var(--on-accent); }
+[data-theme="dark"] .pg-badge.got .pg-badge-icon { color: var(--on-accent); }
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] .pg-badge.got .pg-badge-icon { color: var(--on-accent); }
+}
+
+/* Hero statement, replacing the logo lockup on the home screen. */
+.v2-hero-statement {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(2.1rem, 10vw, 3.1rem);
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+  color: #FFFFFF;
+  margin: 0 0 0.6rem;
+  text-shadow: 0 2px 24px rgba(0,0,0,0.5);
+}
+.v2-hero-statement em {
+  font-family: var(--emph);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.08em;
+  letter-spacing: -0.01em;
+}
+/* The hero sits on a photograph in both themes, so these stay fixed —
+   tying them to --ink is what made the old CTA invisible in dark mode. */
+.v2-hero-sub { color: rgba(255,255,255,0.72); }
+.v2-eyebrow {
+  color: rgba(255,255,255,0.55);
+  font-family: var(--label);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.v2-hero-cta {
+  background: #FFFFFF;
+  color: #08080A;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.85rem 1.5rem;
+  border-radius: var(--r-sm);
+  box-shadow: none;
+}
+.v2-hero-cta:hover { background: #E8E8EA; }
+
+/* ============================================================
+   Kids Games — tiles and in-game polish
+   ============================================================ */
+
+.quest-main { padding-top: 1.4rem; }
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 2rem;
+}
+@media (min-width: 34rem) {
+  .game-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.game-cell { position: relative; }
+
+.game-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  aspect-ratio: 1 / 1.06;
+  padding: 0.85rem;
+  border-radius: var(--r-md, 12px);
+  text-decoration: none;
+  color: #FFFFFF;
+  background: linear-gradient(155deg, var(--g1), var(--g2));
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  box-shadow: 0 6px 18px -10px rgba(0, 0, 0, 0.7);
+}
+/* A soft light source at the top so the tiles read as objects rather than
+   flat swatches, which matters when nine sit together. */
+.game-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(90% 60% at 25% 0%,
+              rgba(255, 255, 255, 0.20) 0%, transparent 60%);
+}
+.game-tile:active { transform: scale(0.96); }
+
+.game-emoji {
+  font-size: 1.9rem;
+  line-height: 1;
+  margin-bottom: auto;
+  /* Emoji rather than icons: a child recognises a sheep before they can read
+     "Lost Sheep", and the icon set has no shepherd, stone or playing card. */
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+}
+.game-name {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.92rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.game-desc {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.72);
+  margin-top: 0.15rem;
+}
+
+/* The leaderboard, tucked into the corner rather than given its own row. */
+.game-cup {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: var(--r-full, 999px);
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.30);
+  color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(3px);
+  transition: background 0.2s ease, transform 0.14s ease;
+}
+.game-cup:active { transform: scale(0.9); }
+.game-cup:focus-visible,
+.game-tile:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- In-game ---------- */
+
+/* Win panels lift in rather than appearing, and the message gets room. */
+.mm-win {
+  animation: win-rise 0.44s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes win-rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Confetti sits above the game but below any dialog. */
+#gameConfetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-tile, .game-cup { transition: none; }
+  .mm-win { animation: none; }
+}
+
+/* ============================================================
+   BIBLE READER — refined
+   A dedicated pass over the reading experience: a calmer reader
+   bar, an elegant text column, bracketed-verse styling, an
+   in-place chapter jump, and the continue-reading card. Appended
+   so these win over the earlier reader rules.
+   ============================================================ */
+
+/* ---------- Reader bar ---------- */
+
+.reader-bar {
+  padding: 0.6rem 1rem;
+  gap: 0.6rem;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+.reader-bar-back {
+  width: 2.2rem; height: 2.2rem;
+  border-radius: var(--r-full);
+  transition: background 0.16s ease, transform 0.16s ease;
+}
+.reader-bar-back:active { background: var(--surface); transform: scale(0.92); }
+
+/* The reference is now the entry point to the chapter jump, so it reads as a
+   button: a soft pill with a subtle chevron. */
+.reader-bar-ref {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  flex: 1;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  padding: 0.32rem 0.2rem;
+  cursor: pointer;
+}
+.reader-bar-ref::after {
+  content: "";
+  width: 0.5rem; height: 0.5rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg) translateY(-1px);
+  margin-left: 0.1rem;
+  transition: transform 0.2s ease;
+}
+.reader-bar-ref:active { opacity: 0.7; }
+
+.reader-bar-trans { gap: 0.3rem; }
+.trans-pill {
+  padding: 0.34rem 0.55rem;
+  border-radius: var(--r-full);
+  border: 1px solid transparent;
+  transition: color 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+.trans-pill:active { transform: scale(0.94); }
+.trans-pill.on {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ---------- The reading column ---------- */
+
+/* Centre the column and cap its width. Research on readability is firm that
+   50–75 characters per line is the comfortable range (~65 the sweet spot);
+   with no cap, lines run too long on wide phones and tablets. ch units track
+   the font, so the measure holds as the reader changes text size. */
+.reader {
+  padding: 2rem 1.4rem 5rem;
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
+/* Line spacing is adjustable alongside size. Leading should grow with the
+   measure, so the two are tuned together via --reading-lh. */
+html { --reading-lh: 1.85; }
+html[data-line-height="tight"]   { --reading-lh: 1.62; }
+html[data-line-height="normal"]  { --reading-lh: 1.85; }
+html[data-line-height="relaxed"] { --reading-lh: 2.1; }
+
+.scripture {
+  /* font-size comes from the app-wide --reading-size system (settings +
+     reader panel), not hardcoded here — hardcoding it silently broke the
+     size control. */
+  line-height: var(--reading-lh);
+  letter-spacing: -0.002em;
+  color: color-mix(in srgb, var(--ink) 94%, var(--muted));
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  max-width: 65ch;
+  margin-inline: auto;
+}
+
+/* A gentle drop-cap-ish lift for the first verse number of the chapter,
+   so the page has a point of entry. Subtle, not decorative. */
+.scripture .v:first-child .vn {
+  font-size: 0.66em;
+}
+
+.v {
+  border-radius: 0.3rem;
+  padding: 0.08em 0.12em;
+  margin: 0 -0.06em;
+  transition: background 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.v.saved  { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.v.sel    { background: color-mix(in srgb, var(--accent) 26%, transparent); }
+
+.vn {
+  font-family: var(--mono);
+  font-size: 0.6em;
+  font-weight: 600;
+  color: var(--accent);
+  vertical-align: super;
+  line-height: 0;
+  margin-right: 0.2em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Highlighted phrases */
+mark.hl {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: inherit;
+  border-radius: 0.2rem;
+  padding: 0.02em 0.05em;
+}
+
+/* ---------- Bracketed (traditional-but-disputed) verses ---------- */
+
+.v.bracketed { color: color-mix(in srgb, var(--ink) 74%, var(--muted)); }
+.v.bracketed .brk {
+  color: var(--muted);
+  font-weight: 400;
+  padding: 0 0.05em;
+}
+
+.reader-bracket-note {
+  font-family: var(--body);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--muted);
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+  padding: 0.65rem 0.8rem;
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  margin: 1.6rem 0 0;
+  max-width: 34rem;
+}
+
+/* ---------- Credit line ---------- */
+
+.reader-credit {
+  font-family: var(--label);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 2.4rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- Paging ---------- */
+
+.reader-paging { margin-top: 2.2rem; gap: 0.7rem; }
+.page-btn {
+  padding: 0.7rem 1rem;
+  border-radius: var(--r-full);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-family: var(--body);
+  font-weight: 500;
+  font-size: 0.86rem;
+  transition: border-color 0.16s ease, background 0.16s ease, transform 0.12s ease;
+}
+.page-btn:active { transform: scale(0.97); background: var(--surface-2); }
+.page-btn:hover { border-color: color-mix(in srgb, var(--line) 60%, var(--ink)); }
+
+/* ============================================================
+   CHAPTER JUMP — the in-place book/chapter picker
+   Slides up from the reader bar's reference button. No page loads.
+   ============================================================ */
+
+.jump {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: flex-end;
+  background: color-mix(in srgb, #000 55%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.24s ease;
+}
+.jump.up { opacity: 1; pointer-events: auto; }
+
+.jump-sheet {
+  width: 100%;
+  max-height: 82vh;
+  background: var(--bg);
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -20px 60px -20px rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.jump.up .jump-sheet { transform: none; }
+
+.jump-grip {
+  width: 2.4rem; height: 0.28rem;
+  border-radius: 999px;
+  background: var(--line);
+  margin: 0.6rem auto 0.2rem;
+  flex: 0 0 auto;
+}
+
+.jump-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.6rem 1.1rem 0.4rem;
+  flex: 0 0 auto;
+}
+.jump-title {
+  font-family: var(--display);
+  font-weight: 700; font-size: 1.05rem; letter-spacing: -0.02em;
+}
+.jump-close {
+  background: var(--surface); border: none; color: var(--muted);
+  width: 2rem; height: 2rem; border-radius: var(--r-full);
+  font-size: 1rem; cursor: pointer; line-height: 1;
+  display: grid; place-items: center;
+}
+.jump-close:active { transform: scale(0.9); }
+
+.jump-search {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin: 0.4rem 1.1rem 0.6rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  flex: 0 0 auto;
+}
+.jump-search .icn { color: var(--muted); flex: 0 0 auto; }
+.jump-search input {
+  flex: 1; border: none; background: none; outline: none;
+  color: var(--ink); font-family: var(--body); font-size: 0.95rem;
+}
+.jump-search input::placeholder { color: var(--muted); }
+
+/* Two panes: the book list, then the chapter grid for the chosen book. */
+.jump-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+.jump-group {
+  font-family: var(--label);
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.9rem 1.2rem 0.4rem;
+  position: sticky; top: 0;
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.jump-book {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 1.2rem;
+  background: none; border: none;
+  color: var(--ink);
+  font-family: var(--body); font-size: 0.98rem; text-align: left;
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+.jump-book:active { background: var(--surface); }
+.jump-book[aria-current="true"] { color: var(--accent); font-weight: 600; }
+.jump-book-meta {
+  font-family: var(--mono); font-size: 0.72rem;
+  color: var(--muted); font-variant-numeric: tabular-nums;
+}
+
+/* The chapter grid slides in as a second step. */
+.jump-chapters { display: none; padding: 0.4rem 1rem 1.4rem; }
+.jump-chapters.show { display: block; }
+
+.jump-crumb {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.6rem 0.2rem 0.9rem;
+}
+.jump-crumb-back {
+  background: var(--surface); border: none; color: var(--ink);
+  border-radius: var(--r-full); width: 2rem; height: 2rem;
+  display: grid; place-items: center; cursor: pointer;
+}
+.jump-crumb-back:active { transform: scale(0.9); }
+.jump-crumb-name {
+  font-family: var(--display); font-weight: 700; font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+
+.jump-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.9rem, 1fr));
+  gap: 0.5rem;
+}
+.jump-cell {
+  aspect-ratio: 1;
+  display: grid; place-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  color: var(--ink);
+  font-family: var(--mono); font-size: 0.9rem; font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.14s ease, transform 0.1s ease, border-color 0.14s ease;
+}
+.jump-cell:active { transform: scale(0.92); }
+.jump-cell:hover { border-color: color-mix(in srgb, var(--line) 50%, var(--ink)); }
+.jump-cell.current {
+  background: var(--accent); color: var(--on-accent); border-color: var(--accent);
+}
+
+.jump-empty {
+  text-align: center; color: var(--muted);
+  font-family: var(--body); font-size: 0.9rem;
+  padding: 2rem 1rem;
+}
+
+/* ============================================================
+   CONTINUE READING — the pick-up-where-you-left-off card
+   Shown at the top of the Bible hub when a position exists.
+   ============================================================ */
+
+.continue-card {
+  display: flex; align-items: center; gap: 0.9rem;
+  margin: 0 0 1.4rem;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--accent) 16%, var(--surface)),
+    var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  border-radius: var(--r-md);
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.14s ease, border-color 0.16s ease;
+}
+.continue-card:active { transform: scale(0.99); }
+.continue-icon {
+  flex: 0 0 auto;
+  width: 2.8rem; height: 2.8rem;
+  display: grid; place-items: center;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: var(--r-md);
+}
+.continue-body { flex: 1; min-width: 0; }
+.continue-label {
+  display: block;
+  font-family: var(--label);
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.15rem;
+}
+.continue-ref {
+  display: block;
+  font-family: var(--display);
+  font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.continue-sub {
+  display: block;
+  font-family: var(--body); font-size: 0.78rem; color: var(--muted);
+  margin-top: 0.1rem;
+}
+.continue-go { flex: 0 0 auto; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .jump, .jump-sheet, .continue-card, .page-btn, .v, .trans-pill { transition: none; }
+}
+
+/* ---------- Books & chapters pages: polish to match the reader ---------- */
+
+.book-row {
+  padding: 0.9rem 0.15rem;
+  transition: background 0.14s ease, padding-left 0.16s ease;
+}
+.book-row:active { padding-left: 0.5rem; }
+.book-row-meta { font-family: var(--mono); font-size: 0.74rem; letter-spacing: -0.02em; }
+
+.chapter-grid { gap: 0.55rem; }
+.chapter-cell {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  transition: background 0.14s ease, transform 0.1s ease, border-color 0.14s ease;
+}
+.chapter-cell:hover { border-color: color-mix(in srgb, var(--line) 50%, var(--ink)); }
+.chapter-cell:active {
+  background: var(--accent); color: var(--on-accent);
+  border-color: var(--accent); transform: scale(0.93);
+}
+
+/* ============================================================
+   READING THEMES — day / sepia / night for the reader itself
+   A reading theme is separate from the app theme: it repaints
+   only the reading surface, the way Kindle and Apple Books do,
+   so someone can read on warm paper at night without flipping
+   the whole app to light. Applied via data-reading-theme on the
+   reader main. Research is consistent that a warm sepia tone
+   eases long and evening reading; it was the one universal
+   reader feature this app lacked.
+   ============================================================ */
+
+/* Sepia: warm paper. Values chosen for a calm, low-blue surface with
+   comfortable (not harsh) contrast — dark warm ink on aged paper. */
+.reader[data-reading-theme="sepia"] {
+  background: #F4ECD8;
+  --reading-ink: #43382A;
+  --reading-muted: #8A7B63;
+  --reading-accent: #9A6A2B;
+  --reading-line: #E0D4B8;
+  border-radius: 0;
+}
+.reader[data-reading-theme="sepia"] .scripture {
+  color: var(--reading-ink);
+}
+.reader[data-reading-theme="sepia"] .scripture .vn {
+  color: var(--reading-accent);
+}
+.reader[data-reading-theme="sepia"] .v.bracketed {
+  color: color-mix(in srgb, var(--reading-ink) 66%, var(--reading-muted));
+}
+.reader[data-reading-theme="sepia"] .v.bracketed .brk,
+.reader[data-reading-theme="sepia"] .reader-credit {
+  color: var(--reading-muted);
+}
+.reader[data-reading-theme="sepia"] mark.hl {
+  background: rgba(154,106,43,0.24);
+}
+.reader[data-reading-theme="sepia"] .reader-bracket-note {
+  background: #EDE3C9;
+  border-left-color: var(--reading-accent);
+  color: var(--reading-muted);
+}
+.reader[data-reading-theme="sepia"] .page-btn {
+  background: #EDE3C9;
+  border-color: var(--reading-line);
+  color: var(--reading-ink);
+}
+.reader[data-reading-theme="sepia"] .reader-credit {
+  border-top-color: var(--reading-line);
+}
+
+/* Night: a true dark reading surface even when the app is in light mode, for
+   reading in the dark without a bright app chrome. In dark app mode it simply
+   matches, which is fine. */
+.reader[data-reading-theme="night"] {
+  background: #0B0B0D;
+  --reading-ink: #D6D6DA;
+  --reading-muted: #8A8A92;
+  --reading-accent: #5EEAD4;
+  --reading-line: #23232A;
+}
+.reader[data-reading-theme="night"] .scripture { color: var(--reading-ink); }
+.reader[data-reading-theme="night"] .scripture .vn { color: var(--reading-accent); }
+.reader[data-reading-theme="night"] .v.bracketed {
+  color: color-mix(in srgb, var(--reading-ink) 66%, var(--reading-muted));
+}
+.reader[data-reading-theme="night"] .reader-credit { color: var(--reading-muted); border-top-color: var(--reading-line); }
+.reader[data-reading-theme="night"] .page-btn {
+  background: #17171B; border-color: var(--reading-line); color: var(--reading-ink);
+}
+.reader[data-reading-theme="night"] .reader-bracket-note {
+  background: #17171B; color: var(--reading-muted);
+}
+
+/* ============================================================
+   READING PROGRESS — a thin, unobtrusive bar at the top of the
+   reader showing how far through the chapter you are. Every
+   serious reader shows progress; the trick is to keep it a
+   quiet indicator, never a nag.
+   ============================================================ */
+
+.reader-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  width: 0;
+  background: var(--accent);
+  z-index: 55;
+  transition: width 0.12s linear;
+  pointer-events: none;
+}
+
+/* ============================================================
+   READING CONTROLS — the "Aa" panel in the reader bar
+   In-context size / spacing / theme, the way Kindle and Apple
+   Books do it, so nobody has to leave the chapter to adjust.
+   ============================================================ */
+
+.reader-aa {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.2rem; height: 2.2rem;
+  border: none; background: none; cursor: pointer;
+  color: var(--ink);
+  font-family: var(--reading); font-weight: 500;
+  border-radius: var(--r-full);
+  transition: background 0.16s ease, transform 0.14s ease;
+  flex: 0 0 auto;
+}
+.reader-aa:active { transform: scale(0.9); background: var(--surface); }
+.reader-aa .aa-big { font-size: 1.15rem; }
+.reader-aa .aa-small { font-size: 0.78rem; }
+
+.aa-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 72;
+  display: flex; align-items: flex-end;
+  background: color-mix(in srgb, #000 45%, transparent);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+.aa-panel.up { opacity: 1; pointer-events: auto; }
+
+.aa-sheet {
+  width: 100%;
+  background: var(--bg);
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -20px 60px -20px rgba(0,0,0,0.6);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0 1.2rem calc(1.4rem + env(safe-area-inset-bottom));
+}
+.aa-panel.up .aa-sheet { transform: none; }
+
+.aa-grip {
+  width: 2.4rem; height: 0.28rem; border-radius: 999px;
+  background: var(--line); margin: 0.6rem auto 1rem;
+}
+
+.aa-group { margin-bottom: 1.3rem; }
+.aa-group:last-child { margin-bottom: 0.4rem; }
+.aa-label {
+  font-family: var(--label);
+  font-size: 0.64rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+
+.aa-row { display: flex; gap: 0.5rem; }
+.aa-opt {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0.7rem 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  color: var(--ink);
+  font-family: var(--body); font-size: 0.85rem; font-weight: 500;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.1s ease;
+}
+.aa-opt:active { transform: scale(0.95); }
+.aa-opt.on {
+  background: var(--accent); color: var(--on-accent); border-color: var(--accent);
+}
+.aa-opt .aa-a-small { font-size: 0.8rem; }
+.aa-opt .aa-a-mid { font-size: 1rem; }
+.aa-opt .aa-a-big { font-size: 1.25rem; }
+.aa-opt .aa-a-xbig { font-size: 1.5rem; }
+
+/* Theme swatches show their actual colour */
+.aa-swatch {
+  flex: 1;
+  height: 3rem;
+  border-radius: var(--r-md);
+  border: 2px solid var(--line);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--reading); font-size: 1rem;
+  transition: transform 0.1s ease, border-color 0.14s ease;
+}
+.aa-swatch:active { transform: scale(0.95); }
+.aa-swatch.on { border-color: var(--accent); }
+.aa-swatch[data-reading-theme-choice="day"]   { background: #FFFFFF; color: #0B0B0D; }
+.aa-swatch[data-reading-theme-choice="sepia"] { background: #F4ECD8; color: #43382A; }
+.aa-swatch[data-reading-theme-choice="night"] { background: #0B0B0D; color: #D6D6DA; }
+
+@media (prefers-reduced-motion: reduce) {
+  .aa-panel, .aa-sheet, .reader-progress, .reader-aa, .aa-opt, .aa-swatch { transition: none; }
+}

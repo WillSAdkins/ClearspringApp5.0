@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('giving') }}" class="bible-back" aria-label="Back to Giving">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">Appeal</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  <h2 class="campaign-detail-title">{{ c['title'] }}</h2>
+
+  {% if pct is not none %}
+    <div class="campaign-progress">
+      <span class="campaign-bar big"><span class="campaign-fill" style="width: {{ pct }}%"></span></span>
+      <div class="campaign-figures big">
+        <strong>{{ c['raised_pence'] | gbp }}</strong>
+        <span>raised of {{ c['target_pence'] | gbp }} target</span>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if c['closes_on'] %}
+    <p class="campaign-closes">Closes {{ c['closes_on'] | pretty_date }}</p>
+  {% endif %}
+
+  {% if c['blurb'] %}
+    <div class="campaign-body">
+      {% for para in c['blurb'].split('\n\n') %}<p>{{ para }}</p>{% endfor %}
+    </div>
+  {% endif %}
+
+  {% set target_url = c['give_url'] or give_url %}
+  {% if target_url %}
+    <a href="{{ target_url }}" target="_blank" rel="noopener" class="give-primary">
+      {{ icon('heart', 20) }}
+      <span><strong>Give to this appeal</strong><small>Opens {{ provider }} securely</small></span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+    <p class="give-secure">
+      {{ icon('check', 14) }}
+      Handled securely by {{ provider }}. Gift Aid can be added during giving.
+    </p>
+  {% endif %}
+
+  <p class="charity-note">
+    Clearspring Church is a registered charity (CIO no. {{ charity_number }}).
+  </p>
+
+</main>
+
+{% endblock %}

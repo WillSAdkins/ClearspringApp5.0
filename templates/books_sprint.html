@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow"><a href="{{ url_for('games_hub') }}" style="color:inherit;">← Kids Games</a></p>
+    <h1 class="page-title">Books Sprint</h1>
+    <p class="tagline">Which book comes first? Sixty seconds on the clock</p>
+  </div>
+</header>
+
+<main class="board">
+  <div class="bs-stats">
+    <span>Time: <strong id="bs-time">60</strong>s</span>
+    <span>Score: <strong id="bs-score">0</strong></span>
+    <span>Streak: <strong id="bs-streak">0</strong></span>
+  </div>
+
+  <div id="bs-start" class="bs-panel">
+    <p class="bs-lead">You'll see two books of the Bible. Tap the one that comes <strong>first</strong>.</p>
+    <p class="bs-note">Right answers score 1 point, and every 5 in a row earns a bonus. Getting one wrong just resets your streak — no penalty.</p>
+    <button id="bs-begin" class="btn-primary" style="width:auto;">Start the clock</button>
+  </div>
+
+  <div id="bs-play" hidden>
+    <p class="bs-question">Which comes first in the Bible?</p>
+    <div class="bs-choices">
+      <button type="button" class="bs-choice" id="bs-a"></button>
+      <button type="button" class="bs-choice" id="bs-b"></button>
+    </div>
+    <p class="bs-feedback" id="bs-feedback"></p>
+  </div>
+
+  <div id="bs-win" class="mm-win" hidden>
+    <p>⏱️ Time! You scored <span id="bs-final"></span> points.</p>
+    <p class="bs-best-streak">Best streak: <span id="bs-final-streak"></span></p>
+    <button id="bs-play-again" class="btn-primary" style="width:auto;">Play again</button>
+    <div class="lb-publish">
+      <button id="bs-publish" class="btn-ghost small">Publish score to leaderboard</button>
+      <p id="bs-publish-result" class="lb-publish-result"></p>
+    </div>
+    <a href="{{ url_for('game_leaderboard', game_key='books_sprint') }}" class="lb-view-link">View leaderboard →</a>
+  </div>
+</main>
+
+<style>
+  .bs-stats {
+    display: flex; align-items: center; gap: 1.4rem;
+    font-family: var(--mono); font-size: 0.9rem;
+    margin-bottom: 1.3rem; flex-wrap: wrap;
+  }
+  .bs-panel { max-width: 30rem; }
+  .bs-lead { font-size: 1rem; line-height: 1.5; margin: 0 0 0.6rem; }
+  .bs-note { font-size: 0.88rem; color: var(--muted); line-height: 1.5; margin: 0 0 1.2rem; }
+  .bs-question {
+    font-family: var(--label); font-size: 0.8rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 0.9rem;
+  }
+  .bs-choices { display: grid; gap: 0.7rem; max-width: 26rem; }
+  .bs-choice {
+    font-family: var(--display); font-size: 1.25rem;
+    padding: 1.35rem 1rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--line);
+    background: var(--white);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.25s ease, border-color 0.25s ease;
+  }
+  .bs-choice:active { transform: scale(0.97); }
+  .bs-choice.right { background: var(--accent); border-color: var(--accent); color: #FFFFFF; }
+  .bs-choice.wrong { border-color: var(--muted); opacity: 0.55; }
+  .bs-feedback {
+    font-size: 0.92rem; min-height: 1.5rem; margin: 0.9rem 0 0;
+    font-family: var(--body);
+  }
+  .bs-feedback.good { color: var(--accent); font-weight: 600; }
+  .bs-feedback.bad { color: var(--muted); }
+  .bs-best-streak { font-size: 0.9rem; color: var(--muted); margin: 0.2rem 0 0.9rem; }
+  @media (prefers-reduced-motion: reduce) { .bs-choice { transition: none; } }
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  // Books in canonical order, with their position. Position is what the game
+  // compares — the names alone don't tell you the order.
+  const BOOKS = {{ books | tojson }};
+  const ROUND_SECONDS = 60;
+
+  const timeEl = document.getElementById("bs-time");
+  const scoreEl = document.getElementById("bs-score");
+  const streakEl = document.getElementById("bs-streak");
+  const feedbackEl = document.getElementById("bs-feedback");
+  const aBtn = document.getElementById("bs-a");
+  const bBtn = document.getElementById("bs-b");
+  const startEl = document.getElementById("bs-start");
+  const playEl = document.getElementById("bs-play");
+  const winEl = document.getElementById("bs-win");
+
+  let score = 0, streak = 0, bestStreak = 0;
+  let left = ROUND_SECONDS;
+  let timer = null;
+  let pair = null;
+  let locked = false;
+
+  function pickPair() {
+    // Avoid pairs that are trivially far apart or adjacent-and-obscure by
+    // keeping a moderate gap: enough to be fair, close enough to be a test.
+    let i, j;
+    do {
+      i = Math.floor(Math.random() * BOOKS.length);
+      j = Math.floor(Math.random() * BOOKS.length);
+    } while (i === j || Math.abs(i - j) > 24);
+    return Math.random() < 0.5 ? [BOOKS[i], BOOKS[j]] : [BOOKS[j], BOOKS[i]];
+  }
+
+  function nextQuestion() {
+    locked = false;
+    pair = pickPair();
+    aBtn.textContent = pair[0].name;
+    bBtn.textContent = pair[1].name;
+    aBtn.className = "bs-choice";
+    bBtn.className = "bs-choice";
+  }
+
+  function answer(choiceIndex) {
+    if (locked) return;
+    locked = true;
+
+    const chosen = pair[choiceIndex];
+    const other = pair[1 - choiceIndex];
+    const correct = chosen.pos < other.pos;
+    const btns = [aBtn, bBtn];
+
+    if (correct) {
+      btns[choiceIndex].classList.add("right");
+      streak += 1;
+      bestStreak = Math.max(bestStreak, streak);
+      let gained = 1;
+      if (streak % 5 === 0) {
+        gained += 3;
+        feedbackEl.textContent = `${streak} in a row — bonus +3!`;
+      } else {
+        feedbackEl.textContent = "Correct!";
+      }
+      feedbackEl.className = "bs-feedback good";
+      score += gained;
+    } else {
+      btns[choiceIndex].classList.add("wrong");
+      btns[1 - choiceIndex].classList.add("right");
+      streak = 0;
+      feedbackEl.textContent = `${other.name} comes first.`;
+      feedbackEl.className = "bs-feedback bad";
+    }
+
+    scoreEl.textContent = String(score);
+    streakEl.textContent = String(streak);
+    setTimeout(() => { if (timer) nextQuestion(); }, 620);
+  }
+
+  aBtn.addEventListener("click", () => answer(0));
+  bBtn.addEventListener("click", () => answer(1));
+
+  function tick() {
+    left -= 1;
+    timeEl.textContent = String(Math.max(0, left));
+    if (left <= 0) endGame();
+  }
+
+  function endGame() {
+    clearInterval(timer);
+    timer = null;
+    playEl.hidden = true;
+    winEl.hidden = false;
+    document.getElementById("bs-final").textContent = String(score);
+    document.getElementById("bs-final-streak").textContent = String(bestStreak);
+  }
+
+  function begin() {
+    score = 0; streak = 0; bestStreak = 0; left = ROUND_SECONDS;
+    scoreEl.textContent = "0";
+    streakEl.textContent = "0";
+    timeEl.textContent = String(ROUND_SECONDS);
+    feedbackEl.textContent = "";
+    startEl.hidden = true;
+    winEl.hidden = true;
+    playEl.hidden = false;
+    const pubBtn = document.getElementById("bs-publish");
+    pubBtn.disabled = false;
+    pubBtn.textContent = "Publish score to leaderboard";
+    document.getElementById("bs-publish-result").textContent = "";
+    nextQuestion();
+    clearInterval(timer);
+    timer = setInterval(tick, 1000);
+  }
+
+  document.getElementById("bs-begin").addEventListener("click", begin);
+  document.getElementById("bs-play-again").addEventListener("click", begin);
+
+  document.getElementById("bs-publish").addEventListener("click", function () {
+    window.ChurchLeaderboard.publish(
+      "books_sprint", score,
+      document.getElementById("bs-publish-result"), this
+    );
+  });
+
+  // Stop the clock if the page is hidden, so time isn't lost in a pocket.
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && timer) { clearInterval(timer); timer = null; }
+    else if (!document.hidden && !playEl.hidden && left > 0 && !timer) {
+      timer = setInterval(tick, 1000);
+    }
+  });
+})();
+</script>
+
+{% endblock %}

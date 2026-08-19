@@ -1,0 +1,27 @@
+# ============================================================
+#  Never commit these — they contain data or secrets
+# ============================================================
+
+# Your passwords and keys
+settings.bat
+settings-previous.bat
+.env
+
+# Your church's data
+church.db
+church.db.*
+church.db-wal
+church.db-shm
+*.db
+*.db-wal
+*.db-shm
+church-data/
+secret_key
+*.migrated
+*.before-restore-*
+
+# Python
+*.pyc
+__pycache__/
+venv/
+.venv/

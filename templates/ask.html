@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow">Ask us anything</p>
+    <h1 class="page-title">Ask a Question</h1>
+    <p class="tagline">Sent privately to our staff — published once answered</p>
+  </div>
+</header>
+
+<main class="admin-page">
+  {% if sent %}
+    <div class="flash" style="max-width:26rem; margin:0 0 1.5rem;">
+      <p>Thanks — your question has been sent. Once it's answered, it'll appear on the
+      <a href="{{ url_for('questions') }}">Q&amp;A page</a>.</p>
+    </div>
+  {% endif %}
+
+  <form method="post" class="event-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="question_text">Your question</label>
+    <textarea id="question_text" name="question_text" rows="4" required
+              placeholder="What would you like to ask?"></textarea>
+
+    <label for="asker_name">Your name (optional)</label>
+    <input type="text" id="asker_name" name="asker_name" placeholder="Leave blank to stay anonymous">
+
+    <!-- Honeypot field: hidden from real visitors, bots often fill it in -->
+    <div style="position:absolute; left:-9999px;" aria-hidden="true">
+      <label for="website">Leave this field blank</label>
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" style="width:auto;">Submit question</button>
+      <a href="{{ url_for('questions') }}" class="btn-ghost">Cancel</a>
+    </div>
+  </form>
+</main>
+
+{% endblock %}

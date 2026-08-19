@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<header class="quest-hero" data-hero>
+  <div class="quest-hero-motifs" aria-hidden="true">
+    <span style="--x:8%; --y:18%; --r:-12deg; --s:1.15;">🪨</span>
+    <span style="--x:82%; --y:12%; --r:10deg; --s:0.9;">🛡️</span>
+    <span style="--x:18%; --y:72%; --r:8deg; --s:0.85;">🕊️</span>
+    <span style="--x:70%; --y:68%; --r:-8deg; --s:1.05;">⭐</span>
+    <span style="--x:46%; --y:30%; --r:-4deg; --s:0.7;">🎯</span>
+    <span style="--x:90%; --y:80%; --r:14deg; --s:0.8;">🧩</span>
+  </div>
+  <a href="{{ url_for('more_hub') }}" class="quest-hero-back" aria-label="Back to More">{{ icon('chevron-left', 20) }}</a>
+  <div class="quest-hero-inner" data-load>
+    <p class="quest-hero-eyebrow">Bible adventures</p>
+    <h1 class="quest-hero-title">Kids Games</h1>
+    <p class="quest-hero-sub">Play together. No sign-in needed — that's only for putting a score on the leaderboard.</p>
+  </div>
+</header>
+
+<main class="bible quest-main">
+
+  {#  Tiles rather than a list.
+
+      This was eighteen near-identical rows — nine games and nine leaderboard
+      links — which is a wall of text for a seven-year-old who doesn't read
+      quickly yet. Each game now has its own colour and symbol, so it can be
+      recognised before it can be read, and the leaderboard sits as a small
+      cup in the corner instead of taking a whole row of its own.  #}
+
+  <div class="game-grid">
+    {% for g in games %}
+    <div class="game-cell">
+      <a href="{{ url_for(g.endpoint) }}" class="game-tile" style="--g1:{{ g.c1 }}; --g2:{{ g.c2 }};">
+        <span class="game-emoji" aria-hidden="true">{{ g.emoji }}</span>
+        <span class="game-name">{{ g.name }}</span>
+        <span class="game-desc">{{ g.desc }}</span>
+      </a>
+      <a href="{{ url_for('game_leaderboard', game_key=g.key) }}"
+         class="game-cup" aria-label="{{ g.name }} leaderboard">{{ icon('trophy', 14) }}</a>
+    </div>
+    {% endfor %}
+  </div>
+
+</main>
+
+{% endblock %}

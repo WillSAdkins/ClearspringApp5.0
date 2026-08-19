@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="admin-page">
+  <p class="eyebrow">Staff area</p>
+  <h1>{{ m['name'] }}</h1>
+
+  {% if is_safeguarded %}
+    <div class="admin-alert">
+      <strong>This ministry works with under-18s.</strong>
+      To protect both children and volunteers, this page can only publish a role
+      email address — not a person's name or phone number. Use something like
+      <em>kids@clearspringchurch.com</em>, which reaches the team and can be
+      reassigned when leaders change.
+    </div>
+  {% endif %}
+
+  <form method="post" class="event-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="{{ m['name'] }}" required>
+
+    <label for="tagline">Tagline</label>
+    <input type="text" id="tagline" name="tagline" value="{{ m['tagline'] or '' }}"
+           placeholder="Ages 11–18">
+    <p class="field-hint">One short line shown under the name in the list.</p>
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="6"
+              placeholder="What happens, who it's for, and what a newcomer can expect.">{{ m['description'] or '' }}</textarea>
+
+    <div class="form-row">
+      <div>
+        <label for="meets">When it meets</label>
+        <input type="text" id="meets" name="meets" value="{{ m['meets'] or '' }}"
+               placeholder="Sundays, 10.30am">
+      </div>
+      <div>
+        <label for="location">Where</label>
+        <input type="text" id="location" name="location" value="{{ m['location'] or '' }}"
+               placeholder="The Atrium">
+      </div>
+    </div>
+
+    <label for="resources">Resources</label>
+    <textarea id="resources" name="resources" rows="4"
+              placeholder="Parent handbook | https://...&#10;Term dates | https://...">{{ m['resources'] or '' }}</textarea>
+    <p class="field-hint">One per line. Use <code>Label | https://link</code>, or just a label with no link.</p>
+
+    <h2 class="section-label" style="margin-top:2rem;">Contact</h2>
+
+    {% if is_safeguarded %}
+      <label for="contact_email">Role email address</label>
+      <input type="email" id="contact_email" name="contact_email" value="{{ m['contact_email'] or '' }}"
+             placeholder="kids@clearspringchurch.com">
+      <p class="field-hint">
+        A shared team address, not an individual's. Name and phone fields are
+        disabled for this ministry.
+      </p>
+    {% else %}
+      <label for="contact_name">Contact name</label>
+      <input type="text" id="contact_name" name="contact_name" value="{{ m['contact_name'] or '' }}"
+             placeholder="Sarah Jones">
+
+      <label for="contact_email">Email</label>
+      <input type="email" id="contact_email" name="contact_email" value="{{ m['contact_email'] or '' }}"
+             placeholder="women@clearspringchurch.com">
+
+      <label for="contact_phone">Phone</label>
+      <input type="tel" id="contact_phone" name="contact_phone" value="{{ m['contact_phone'] or '' }}"
+             placeholder="01242 000000">
+      <p class="field-hint">Please check the person is happy for this to be public before publishing.</p>
+    {% endif %}
+
+    <label class="admin-check">
+      <input type="checkbox" name="active" {{ 'checked' if m['active'] }}>
+      <span>Show this ministry in the app</span>
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" style="width:auto;">Save changes</button>
+      <a href="{{ url_for('admin_ministries') }}" class="btn-ghost">Cancel</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

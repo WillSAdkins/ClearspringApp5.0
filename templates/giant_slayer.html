@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow"><a href="{{ url_for('games_hub') }}" style="color:inherit;">← Kids Games</a></p>
+    <h1 class="page-title">Giant Slayer</h1>
+    <p class="tagline">Five smooth stones. Take down the whole camp, one wave at a time.</p>
+  </div>
+</header>
+
+<main class="board">
+  <div class="gs-stats">
+    <span>Score: <strong id="gs-score">0</strong></span>
+    <span>Wave: <strong id="gs-wave">1</strong> / <strong id="gs-total-waves">3</strong></span>
+    <span>Lives: <strong id="gs-lives">3</strong></span>
+    <button id="gs-restart" class="btn-ghost small">Restart</button>
+  </div>
+
+  <div id="gs-field" class="gs-field">
+    <div id="gs-player" class="gs-player">🧑</div>
+  </div>
+
+  <div class="gs-controls">
+    <button class="mz-btn" data-act="left" aria-label="Move left">←</button>
+    <button class="mz-btn gs-fire" data-act="fire" aria-label="Sling stone">🪨</button>
+    <button class="mz-btn" data-act="right" aria-label="Move right">→</button>
+  </div>
+
+  <div id="gs-end-box" class="mm-win" hidden>
+    <p id="gs-end-message"></p>
+    <button id="gs-play-again" class="btn-primary" style="width:auto;">Play again</button>
+    <div class="lb-publish">
+      <button id="gs-publish" class="btn-ghost small">Publish score to leaderboard</button>
+      <p id="gs-publish-result" class="lb-publish-result"></p>
+    </div>
+    <a href="{{ url_for('game_leaderboard', game_key='giant_slayer') }}" class="lb-view-link">View leaderboard →</a>
+  </div>
+
+  <p class="gs-verse">"The battle is the Lord's" — 1 Samuel 17:47</p>
+</main>
+
+<style>
+  .gs-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .gs-field {
+    position: relative;
+    width: 100%;
+    max-width: 22rem;
+    aspect-ratio: 3 / 4;
+    background: var(--ink);
+    border-radius: 0.6rem;
+    overflow: hidden;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .gs-enemy, .gs-player, .gs-stone, .gs-javelin {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .gs-enemy {
+    font-size: 1.1rem;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.4));
+  }
+  .gs-player {
+    font-size: 1.4rem;
+  }
+  .gs-stone {
+    width: 0.4rem;
+    height: 0.4rem;
+    background: var(--white);
+    border-radius: 50%;
+  }
+  .gs-javelin {
+    width: 0.2rem;
+    height: 0.7rem;
+    background: var(--accent-soft);
+    border-radius: 2px;
+  }
+  .gs-controls {
+    display: grid;
+    grid-template-columns: 3.2rem 3.6rem 3.2rem;
+    gap: 0.5rem;
+    margin-top: 1.2rem;
+    justify-content: center;
+  }
+  .gs-controls .mz-btn {
+    aspect-ratio: 1;
+    border-radius: 0.6rem;
+    border: 1px solid var(--ink);
+    background: var(--white);
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+  .gs-controls .mz-btn:active { background: var(--ink); color: var(--white); }
+  .gs-verse {
+    margin-top: 1rem;
+    font-family: var(--display);
+    font-style: italic;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .lb-publish { margin-top: 0.8rem; }
+  .lb-publish-result { font-size: 0.82rem; color: var(--muted); margin-top: 0.3rem; }
+  .lb-view-link { display: inline-block; margin-top: 0.6rem; font-size: 0.85rem; color: var(--accent); }
+</style>
+
+<script>
+(function () {
+  const field = document.getElementById("gs-field");
+  const playerEl = document.getElementById("gs-player");
+  const scoreEl = document.getElementById("gs-score");
+  const waveEl = document.getElementById("gs-wave");
+  const totalWavesEl = document.getElementById("gs-total-waves");
+  const livesEl = document.getElementById("gs-lives");
+  const endBox = document.getElementById("gs-end-box");
+  const endMessage = document.getElementById("gs-end-message");
+
+  const TOTAL_WAVES = 3;
+  const ROWS = 3;
+  const COLS = 6;
+  const PLAYER_W = 28, PLAYER_H = 28;
+  const ENEMY_W = 24, ENEMY_H = 24;
+
+  let W, H;
+  let player, enemies, stones, javelins;
+  let score, lives, wave, dir, dropTimer, gameOver, raf;
+  let lastEnemyStep, lastEnemyThrow, enemySpeed;
+
+  function sizeField() {
+    const rect = field.getBoundingClientRect();
+    W = rect.width;
+    H = rect.height;
+  }
+
+  function setupWave() {
+    enemies = [];
+    const marginX = 20;
+    const gapX = (W - marginX * 2 - ENEMY_W) / (COLS - 1);
+    const gapY = ENEMY_H + 14;
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        enemies.push({
+          x: marginX + c * gapX,
+          y: 20 + r * gapY,
+          alive: true,
+        });
+      }
+    }
+    dir = 1;
+    enemySpeed = 10 + wave * 4;
+    lastEnemyStep = 0;
+    lastEnemyThrow = 0;
+    stones = [];
+    javelins = [];
+  }
+
+  function resetPlayer() {
+    player = { x: W / 2 - PLAYER_W / 2, y: H - PLAYER_H - 10 };
+  }
+
+  function restart() {
+    sizeField();
+    score = 0;
+    lives = 3;
+    wave = 1;
+    gameOver = false;
+    endBox.hidden = true;
+    totalWavesEl.textContent = TOTAL_WAVES;
+    resetPlayer();
+    setupWave();
+    updateStats();
+    if (raf) cancelAnimationFrame(raf);
+    lastFrame = performance.now();
+    raf = requestAnimationFrame(loop);
+  }
+
+  function updateStats() {
+    scoreEl.textContent = score;
+    waveEl.textContent = wave;
+    livesEl.textContent = lives;
+  }
+
+  function movePlayer(dx) {
+    if (gameOver) return;
+    player.x = Math.max(0, Math.min(W - PLAYER_W, player.x + dx));
+  }
+
+  function fire() {
+    if (gameOver) return;
+    if (stones.length >= 3) return; // one wave of stones in flight at a time-ish
+    stones.push({ x: player.x + PLAYER_W / 2 - 2, y: player.y - 8 });
+  }
+
+  let lastFrame = 0;
+
+  function loop(t) {
+    const dt = Math.min(50, t - lastFrame);
+    lastFrame = t;
+    if (!gameOver) {
+      update(t, dt);
+      render();
+      raf = requestAnimationFrame(loop);
+    }
+  }
+
+  function update(t, dt) {
+    // Move stones up
+    stones.forEach((s) => (s.y -= 0.35 * dt));
+    stones = stones.filter((s) => s.y > -10);
+
+    // Move javelins down
+    javelins.forEach((j) => (j.y += 0.22 * dt));
+    javelins = javelins.filter((j) => j.y < H + 10);
+
+    // Step enemies sideways/down on a timer
+    lastEnemyStep += dt;
+    const stepInterval = Math.max(180, 700 - enemySpeed * 15);
+    if (lastEnemyStep >= stepInterval) {
+      lastEnemyStep = 0;
+      const alive = enemies.filter((e) => e.alive);
+      let hitEdge = false;
+      alive.forEach((e) => {
+        const nx = e.x + dir * 10;
+        if (nx < 4 || nx > W - ENEMY_W - 4) hitEdge = true;
+      });
+      if (hitEdge) {
+        dir *= -1;
+        alive.forEach((e) => (e.y += 16));
+      } else {
+        alive.forEach((e) => (e.x += dir * 10));
+      }
+      // Reached the player's line?
+      if (alive.some((e) => e.y + ENEMY_H >= player.y)) {
+        endGame(false, "The camp reached your line. Take heart and try again!");
+        return;
+      }
+    }
+
+    // Enemies occasionally throw javelins
+    lastEnemyThrow += dt;
+    const throwInterval = Math.max(500, 1800 - wave * 200);
+    if (lastEnemyThrow >= throwInterval) {
+      lastEnemyThrow = 0;
+      const alive = enemies.filter((e) => e.alive);
+      if (alive.length) {
+        const thrower = alive[Math.floor(Math.random() * alive.length)];
+        javelins.push({ x: thrower.x + ENEMY_W / 2 - 1, y: thrower.y + ENEMY_H });
+      }
+    }
+
+    // Stone vs enemy collisions
+    stones.forEach((s) => {
+      enemies.forEach((e) => {
+        if (!e.alive) return;
+        if (
+          s.x > e.x - 4 && s.x < e.x + ENEMY_W + 4 &&
+          s.y > e.y - 4 && s.y < e.y + ENEMY_H + 4
+        ) {
+          e.alive = false;
+          s.y = -100; // remove
+          score += 10;
+        }
+      });
+    });
+    stones = stones.filter((s) => s.y > -50);
+
+    // Javelin vs player collision
+    javelins.forEach((j) => {
+      if (
+        j.x > player.x - 2 && j.x < player.x + PLAYER_W + 2 &&
+        j.y > player.y - 2 && j.y < player.y + PLAYER_H + 2
+      ) {
+        j.y = H + 100;
+        loseLife();
+      }
+    });
+    javelins = javelins.filter((j) => j.y < H + 50);
+
+    // Wave cleared?
+    if (enemies.every((e) => !e.alive)) {
+      if (wave >= TOTAL_WAVES) {
+        endGame(true, "The whole camp has fallen — well done, giant slayer! \u201cThe battle is the Lord's\u201d (1 Samuel 17:47).");
+      } else {
+        wave += 1;
+        resetPlayer();
+        setupWave();
+      }
+    }
+
+    updateStats();
+  }
+
+  function loseLife() {
+    lives -= 1;
+    updateStats();
+    if (lives <= 0) {
+      endGame(false, "Out of stones! Take a breath and try again.");
+    }
+  }
+
+  function endGame(won, message) {
+    gameOver = true;
+    if (raf) cancelAnimationFrame(raf);
+    endBox.hidden = false;
+    endMessage.textContent = message;
+    const publishBtn = document.getElementById("gs-publish");
+    const resultEl = document.getElementById("gs-publish-result");
+    publishBtn.disabled = false;
+    publishBtn.textContent = "Publish score to leaderboard";
+    resultEl.textContent = "";
+    publishBtn.onclick = () => {
+      ChurchLeaderboard.publish("giant_slayer", score, resultEl, publishBtn);
+    };
+  }
+
+  function render() {
+    playerEl.style.transform = `translate(${player.x}px, ${player.y}px)`;
+    playerEl.style.width = PLAYER_W + "px";
+    playerEl.style.height = PLAYER_H + "px";
+
+    // Clear and redraw dynamic nodes
+    field.querySelectorAll(".gs-enemy, .gs-stone, .gs-javelin").forEach((n) => n.remove());
+
+    enemies.forEach((e) => {
+      if (!e.alive) return;
+      const el = document.createElement("div");
+      el.className = "gs-enemy";
+      el.style.width = ENEMY_W + "px";
+      el.style.height = ENEMY_H + "px";
+      el.style.transform = `translate(${e.x}px, ${e.y}px)`;
+      el.textContent = "\u{1F6E1}\u{FE0F}";
+      field.appendChild(el);
+    });
+
+    stones.forEach((s) => {
+      const el = document.createElement("div");
+      el.className = "gs-stone";
+      el.style.transform = `translate(${s.x}px, ${s.y}px)`;
+      field.appendChild(el);
+    });
+
+    javelins.forEach((j) => {
+      const el = document.createElement("div");
+      el.className = "gs-javelin";
+      el.style.transform = `translate(${j.x}px, ${j.y}px)`;
+      field.appendChild(el);
+    });
+  }
+
+  // Controls
+  document.querySelectorAll(".gs-controls .mz-btn").forEach((btn) => {
+    const act = btn.dataset.act;
+    const trigger = () => {
+      if (act === "left") movePlayer(-18);
+      else if (act === "right") movePlayer(18);
+      else if (act === "fire") fire();
+    };
+    btn.addEventListener("click", trigger);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") { e.preventDefault(); movePlayer(-18); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); movePlayer(18); }
+    else if (e.key === " ") { e.preventDefault(); fire(); }
+  });
+
+  document.getElementById("gs-restart").addEventListener("click", restart);
+  document.getElementById("gs-play-again").addEventListener("click", restart);
+
+  window.addEventListener("resize", () => {
+    sizeField();
+  });
+
+  restart();
+})();
+</script>
+
+{% endblock %}

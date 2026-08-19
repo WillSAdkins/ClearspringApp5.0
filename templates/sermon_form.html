@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="admin-page">
+  <p class="eyebrow">Staff area</p>
+  <h1>{{ "Edit sermon" if s else "Add sermon" }}</h1>
+
+  <form method="post" class="event-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" required
+           value="{{ s['title'] if s else '' }}" placeholder="The Weight of Grace">
+
+    <div class="form-row">
+      <div>
+        <label for="speaker">Speaker</label>
+        <input type="text" id="speaker" name="speaker"
+               value="{{ s['speaker'] if s else '' }}" placeholder="Paul Lyndon Burtwell">
+      </div>
+      <div>
+        <label for="preached_on">Date</label>
+        <input type="date" id="preached_on" name="preached_on" required
+               value="{{ s['preached_on'] if s else '' }}">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label for="series">Series</label>
+        <input type="text" id="series" name="series"
+               value="{{ s['series'] if s else '' }}" placeholder="Romans">
+      </div>
+      <div>
+        <label for="topic">Topic</label>
+        <input type="text" id="topic" name="topic"
+               value="{{ s['topic'] if s else '' }}" placeholder="Faith">
+      </div>
+    </div>
+
+    <label for="passage">Bible passage</label>
+    <input type="text" id="passage" name="passage"
+           value="{{ s['passage'] if s else '' }}" placeholder="Romans 8">
+    <p class="field-hint">Use a form like "Romans 8" or "John 3" so it links into the Bible reader.</p>
+
+    <label for="summary">Summary</label>
+    <textarea id="summary" name="summary" rows="3"
+              placeholder="A sentence or two about this message">{{ s['summary'] if s else '' }}</textarea>
+
+    <label for="video_url">Video URL</label>
+    <input type="url" id="video_url" name="video_url"
+           value="{{ s['video_url'] if s else '' }}" placeholder="https://youtu.be/...">
+    <p class="field-hint">YouTube, Vimeo or Facebook links will play inside the app.</p>
+
+    <label for="audio_url">Audio file URL</label>
+    <input type="url" id="audio_url" name="audio_url"
+           value="{{ s['audio_url'] if s else '' }}" placeholder="https://.../sermon.mp3">
+    <p class="field-hint">A direct link to an MP3. Needed for the podcast feed and offline listening.</p>
+
+    <label for="duration_minutes">Length (minutes)</label>
+    <input type="number" id="duration_minutes" name="duration_minutes" min="0" step="1"
+           value="{{ (s['duration_seconds'] // 60) if s and s['duration_seconds'] else '' }}" placeholder="38">
+
+    <label class="admin-check">
+      <input type="checkbox" name="published" {{ 'checked' if (not s) or s['published'] }}>
+      <span>Published (visible in the app)</span>
+    </label>
+
+    {% if not s %}
+      <label class="admin-check">
+        <input type="checkbox" name="notify">
+        <span>Notify people who've opted in to new sermon alerts</span>
+      </label>
+    {% endif %}
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" style="width:auto;">{{ "Save changes" if s else "Add sermon" }}</button>
+      <a href="{{ url_for('admin_sermons') }}" class="btn-ghost">Cancel</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+<main class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Staff area</p>
+      <h1>Questions</h1>
+    </div>
+    <div class="admin-actions">
+      <a href="{{ url_for('admin') }}" class="btn-ghost">← Calendar</a>
+      <a href="{{ url_for('logout') }}" class="btn-ghost">Sign out</a>
+    </div>
+  </div>
+
+  <h2 class="section-label">Pending ({{ pending|length }})</h2>
+  {% if not pending %}
+    <p class="empty-sub">No new questions right now.</p>
+  {% endif %}
+
+  {% for q in pending %}
+    <article class="qa-admin-card">
+      <p class="qa-question">{{ q['question_text'] }}</p>
+      <p class="qa-meta">
+        {% if q['asker_name'] %}From {{ q['asker_name'] }} ·{% endif %}
+        submitted {{ q['submitted_at'] | pretty_datetime }}
+      </p>
+
+      <form method="post" action="{{ url_for('answer_question', question_id=q['id']) }}" class="qa-answer-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <textarea name="answer_text" rows="3" placeholder="Write your answer to publish it..." required></textarea>
+        <div class="qa-admin-actions">
+          <button type="submit" class="btn-primary small" style="width:auto;">Publish answer</button>
+          <form method="post" action="{{ url_for('reject_question', question_id=q['id']) }}" style="display:inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-ghost small">Dismiss</button>
+          </form>
+        </div>
+      </form>
+    </article>
+  {% endfor %}
+
+  <h2 class="section-label" style="margin-top:2.4rem;">Answered ({{ answered|length }})</h2>
+  {% for q in answered %}
+    <article class="qa-admin-card">
+      <p class="qa-question">{{ q['question_text'] }}</p>
+      <p class="qa-meta">
+        {% if q['asker_name'] %}From {{ q['asker_name'] }} ·{% endif %}
+        answered {{ q['answered_at'] | pretty_datetime }}
+      </p>
+      <div class="qa-answer">{{ q['answer_text'] }}</div>
+      <form method="post" action="{{ url_for('delete_question', question_id=q['id']) }}"
+            onsubmit="return confirm('Remove this question and answer?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-danger small">Delete</button>
+      </form>
+    </article>
+  {% endfor %}
+</main>
+{% endblock %}

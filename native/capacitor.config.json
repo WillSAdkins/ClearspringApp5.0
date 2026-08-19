@@ -1,0 +1,36 @@
+{
+  "appId": "uk.org.clearspring.app",
+  "appName": "Clearspring",
+  "webDir": "www",
+  "server": {
+    "url": "https://clearspringapp3-0.onrender.com",
+    "cleartext": false,
+    "allowNavigation": [
+      "clearspringapp3-0.onrender.com"
+    ]
+  },
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#FBF8F3",
+    "limitsNavigationsToAppBoundDomains": false
+  },
+  "android": {
+    "backgroundColor": "#FBF8F3",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#FBF8F3",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "StatusBar": {
+      "style": "DEFAULT",
+      "backgroundColor": "#FBF8F3"
+    }
+  }
+}

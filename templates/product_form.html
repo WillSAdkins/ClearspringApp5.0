@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="admin-page">
+  <p class="eyebrow">Staff area</p>
+  <h1>{{ "Edit item" if p else "Add item" }}</h1>
+
+  <form method="post" class="event-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" required
+           value="{{ p['name'] if p else '' }}" placeholder="Clearspring mug">
+
+    <label for="category">Category</label>
+    <select id="category" name="category">
+      {% for slug, label in categories %}
+        <option value="{{ slug }}" {{ "selected" if p and p['category'] == slug }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="summary">Short description</label>
+    <input type="text" id="summary" name="summary"
+           value="{{ p['summary'] if p else '' }}" placeholder="One line, shown in the list">
+
+    <label for="description">Full description</label>
+    <textarea id="description" name="description" rows="5"
+              placeholder="Anything a buyer should know.">{{ p['description'] if p else '' }}</textarea>
+
+    <div class="form-row">
+      <div>
+        <label for="price">Price (£)</label>
+        <input type="text" id="price" name="price" inputmode="decimal"
+               value="{{ (p['price_pence'] / 100) | round(2) if p and p['price_pence'] else '' }}" placeholder="12.50">
+      </div>
+      <div>
+        <label for="stock">Availability</label>
+        <select id="stock" name="stock">
+          <option value="available" {{ "selected" if p and p['stock'] == 'available' }}>Available</option>
+          <option value="low" {{ "selected" if p and p['stock'] == 'low' }}>Only a few left</option>
+          <option value="preorder" {{ "selected" if p and p['stock'] == 'preorder' }}>Pre-order</option>
+          <option value="collect" {{ "selected" if p and p['stock'] == 'collect' }}>Collect at church</option>
+          <option value="out" {{ "selected" if p and p['stock'] == 'out' }}>Sold out</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="price_note">Price note</label>
+    <input type="text" id="price_note" name="price_note"
+           value="{{ p['price_note'] if p else '' }}" placeholder="plus postage, or: suggested donation">
+
+    <label for="image_url">Image link</label>
+    <input type="url" id="image_url" name="image_url"
+           value="{{ p['image_url'] if p else '' }}" placeholder="https://...">
+    <p class="field-hint">A direct link to a photo. Square images look best.</p>
+
+    <label for="buy_url">Buy link</label>
+    <input type="url" id="buy_url" name="buy_url"
+           value="{{ p['buy_url'] if p else '' }}" placeholder="https://your-shop/item">
+    <p class="field-hint">Where buying happens. Leave blank to use the store's default link.</p>
+
+    <div class="form-row">
+      <div>
+        <label for="sort_order">Order</label>
+        <input type="number" id="sort_order" name="sort_order" value="{{ p['sort_order'] if p else 0 }}">
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <label class="admin-check" style="margin-top:0.5rem;">
+          <input type="checkbox" name="featured" {{ 'checked' if p and p['featured'] }}>
+          <span>Feature this</span>
+        </label>
+      </div>
+    </div>
+
+    <label class="admin-check">
+      <input type="checkbox" name="active" {{ 'checked' if (not p) or p['active'] }}>
+      <span>Show in the store</span>
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" style="width:auto;">{{ "Save changes" if p else "Add item" }}</button>
+      <a href="{{ url_for('admin_store') }}" class="btn-ghost">Cancel</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

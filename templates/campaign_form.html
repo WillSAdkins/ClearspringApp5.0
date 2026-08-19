@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="admin-page">
+  <p class="eyebrow">Staff area</p>
+  <h1>{{ "Edit appeal" if c else "New appeal" }}</h1>
+
+  <form method="post" class="event-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" required
+           value="{{ c['title'] if c else '' }}" placeholder="Building Fund">
+
+    <label for="blurb">Description</label>
+    <textarea id="blurb" name="blurb" rows="5"
+              placeholder="What is this appeal for, and what will it make possible?">{{ c['blurb'] if c else '' }}</textarea>
+
+    <div class="form-row">
+      <div>
+        <label for="target">Target (£)</label>
+        <input type="text" id="target" name="target" inputmode="decimal"
+               value="{{ (c['target_pence'] / 100) | round(2) if c and c['target_pence'] else '' }}" placeholder="25000">
+      </div>
+      <div>
+        <label for="raised">Raised so far (£)</label>
+        <input type="text" id="raised" name="raised" inputmode="decimal"
+               value="{{ (c['raised_pence'] / 100) | round(2) if c and c['raised_pence'] else '' }}" placeholder="8400">
+      </div>
+    </div>
+    <p class="field-hint">Leave the target blank to hide the progress bar. Update "raised" manually as gifts come in.</p>
+
+    <label for="give_url">Giving link for this appeal</label>
+    <input type="url" id="give_url" name="give_url"
+           value="{{ c['give_url'] if c else '' }}" placeholder="https://www.stewardship.org.uk/...">
+    <p class="field-hint">Optional. If blank, the main giving link is used.</p>
+
+    <label for="closes_on">Closing date</label>
+    <input type="date" id="closes_on" name="closes_on" value="{{ c['closes_on'] if c else '' }}">
+
+    <label class="admin-check">
+      <input type="checkbox" name="active" {{ 'checked' if (not c) or c['active'] }}>
+      <span>Show in the app</span>
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" style="width:auto;">{{ "Save changes" if c else "Create appeal" }}</button>
+      <a href="{{ url_for('admin_giving') }}" class="btn-ghost">Cancel</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

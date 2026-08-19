@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow"><a href="{{ url_for('games_hub') }}" style="color:inherit;">← Kids Games</a></p>
+    <h1 class="page-title">Verse Builder</h1>
+    <p class="tagline">Put the verse back together, one word at a time</p>
+  </div>
+</header>
+
+<main class="board">
+  <div class="vb-stats">
+    <span>Round: <strong id="vb-round">1</strong> / 5</span>
+    <span>Score: <strong id="vb-score">0</strong></span>
+    <button id="vb-restart" class="btn-ghost small">Restart</button>
+  </div>
+
+  <div id="vb-play">
+    <p class="vb-ref" id="vb-ref"></p>
+
+    <div class="vb-answer" id="vb-answer" aria-live="polite">
+      <p class="vb-placeholder" id="vb-placeholder">Tap the words below in the right order</p>
+    </div>
+
+    <div class="vb-pool" id="vb-pool"></div>
+
+    <div class="vb-controls">
+      <button id="vb-undo" class="btn-ghost small">Undo</button>
+      <button id="vb-hint" class="btn-ghost small">Hint (−3)</button>
+    </div>
+
+    <p class="vb-feedback" id="vb-feedback"></p>
+  </div>
+
+  <div id="vb-win" class="mm-win" hidden>
+    <p>📖 You scored <span id="vb-final"></span> points!</p>
+    <button id="vb-play-again" class="btn-primary" style="width:auto;">Play again</button>
+    <div class="lb-publish">
+      <button id="vb-publish" class="btn-ghost small">Publish score to leaderboard</button>
+      <p id="vb-publish-result" class="lb-publish-result"></p>
+    </div>
+    <a href="{{ url_for('game_leaderboard', game_key='verse_builder') }}" class="lb-view-link">View leaderboard →</a>
+  </div>
+</main>
+
+<style>
+  .vb-stats {
+    display: flex; align-items: center; gap: 1.2rem;
+    font-family: var(--mono); font-size: 0.85rem;
+    margin-bottom: 1.2rem; flex-wrap: wrap;
+  }
+  .vb-ref {
+    font-family: var(--label); font-size: 0.8rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 0.6rem;
+  }
+  .vb-answer {
+    min-height: 5.5rem;
+    border: 2px dashed var(--line);
+    border-radius: 0.9rem;
+    padding: 0.85rem;
+    margin-bottom: 1.1rem;
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    align-content: flex-start;
+    background: var(--surface);
+  }
+  .vb-placeholder {
+    margin: 0; color: var(--muted); font-size: 0.88rem;
+  }
+  .vb-pool {
+    display: flex; flex-wrap: wrap; gap: 0.45rem;
+    margin-bottom: 1rem;
+  }
+  .vb-word {
+    font-family: var(--body); font-size: 0.92rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--line);
+    background: var(--white);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.2s ease, opacity 0.2s ease;
+  }
+  .vb-word:active { transform: scale(0.94); }
+  .vb-word.placed {
+    background: var(--accent);
+    color: #FFFFFF;
+    border-color: var(--accent);
+  }
+  .vb-word.spent { opacity: 0.25; pointer-events: none; }
+  .vb-word.wrong { animation: vb-shake 0.32s; }
+  @keyframes vb-shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  .vb-controls { display: flex; gap: 0.6rem; margin-bottom: 0.8rem; }
+  .vb-feedback {
+    font-size: 0.9rem; min-height: 1.4rem; margin: 0;
+    font-family: var(--body);
+  }
+  .vb-feedback.good { color: var(--accent); font-weight: 600; }
+  .vb-feedback.bad { color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) {
+    .vb-word, .vb-word.wrong { transition: none; animation: none; }
+  }
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  const VERSES = {{ verses | tojson }};
+  const ROUNDS = 5;
+
+  const roundEl = document.getElementById("vb-round");
+  const scoreEl = document.getElementById("vb-score");
+  const refEl = document.getElementById("vb-ref");
+  const answerEl = document.getElementById("vb-answer");
+  const poolEl = document.getElementById("vb-pool");
+  const feedbackEl = document.getElementById("vb-feedback");
+  const placeholder = document.getElementById("vb-placeholder");
+  const playEl = document.getElementById("vb-play");
+  const winEl = document.getElementById("vb-win");
+
+  let deck = [];
+  let round = 0;
+  let score = 0;
+  let target = [];      // correct word order
+  let placed = [];      // {word, btn} in the order tapped
+  let usedHint = false;
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  /* Long verses make for a miserable puzzle on a phone, so pick a workable
+     run of words rather than the whole thing. */
+  function pickWords(text) {
+    const words = text.replace(/\s+/g, " ").trim().split(" ");
+    const MAX = 10;
+    if (words.length <= MAX) return words;
+    const start = Math.floor(Math.random() * (words.length - MAX));
+    return words.slice(start, start + MAX);
+  }
+
+  function startRound() {
+    const verse = deck[round];
+    target = pickWords(verse.text);
+    placed = [];
+    usedHint = false;
+
+    refEl.textContent = verse.ref;
+    roundEl.textContent = String(round + 1);
+    feedbackEl.textContent = "";
+    feedbackEl.className = "vb-feedback";
+
+    answerEl.textContent = "";
+    answerEl.appendChild(placeholder);
+    placeholder.hidden = false;
+
+    poolEl.textContent = "";
+    shuffle(target).forEach((word) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "vb-word";
+      b.textContent = word;
+      b.addEventListener("click", () => placeWord(word, b));
+      poolEl.appendChild(b);
+    });
+  }
+
+  function placeWord(word, btn) {
+    const expected = target[placed.length];
+    if (word !== expected) {
+      btn.classList.add("wrong");
+      setTimeout(() => btn.classList.remove("wrong"), 340);
+      feedbackEl.textContent = "Not that one — try again.";
+      feedbackEl.className = "vb-feedback bad";
+      return;
+    }
+
+    placeholder.hidden = true;
+    btn.classList.add("spent");
+
+    const chip = document.createElement("span");
+    chip.className = "vb-word placed";
+    chip.textContent = word;
+    answerEl.appendChild(chip);
+    placed.push({ word, btn, chip });
+
+    feedbackEl.textContent = "";
+    feedbackEl.className = "vb-feedback";
+
+    if (placed.length === target.length) finishRound();
+  }
+
+  function finishRound() {
+    const points = usedHint ? 7 : 10;
+    score += points;
+    scoreEl.textContent = String(score);
+    feedbackEl.textContent = `Well done — +${points} points!`;
+    feedbackEl.className = "vb-feedback good";
+
+    round += 1;
+    if (round >= ROUNDS) {
+      setTimeout(endGame, 900);
+    } else {
+      setTimeout(startRound, 900);
+    }
+  }
+
+  function endGame() {
+    playEl.hidden = true;
+    winEl.hidden = false;
+    document.getElementById("vb-final").textContent = String(score);
+  }
+
+  document.getElementById("vb-undo").addEventListener("click", () => {
+    const last = placed.pop();
+    if (!last) return;
+    last.chip.remove();
+    last.btn.classList.remove("spent");
+    if (!placed.length) placeholder.hidden = false;
+  });
+
+  document.getElementById("vb-hint").addEventListener("click", () => {
+    if (placed.length >= target.length) return;
+    if (!usedHint) { usedHint = true; }
+    const next = target[placed.length];
+    const btn = [...poolEl.querySelectorAll(".vb-word")]
+      .find((b) => b.textContent === next && !b.classList.contains("spent"));
+    if (btn) placeWord(next, btn);
+  });
+
+  function newGame() {
+    deck = shuffle(VERSES).slice(0, ROUNDS);
+    round = 0;
+    score = 0;
+    scoreEl.textContent = "0";
+    playEl.hidden = false;
+    winEl.hidden = true;
+    const pubBtn = document.getElementById("vb-publish");
+    pubBtn.disabled = false;
+    pubBtn.textContent = "Publish score to leaderboard";
+    document.getElementById("vb-publish-result").textContent = "";
+    startRound();
+  }
+
+  document.getElementById("vb-restart").addEventListener("click", newGame);
+  document.getElementById("vb-play-again").addEventListener("click", newGame);
+
+  document.getElementById("vb-publish").addEventListener("click", function () {
+    window.ChurchLeaderboard.publish(
+      "verse_builder", score,
+      document.getElementById("vb-publish-result"), this
+    );
+  });
+
+  newGame();
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,999 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<div class="reader-progress" id="readerProgress"></div>
+
+<div class="reader-bar">
+  <a href="{{ url_for('bible_chapters', book_slug=book.slug) }}" class="reader-bar-back" aria-label="Chapters">
+    {{ icon('chevron-left', 22) }}
+  </a>
+  <button class="reader-bar-ref" id="refBtn" type="button" aria-haspopup="dialog">
+    {{ book.name }} {{ chapter }}
+  </button>
+  <button class="reader-aa" id="aaBtn" type="button" aria-haspopup="dialog" aria-label="Reading options">
+    <span class="aa-big">A</span><span class="aa-small">a</span>
+  </button>
+  <div class="reader-bar-trans">
+    {% for code, name in translations.items() %}
+      <a href="{{ url_for('bible_read_chapter', book_slug=book.slug, chapter=chapter, translation=code) }}"
+         class="trans-pill {{ 'on' if translation == code }}">{{ code | upper }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+<main class="reader">
+
+  {% if error %}
+    <div class="reader-error">
+      <p><strong>Couldn't load this chapter.</strong></p>
+      <p>The Bible text service may be temporarily unavailable. You can read this passage at
+         <a href="{{ gateway_url }}" target="_blank" rel="noopener">Bible Gateway</a>.</p>
+    </div>
+  {% else %}
+    <article class="scripture" id="scripture">
+      {% for v in data.verses %}<span class="v{{ ' bracketed' if v.bracketed }}" data-ref="{{ book.name }} {{ chapter }}:{{ v.verse }}" data-translation="{{ translation }}" data-text="{{ v.text.strip() }}" data-num="{{ v.verse }}"{% if v.bracketed %} data-bracketed="1"{% endif %}><sup class="vn">{{ v.verse }}</sup>{% if v.bracketed %}<span class="brk">[</span>{{ v.text.strip() }}<span class="brk">]</span>{% else %}{{ v.text.strip() }}{% endif %} </span>{% endfor %}
+    </article>
+    {% if data.bracket_note %}
+      <p class="reader-bracket-note">{{ data.bracket_note }}</p>
+    {% endif %}
+    {% if fell_back %}
+      <p class="reader-fallback">That translation isn't available right now,
+        so this is the {{ translations.get(translation, translation|upper) }}.</p>
+    {% endif %}
+    <p class="reader-credit">{{ translations.get(translation, translation|upper) }}</p>
+    {% if data.copyright %}
+      {# Not optional. Biblica and the other publishers require their notice
+         to appear wherever their text is shown. #}
+      <p class="reader-copyright">{{ data.copyright }}</p>
+    {% endif %}
+  {% endif %}
+
+  <nav class="reader-paging">
+    {% if chapter > 1 %}
+      <a href="{{ url_for('bible_read_chapter', book_slug=book.slug, chapter=chapter-1, translation=translation) }}" class="page-btn">
+        {{ icon('chevron-left', 18) }} <span>{{ book.name }} {{ chapter - 1 }}</span>
+      </a>
+    {% else %}<span></span>{% endif %}
+    {% if chapter < book.chapters %}
+      <a href="{{ url_for('bible_read_chapter', book_slug=book.slug, chapter=chapter+1, translation=translation) }}" class="page-btn">
+        <span>{{ book.name }} {{ chapter + 1 }}</span> {{ icon('chevron-right', 18) }}
+      </a>
+    {% endif %}
+  </nav>
+</main>
+
+{% if study_enabled %}
+<!-- Study assistant -->
+<button type="button" id="studyOpen" class="study-fab" aria-label="Ask about this passage">
+  {{ icon('message', 20) }}<span>Study help</span>
+</button>
+
+<div class="study-panel" id="studyPanel" hidden>
+  <div class="study-inner">
+    <div class="study-head">
+      <div>
+        <p class="study-title">Study help</p>
+        <p class="study-ref">{{ book.name }} {{ chapter }}</p>
+      </div>
+      <button type="button" id="studyClose" class="study-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="study-disclaimer">
+      This is an AI study aid, not our church speaking. It summarises how
+      different Christian teachers have read a passage — it doesn't tell you what
+      Clearspring believes. Please check anything important with a pastor.
+    </div>
+
+    <div class="study-thread" id="studyThread">
+      <div class="study-suggestions" id="studySuggest">
+        <button type="button" class="study-chip">What is this passage about?</button>
+        <button type="button" class="study-chip">What's the historical context?</button>
+        <button type="button" class="study-chip">Do Christians read this differently?</button>
+        <button type="button" class="study-chip">What do the key words mean?</button>
+      </div>
+    </div>
+
+    <form class="study-form" id="studyForm">
+      <input type="text" id="studyInput" placeholder="Ask about this passage…"
+             maxlength="500" autocomplete="off">
+      <button type="submit" id="studySend" class="study-send">{{ icon('chevron-right', 20) }}</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Action sheet: appears when verses are selected or a phrase is highlighted -->
+<div class="vsheet" id="vsheet" hidden>
+  <div class="vsheet-inner">
+    <p class="vsheet-ref" id="vsheetRef"></p>
+    <p class="vsheet-hint" id="vsheetHint">Tap more verses to add them</p>
+    <div class="vsheet-actions">
+      <button type="button" class="vsheet-btn" id="vsheetSave">
+        {{ icon('bookmark', 20) }}<span id="vsheetSaveLabel">Save</span>
+      </button>
+      <button type="button" class="vsheet-btn" id="vsheetHighlight">
+        {{ icon('bookmark', 20) }}<span id="vsheetHighlightLabel">Highlight</span>
+      </button>
+      <button type="button" class="vsheet-btn" id="vsheetCopy">
+        {{ icon('check', 20) }}<span>Copy</span>
+      </button>
+      {% if study_enabled %}
+      <button type="button" class="vsheet-btn" id="vsheetAsk">
+        {{ icon('message', 20) }}<span>Ask</span>
+      </button>
+      {% endif %}
+      <button type="button" class="vsheet-btn" id="vsheetClose">
+        <span>Done</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Chapter jump: an in-place book + chapter picker, opened from the reader bar -->
+<div class="jump" id="jump" role="dialog" aria-modal="true" aria-label="Go to passage" hidden>
+  <div class="jump-sheet">
+    <div class="jump-grip"></div>
+    <div class="jump-head">
+      <p class="jump-title" id="jumpTitle">Go to</p>
+      <button type="button" class="jump-close" id="jumpClose" aria-label="Close">✕</button>
+    </div>
+
+    <div class="jump-search" id="jumpSearchWrap">
+      {{ icon('search', 18) }}
+      <input type="search" id="jumpSearch" placeholder="Find a book" autocomplete="off" aria-label="Find a book">
+    </div>
+
+    <div class="jump-body">
+      <!-- Book list (step 1) -->
+      <div id="jumpBooks"></div>
+
+      <!-- Chapter grid (step 2) -->
+      <div class="jump-chapters" id="jumpChapters">
+        <div class="jump-crumb">
+          <button type="button" class="jump-crumb-back" id="jumpBack" aria-label="Back to books">
+            {{ icon('chevron-left', 20) }}
+          </button>
+          <span class="jump-crumb-name" id="jumpCrumbName"></span>
+        </div>
+        <div class="jump-grid" id="jumpGrid"></div>
+      </div>
+
+      <p class="jump-empty" id="jumpEmpty" hidden>No book matches that.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Reading options: in-context size, spacing and reading theme -->
+<div class="aa-panel" id="aaPanel" role="dialog" aria-modal="true" aria-label="Reading options" hidden>
+  <div class="aa-sheet">
+    <div class="aa-grip"></div>
+
+    <div class="aa-group">
+      <p class="aa-label">Text size</p>
+      <div class="aa-row" id="aaSize">
+        <button type="button" class="aa-opt" data-size="small"  aria-label="Small"><span class="aa-a-small">A</span></button>
+        <button type="button" class="aa-opt" data-size="normal" aria-label="Normal"><span class="aa-a-mid">A</span></button>
+        <button type="button" class="aa-opt" data-size="large"  aria-label="Large"><span class="aa-a-big">A</span></button>
+        <button type="button" class="aa-opt" data-size="xlarge" aria-label="Extra large"><span class="aa-a-xbig">A</span></button>
+      </div>
+    </div>
+
+    <div class="aa-group">
+      <p class="aa-label">Line spacing</p>
+      <div class="aa-row" id="aaLh">
+        <button type="button" class="aa-opt" data-lh="tight">Tight</button>
+        <button type="button" class="aa-opt" data-lh="normal">Normal</button>
+        <button type="button" class="aa-opt" data-lh="relaxed">Relaxed</button>
+      </div>
+    </div>
+
+    <div class="aa-group">
+      <p class="aa-label">Reading theme</p>
+      <div class="aa-row" id="aaTheme">
+        <button type="button" class="aa-swatch" data-reading-theme-choice="day">Day</button>
+        <button type="button" class="aa-swatch" data-reading-theme-choice="sepia">Sepia</button>
+        <button type="button" class="aa-swatch" data-reading-theme-choice="night">Night</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const btn = document.getElementById("aaBtn");
+  const panel = document.getElementById("aaPanel");
+  const reader = document.querySelector("main.reader");
+  if (!btn || !panel || !reader) return;
+
+  const root = document.documentElement;
+  const SIZE_KEY = "cs_text_size";        // shared with settings — stays in step
+  const LH_KEY = "cs_reading_lh";
+  const RTHEME_KEY = "cs_reading_theme";
+
+  function get(key, fallback) {
+    try { return localStorage.getItem(key) || fallback; } catch (e) { return fallback; }
+  }
+  function set(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
+
+  /* ---- apply saved prefs (size already applied app-wide by base.html) ---- */
+  function applyLh(v)     { root.setAttribute("data-line-height", v); }
+  function applyRTheme(v) { reader.setAttribute("data-reading-theme", v); }
+
+  applyLh(get(LH_KEY, "normal"));
+  applyRTheme(get(RTHEME_KEY, "day"));
+
+  /* ---- paint current selections in the panel ---- */
+  function paint() {
+    const size = get(SIZE_KEY, "normal");
+    const lh = get(LH_KEY, "normal");
+    const rt = get(RTHEME_KEY, "day");
+    panel.querySelectorAll("#aaSize .aa-opt").forEach((b) =>
+      b.classList.toggle("on", b.dataset.size === size));
+    panel.querySelectorAll("#aaLh .aa-opt").forEach((b) =>
+      b.classList.toggle("on", b.dataset.lh === lh));
+    panel.querySelectorAll("#aaTheme .aa-swatch").forEach((b) =>
+      b.classList.toggle("on", b.dataset.readingThemeChoice === rt));
+  }
+
+  /* ---- wire the controls ---- */
+  panel.querySelectorAll("#aaSize .aa-opt").forEach((b) => {
+    b.addEventListener("click", () => {
+      set(SIZE_KEY, b.dataset.size);
+      root.setAttribute("data-text-size", b.dataset.size);
+      paint();
+    });
+  });
+  panel.querySelectorAll("#aaLh .aa-opt").forEach((b) => {
+    b.addEventListener("click", () => { set(LH_KEY, b.dataset.lh); applyLh(b.dataset.lh); paint(); });
+  });
+  panel.querySelectorAll("#aaTheme .aa-swatch").forEach((b) => {
+    b.addEventListener("click", () => {
+      set(RTHEME_KEY, b.dataset.readingThemeChoice);
+      applyRTheme(b.dataset.readingThemeChoice);
+      paint();
+    });
+  });
+
+  /* ---- open / close ---- */
+  function open() { paint(); panel.hidden = false; requestAnimationFrame(() => panel.classList.add("up")); }
+  function close() { panel.classList.remove("up"); setTimeout(() => { panel.hidden = true; }, 260); }
+
+  btn.addEventListener("click", open);
+  panel.addEventListener("click", (e) => { if (e.target === panel) close(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden) close(); });
+})();
+
+/* ---- reading progress bar ---- */
+(function () {
+  const bar = document.getElementById("readerProgress");
+  if (!bar) return;
+  let ticking = false;
+  function update() {
+    const doc = document.documentElement;
+    const scrollable = doc.scrollHeight - doc.clientHeight;
+    const pct = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0;
+    bar.style.width = (pct * 100).toFixed(1) + "%";
+    ticking = false;
+  }
+  window.addEventListener("scroll", () => {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+  window.addEventListener("resize", update, { passive: true });
+  update();
+})();
+</script>
+
+<script id="jumpData" type="application/json">
+  {{ jump_books | tojson }}
+</script>
+
+<script>
+(function () {
+  const jump = document.getElementById("jump");
+  const refBtn = document.getElementById("refBtn");
+  if (!jump || !refBtn) return;
+
+  const CURRENT_SLUG = {{ book.slug | tojson }};
+  const CURRENT_CHAPTER = {{ chapter }};
+  const TRANSLATION = {{ translation | tojson }};
+
+  const books = JSON.parse(document.getElementById("jumpData").textContent);
+
+  const booksPane = document.getElementById("jumpBooks");
+  const chaptersPane = document.getElementById("jumpChapters");
+  const grid = document.getElementById("jumpGrid");
+  const crumbName = document.getElementById("jumpCrumbName");
+  const search = document.getElementById("jumpSearch");
+  const searchWrap = document.getElementById("jumpSearchWrap");
+  const emptyMsg = document.getElementById("jumpEmpty");
+
+  /* ---- build the book list once ---- */
+
+  function chapterHref(slug, n) {
+    return `/bible/read/${slug}/${n}?translation=${encodeURIComponent(TRANSLATION)}`;
+  }
+
+  function renderBooks(groups) {
+    booksPane.textContent = "";
+    let any = false;
+    groups.forEach((group) => {
+      const visible = group.books.filter((b) => b._match !== false);
+      if (!visible.length) return;
+      any = true;
+      const label = document.createElement("p");
+      label.className = "jump-group";
+      label.textContent = group.label;
+      booksPane.appendChild(label);
+      visible.forEach((b) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "jump-book";
+        if (b.slug === CURRENT_SLUG) btn.setAttribute("aria-current", "true");
+        const name = document.createElement("span");
+        name.textContent = b.name;
+        const meta = document.createElement("span");
+        meta.className = "jump-book-meta";
+        meta.textContent = b.chapters + (b.chapters === 1 ? " ch" : " ch");
+        btn.append(name, meta);
+        btn.addEventListener("click", () => openChapters(b));
+        booksPane.appendChild(btn);
+      });
+    });
+    emptyMsg.hidden = any;
+  }
+
+  const GROUPS = [
+    { label: "Old Testament", books: books.filter((b) => b.testament === "old") },
+    { label: "New Testament", books: books.filter((b) => b.testament === "new") },
+  ];
+
+  /* ---- step 2: chapters ---- */
+
+  function openChapters(book) {
+    crumbName.textContent = book.name;
+    grid.textContent = "";
+    for (let n = 1; n <= book.chapters; n++) {
+      const a = document.createElement("a");
+      a.className = "jump-cell";
+      if (book.slug === CURRENT_SLUG && n === CURRENT_CHAPTER) a.classList.add("current");
+      a.href = chapterHref(book.slug, n);
+      a.textContent = n;
+      grid.appendChild(a);
+    }
+    booksPane.style.display = "none";
+    searchWrap.style.display = "none";
+    chaptersPane.classList.add("show");
+    document.getElementById("jumpTitle").textContent = book.name;
+    chaptersPane.scrollTop = 0;
+    jump.querySelector(".jump-body").scrollTop = 0;
+  }
+
+  function backToBooks() {
+    chaptersPane.classList.remove("show");
+    booksPane.style.display = "";
+    searchWrap.style.display = "";
+    document.getElementById("jumpTitle").textContent = "Go to";
+  }
+
+  document.getElementById("jumpBack").addEventListener("click", backToBooks);
+
+  /* ---- search filter ---- */
+
+  search.addEventListener("input", () => {
+    const q = search.value.trim().toLowerCase();
+    books.forEach((b) => { b._match = !q || b.name.toLowerCase().includes(q); });
+    renderBooks(GROUPS);
+  });
+
+  /* ---- open / close ---- */
+
+  function open() {
+    books.forEach((b) => { b._match = true; });
+    renderBooks(GROUPS);
+    backToBooks();
+    search.value = "";
+    jump.hidden = false;
+    requestAnimationFrame(() => jump.classList.add("up"));
+  }
+  function close() {
+    jump.classList.remove("up");
+    setTimeout(() => { jump.hidden = true; }, 300);
+  }
+
+  refBtn.addEventListener("click", open);
+  document.getElementById("jumpClose").addEventListener("click", close);
+  jump.addEventListener("click", (e) => { if (e.target === jump) close(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !jump.hidden) close();
+  });
+})();
+</script>
+
+<script src="{{ url_for('static', filename='reading-position.js') }}"></script>
+<script src="{{ url_for('static', filename='saved-verses.js') }}"></script>
+<script src="{{ url_for('static', filename='highlights.js') }}"></script>
+<script>
+(function () {
+  const sheet = document.getElementById("vsheet");
+  if (!sheet) return;
+
+  const BOOK = {{ book.name | tojson }};
+  const CHAPTER = {{ chapter }};
+  const TRANSLATION = {{ translation | tojson }};
+
+  const refEl = document.getElementById("vsheetRef");
+  const hintEl = document.getElementById("vsheetHint");
+  const saveBtn = document.getElementById("vsheetSave");
+  const saveLabel = document.getElementById("vsheetSaveLabel");
+  const hlBtn = document.getElementById("vsheetHighlight");
+  const hlLabel = document.getElementById("vsheetHighlightLabel");
+  const copyBtn = document.getElementById("vsheetCopy");
+  const closeBtn = document.getElementById("vsheetClose");
+
+  const verses = [...document.querySelectorAll(".v")];
+  let selected = [];        // verse elements, in document order
+  let phrase = null;        // { ref, text } when a phrase is selected
+
+  /* ---------- helpers ---------- */
+
+  function sortSelection() {
+    selected.sort((a, b) => Number(a.dataset.num) - Number(b.dataset.num));
+  }
+
+  function selectionLabel() {
+    if (phrase) return phrase.ref;
+    if (!selected.length) return "";
+    sortSelection();
+    const nums = selected.map((el) => Number(el.dataset.num));
+    // Collapse consecutive runs: 16,17,18 -> 16-18
+    const runs = [];
+    let start = nums[0], prev = nums[0];
+    for (let i = 1; i < nums.length; i++) {
+      if (nums[i] === prev + 1) { prev = nums[i]; continue; }
+      runs.push(start === prev ? `${start}` : `${start}-${prev}`);
+      start = prev = nums[i];
+    }
+    runs.push(start === prev ? `${start}` : `${start}-${prev}`);
+    return `${BOOK} ${CHAPTER}:${runs.join(", ")}`;
+  }
+
+  function selectionText() {
+    if (phrase) return phrase.text;
+    sortSelection();
+    return selected.map((el) => el.dataset.text).join(" ");
+  }
+
+  function allSaved() {
+    if (!selected.length) return false;
+    return selected.every((el) =>
+      window.SavedVerses.isSaved(el.dataset.ref, TRANSLATION)
+    );
+  }
+
+  /* ---------- sheet ---------- */
+
+  function openSheet() {
+    refEl.textContent = selectionLabel();
+    if (phrase) {
+      hintEl.textContent = "Highlight this phrase";
+      saveBtn.hidden = true;
+      hlLabel.textContent = window.Highlights.exists(phrase.ref, phrase.text, TRANSLATION)
+        ? "Remove highlight" : "Highlight";
+    } else {
+      hintEl.textContent = selected.length > 1
+        ? `${selected.length} verses selected`
+        : "Tap more verses to add them";
+      saveBtn.hidden = false;
+      saveLabel.textContent = allSaved() ? "Saved" : "Save";
+      hlLabel.textContent = "Highlight";
+    }
+    sheet.hidden = false;
+    requestAnimationFrame(() => sheet.classList.add("up"));
+  }
+
+  function closeSheet() {
+    sheet.classList.remove("up");
+    verses.forEach((v) => v.classList.remove("sel"));
+    selected = [];
+    phrase = null;
+    window.getSelection().removeAllRanges();
+    setTimeout(() => { sheet.hidden = true; }, 220);
+  }
+
+  /* ---------- verse selection (tap to add) ---------- */
+
+  function toggleVerse(el) {
+    phrase = null;
+    const i = selected.indexOf(el);
+    if (i >= 0) {
+      selected.splice(i, 1);
+      el.classList.remove("sel");
+    } else {
+      selected.push(el);
+      el.classList.add("sel");
+    }
+    if (selected.length) openSheet(); else closeSheet();
+  }
+
+  verses.forEach((el) => {
+    el.addEventListener("click", (e) => {
+      // A real text selection means the reader is picking words, not tapping.
+      const sel = window.getSelection();
+      if (sel && String(sel).trim().length > 1) return;
+      e.stopPropagation();
+      toggleVerse(el);
+    });
+
+    // Desktop: double-click a word to highlight just that word.
+    el.addEventListener("dblclick", (e) => {
+      const sel = window.getSelection();
+      const word = String(sel).trim();
+      if (!word) return;
+      e.stopPropagation();
+      verses.forEach((v) => v.classList.remove("sel"));
+      selected = [];
+      phrase = { ref: el.dataset.ref, text: word };
+      openSheet();
+    });
+  });
+
+  /* ---------- phrase selection (drag / long-press) ---------- */
+
+  document.addEventListener("selectionchange", () => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    const text = String(sel).trim();
+    if (text.length < 2) return;
+
+    // Only react when the selection sits inside the scripture text.
+    const node = sel.anchorNode;
+    const holder = node && (node.nodeType === 1 ? node : node.parentElement);
+    const verseEl = holder && holder.closest ? holder.closest(".v") : null;
+    if (!verseEl) return;
+
+    verses.forEach((v) => v.classList.remove("sel"));
+    selected = [];
+    phrase = { ref: verseEl.dataset.ref, text };
+    openSheet();
+  });
+
+  /* ---------- actions ---------- */
+
+  saveBtn.addEventListener("click", () => {
+    if (!selected.length) return;
+    const shouldSave = !allSaved();
+    selected.forEach((el) => {
+      const isSaved = window.SavedVerses.isSaved(el.dataset.ref, TRANSLATION);
+      if (shouldSave && !isSaved) {
+        window.SavedVerses.save(el.dataset.ref, el.dataset.text, TRANSLATION);
+      } else if (!shouldSave && isSaved) {
+        window.SavedVerses.remove(el.dataset.ref, TRANSLATION);
+      }
+    });
+    saveLabel.textContent = shouldSave ? "Saved" : "Save";
+    markSaved();
+  });
+
+  hlBtn.addEventListener("click", () => {
+    if (phrase) {
+      if (window.Highlights.exists(phrase.ref, phrase.text, TRANSLATION)) {
+        window.Highlights.remove(phrase.ref, phrase.text, TRANSLATION);
+      } else {
+        window.Highlights.add(phrase.ref, phrase.text, TRANSLATION);
+      }
+    } else {
+      selected.forEach((el) => {
+        window.Highlights.add(el.dataset.ref, el.dataset.text, TRANSLATION);
+      });
+    }
+    applyHighlights();
+    closeSheet();
+  });
+
+  copyBtn.addEventListener("click", () => {
+    const text = `"${selectionText()}" — ${selectionLabel()}`;
+    if (navigator.clipboard) navigator.clipboard.writeText(text);
+    closeSheet();
+  });
+
+  // Hand the selected verses to the study assistant, so the question is about
+  // exactly what the reader picked out rather than the whole chapter.
+  const askBtn = document.getElementById("vsheetAsk");
+  if (askBtn) {
+    askBtn.addEventListener("click", () => {
+      const ref = selectionLabel();
+      const text = selectionText();
+      // The sheet knows what was picked; pass it on so the suggested
+      // questions match. Read before closeSheet(), which clears both.
+      const kind = phrase ? "phrase" : selected.length;
+      closeSheet();
+      if (window.StudyPanel) window.StudyPanel.openWith(ref, text, kind);
+    });
+  }
+
+  closeBtn.addEventListener("click", closeSheet);
+
+  /* ---------- rendering saved + highlighted state ---------- */
+
+  function markSaved() {
+    verses.forEach((v) => {
+      v.classList.toggle(
+        "saved",
+        window.SavedVerses.isSaved(v.dataset.ref, TRANSLATION)
+      );
+    });
+  }
+
+  function escapeRe(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function applyHighlights() {
+    const items = window.Highlights.forChapter(BOOK, CHAPTER, TRANSLATION);
+
+    verses.forEach((v) => {
+      const num = v.dataset.num;
+      const original = v.dataset.text;
+      const mine = items.filter((h) => h.ref === v.dataset.ref);
+      const bracketed = v.dataset.bracketed === "1";
+
+      // Rebuild the verse using DOM nodes rather than an HTML string. The
+      // verse text comes from an external API, so it must never be treated
+      // as markup — textContent guarantees it is rendered as plain text.
+      v.textContent = "";
+
+      const sup = document.createElement("sup");
+      sup.className = "vn";
+      sup.textContent = num;
+      v.appendChild(sup);
+
+      // Bracketed (traditional-but-disputed) verses show their brackets even
+      // through a highlight rebuild, so the caveat is never lost.
+      const openBracket = () => {
+        if (!bracketed) return;
+        const b = document.createElement("span");
+        b.className = "brk";
+        b.textContent = "[";
+        v.appendChild(b);
+      };
+      const closeBracket = () => {
+        if (!bracketed) return;
+        const b = document.createElement("span");
+        b.className = "brk";
+        b.textContent = "]";
+        v.appendChild(b);
+      };
+
+      if (!mine.length) {
+        openBracket();
+        v.appendChild(document.createTextNode(original));
+        closeBracket();
+        v.appendChild(document.createTextNode(" "));
+        return;
+      }
+
+      openBracket();
+
+      // Find every span to highlight, longest phrases first so overlapping
+      // highlights don't split each other.
+      const ranges = [];
+      mine.sort((a, b) => b.text.length - a.text.length).forEach((h) => {
+        let from = 0;
+        while (true) {
+          const at = original.indexOf(h.text, from);
+          if (at === -1) break;
+          const end = at + h.text.length;
+          // Skip anything overlapping a range we've already claimed.
+          if (!ranges.some((r) => at < r.end && end > r.start)) {
+            ranges.push({ start: at, end });
+          }
+          from = at + 1;
+        }
+      });
+      ranges.sort((a, b) => a.start - b.start);
+
+      let cursor = 0;
+      ranges.forEach((r) => {
+        if (r.start > cursor) {
+          v.appendChild(document.createTextNode(original.slice(cursor, r.start)));
+        }
+        const mark = document.createElement("mark");
+        mark.className = "hl";
+        mark.textContent = original.slice(r.start, r.end);
+        v.appendChild(mark);
+        cursor = r.end;
+      });
+      if (cursor < original.length) {
+        v.appendChild(document.createTextNode(original.slice(cursor)));
+      }
+      closeBracket();
+      v.appendChild(document.createTextNode(" "));
+    });
+  }
+
+  /* ---------- start ---------- */
+
+  // Remember where they are, so home can offer to continue.
+  if (window.ReadingPosition) {
+    window.ReadingPosition.setPosition(BOOK, {{ book.slug | tojson }}, CHAPTER, TRANSLATION);
+  }
+
+  markSaved();
+  applyHighlights();
+
+  // Pull anything saved on another device, then repaint
+  if (window.SavedVerses.syncWithAccount) {
+    window.SavedVerses.syncWithAccount().then((signedIn) => {
+      if (signedIn) markSaved();
+    });
+  }
+
+  // If signed in, pull anything highlighted on another device.
+  window.Highlights.pullFromAccount().then((signedIn) => {
+    if (signedIn) applyHighlights();
+  });
+})();
+</script>
+
+{% if study_enabled %}
+<script>
+(function () {
+  const panel = document.getElementById("studyPanel");
+  const openBtn = document.getElementById("studyOpen");
+  const closeBtn = document.getElementById("studyClose");
+  const form = document.getElementById("studyForm");
+  const input = document.getElementById("studyInput");
+  const send = document.getElementById("studySend");
+  const thread = document.getElementById("studyThread");
+
+  const REF = {{ (book.name ~ " " ~ chapter) | tojson }};
+  const PASSAGE = (document.getElementById("scripture") || {}).innerText || "";
+
+  // The running conversation, so follow-up questions have something to
+  // follow. Kept in memory only — it is not a record of anyone's questions.
+  let history = [];
+
+  // When the reader has selected specific verses, questions are about those
+  // rather than the whole chapter.
+  let focusRef = null;
+  let focusText = null;
+
+  function open() {
+    panel.hidden = false;
+    requestAnimationFrame(() => panel.classList.add("up"));
+    setTimeout(() => input.focus(), 300);
+  }
+  function close() {
+    panel.classList.remove("up");
+    setTimeout(() => { panel.hidden = true; }, 240);
+  }
+
+  // Starter questions, matched to what was actually selected. Being offered
+  // "What is this passage about?" after picking out a single word is a poor
+  // fit — the useful question there is what the word means.
+  const CHAPTER_CHIPS = [
+    "What is this passage about?",
+    "What's the historical context?",
+    "Do Christians read this differently?",
+    "What do the key words mean?",
+  ];
+  const WORD_CHIPS = [
+    "What does this word mean here?",
+    "What's the original Greek or Hebrew?",
+    "Is it translated differently elsewhere?",
+  ];
+  const PHRASE_CHIPS = [
+    "What does this mean?",
+    "Why does it say it this way?",
+    "Where else does the Bible say something similar?",
+  ];
+  const VERSE_CHIPS = [
+    "What does this verse mean?",
+    "What's the context around it?",
+    "Do Christians read this differently?",
+    "Where else does this idea appear?",
+  ];
+  const VERSES_CHIPS = [
+    "What do these verses mean?",
+    "How do these verses fit together?",
+    "What's the context around this?",
+    "Do Christians read this differently?",
+  ];
+
+  /* `kind` comes from the action sheet, which knows exactly what was picked:
+     "phrase" for a drag or long-press, or a verse count. Inferring it from
+     the length of the text gets the plurals wrong on a long single verse. */
+  function chipsFor(text, kind) {
+    if (!text) return CHAPTER_CHIPS;
+    if (kind === "phrase") {
+      const words = text.trim().split(/\s+/).length;
+      return words === 1 ? WORD_CHIPS : PHRASE_CHIPS;
+    }
+    return kind === 1 ? VERSE_CHIPS : VERSES_CHIPS;
+  }
+
+  function renderChips(list) {
+    let box = document.getElementById("studySuggest");
+    if (!box) {
+      box = document.createElement("div");
+      box.className = "study-suggestions";
+      box.id = "studySuggest";
+      thread.prepend(box);
+    }
+    box.textContent = "";
+    list.forEach((q) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "study-chip";
+      b.textContent = q;
+      b.addEventListener("click", () => askQuestion(q));
+      box.appendChild(b);
+    });
+  }
+
+  // Let the verse action sheet hand a specific passage to the assistant.
+  window.StudyPanel = {
+    openWith: function (ref, text, kind) {
+      focusRef = ref || null;
+      focusText = text || null;
+      const label = document.querySelector(".study-ref");
+      if (label) label.textContent = focusRef || REF;
+
+      if (focusRef) {
+        // A new passage means a new line of enquiry.
+        history = [];
+        thread.querySelectorAll(".study-bubble").forEach((b) => b.remove());
+        renderChips(chipsFor(focusText, kind));
+      }
+      open();
+    },
+  };
+
+  openBtn.addEventListener("click", open);
+  closeBtn.addEventListener("click", close);
+
+  /* The model replies in markdown. Rendering it with textContent shows the
+     raw asterisks; rendering it with innerHTML would let model output inject
+     markup. So parse the small subset it actually uses — bold, italic and
+     bullet lists — into real DOM nodes. Text only ever arrives via
+     textContent, so nothing can be injected. */
+  function appendInline(parent, text) {
+    // Split on **bold** and *italic*, keeping the delimiters.
+    const parts = text.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*)/g);
+    parts.forEach((part) => {
+      if (!part) return;
+      if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+        const s = document.createElement("strong");
+        s.textContent = part.slice(2, -2);
+        parent.appendChild(s);
+      } else if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+        const e = document.createElement("em");
+        e.textContent = part.slice(1, -1);
+        parent.appendChild(e);
+      } else {
+        parent.appendChild(document.createTextNode(part));
+      }
+    });
+  }
+
+  function addBubble(text, who) {
+    const el = document.createElement("div");
+    el.className = "study-bubble " + who;
+
+    text.split(/\n\n+/).forEach((block) => {
+      const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
+      if (!lines.length) return;
+
+      /* The model often writes an intro line and then bullets in one block:
+
+           Christians emphasise different aspects:
+           * Reformed traditions say...
+           * Catholic traditions say...
+
+         So walk the block and flush a paragraph or a list as the run
+         changes, rather than requiring the whole block to be one or other. */
+      let para = [];
+      let bullets = [];
+
+      const flushPara = () => {
+        if (!para.length) return;
+        const p = document.createElement("p");
+        para.forEach((l, i) => {
+          if (i) p.appendChild(document.createTextNode(" "));
+          appendInline(p, l);
+        });
+        el.appendChild(p);
+        para = [];
+      };
+      const flushBullets = () => {
+        if (!bullets.length) return;
+        const ul = document.createElement("ul");
+        bullets.forEach((l) => {
+          const li = document.createElement("li");
+          appendInline(li, l);
+          ul.appendChild(li);
+        });
+        el.appendChild(ul);
+        bullets = [];
+      };
+
+      lines.forEach((line) => {
+        const m = line.match(/^[*-]\s+(.*)$/);
+        if (m) {
+          flushPara();
+          bullets.push(m[1]);
+        } else {
+          flushBullets();
+          para.push(line);
+        }
+      });
+      flushPara();
+      flushBullets();
+    });
+
+    thread.appendChild(el);
+    thread.scrollTop = thread.scrollHeight;
+    return el;
+  }
+
+  async function askQuestion(question) {
+    if (!question) return;
+    // Look this up each time rather than caching it: the chips are rebuilt
+    // whenever a new selection comes in, so a reference held from page load
+    // would point at an element that is no longer on the page.
+    const box = document.getElementById("studySuggest");
+    if (box) box.remove();
+
+    addBubble(question, "me");
+    input.value = "";
+    send.disabled = true;
+
+    const thinking = addBubble("Thinking…", "ai thinking");
+
+    try {
+      const res = await fetch("/api/study/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question,
+          ref: focusRef || REF,
+          text: (focusText || PASSAGE).slice(0, 2500),
+          history: history,
+        }),
+      });
+      const data = await res.json();
+      thinking.remove();
+      const answer = data.answer || "No answer came back.";
+      addBubble(answer, "ai");
+
+      // Only remember exchanges that actually worked, so a failed request
+      // doesn't poison the thread with an error message as context.
+      if (data.ok) {
+        history.push({ role: "user", text: question });
+        history.push({ role: "model", text: answer });
+        history = history.slice(-20);
+      }
+    } catch (e) {
+      thinking.remove();
+      addBubble("Couldn't reach the study assistant. Please try again.", "ai");
+    } finally {
+      send.disabled = false;
+      input.focus();
+    }
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    askQuestion(input.value.trim());
+  });
+
+  document.querySelectorAll(".study-chip").forEach((chip) => {
+    chip.addEventListener("click", () => askQuestion(chip.textContent.trim()));
+  });
+})();
+</script>
+{% endif %}
+
+{% endblock %}

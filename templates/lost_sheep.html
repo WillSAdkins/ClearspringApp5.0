@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% block content %}
+
+<header class="hero hero-small">
+  <div class="hero-arch">
+    <p class="eyebrow"><a href="{{ url_for('games_hub') }}" style="color:inherit;">← Kids Games</a></p>
+    <h1 class="page-title">Lost Sheep</h1>
+    <p class="tagline">Five sheep have wandered off. Bring them all home</p>
+  </div>
+</header>
+
+<main class="board">
+  <div class="ls-stats">
+    <span>Found: <strong id="ls-found">0</strong> / 5</span>
+    <span>Searches: <strong id="ls-moves">0</strong></span>
+    <button id="ls-restart" class="btn-ghost small">New field</button>
+  </div>
+
+  <p class="ls-hint" id="ls-hint">Tap a square to search it. You'll be told how close you are.</p>
+
+  <div id="ls-grid" class="ls-grid" role="grid" aria-label="Search field"></div>
+
+  <div class="ls-key">
+    <span><i class="ls-dot ls-hot"></i> Very close</span>
+    <span><i class="ls-dot ls-warm"></i> Nearby</span>
+    <span><i class="ls-dot ls-cold"></i> Far away</span>
+  </div>
+
+  <div id="ls-win" class="mm-win" hidden>
+    <p>🐑 All five are home — in <span id="ls-final"></span> searches!</p>
+    <button id="ls-play-again" class="btn-primary" style="width:auto;">Play again</button>
+    <div class="lb-publish">
+      <button id="ls-publish" class="btn-ghost small">Publish score to leaderboard</button>
+      <p id="ls-publish-result" class="lb-publish-result"></p>
+    </div>
+    <a href="{{ url_for('game_leaderboard', game_key='lost_sheep') }}" class="lb-view-link">View leaderboard →</a>
+  </div>
+</main>
+
+<style>
+  .ls-stats {
+    display: flex; align-items: center; gap: 1.2rem;
+    font-family: var(--mono); font-size: 0.85rem;
+    margin-bottom: 0.9rem; flex-wrap: wrap;
+  }
+  .ls-hint {
+    font-size: 0.9rem; color: var(--muted);
+    margin: 0 0 1rem; min-height: 2.6rem; line-height: 1.4;
+  }
+  .ls-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 0.35rem;
+    max-width: 26rem;
+    margin-bottom: 1rem;
+  }
+  .ls-cell {
+    aspect-ratio: 1;
+    border-radius: 0.5rem;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 1.05rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; padding: 0;
+    transition: transform 0.12s ease, background 0.25s ease;
+  }
+  .ls-cell:active { transform: scale(0.9); }
+  .ls-cell:disabled { cursor: default; }
+  .ls-cell.hot   { background: #C9683C; border-color: #C9683C; color: #FFF; }
+  .ls-cell.warm  { background: #D9A441; border-color: #D9A441; color: #2B2622; }
+  .ls-cell.cold  { background: var(--surface-2); color: var(--muted); }
+  .ls-cell.sheep { background: #6E9B57; border-color: #6E9B57; }
+  .ls-key {
+    display: flex; gap: 1.1rem; flex-wrap: wrap;
+    font-size: 0.8rem; color: var(--muted);
+    font-family: var(--body); margin-bottom: 1.2rem;
+  }
+  .ls-key span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .ls-dot {
+    width: 0.7rem; height: 0.7rem; border-radius: 50%;
+    display: inline-block;
+  }
+  .ls-hot { background: #C9683C; }
+  .ls-warm { background: #D9A441; }
+  .ls-cold { background: var(--surface-2); border: 1px solid var(--line); }
+  @media (prefers-reduced-motion: reduce) { .ls-cell { transition: none; } }
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  const SIZE = 8;
+  const SHEEP = 5;
+
+  const gridEl = document.getElementById("ls-grid");
+  const foundEl = document.getElementById("ls-found");
+  const movesEl = document.getElementById("ls-moves");
+  const hintEl = document.getElementById("ls-hint");
+  const winEl = document.getElementById("ls-win");
+
+  let sheep = [];      // [{r,c,found}]
+  let moves = 0;
+  let found = 0;
+  let cells = [];
+
+  function placeSheep() {
+    const taken = new Set();
+    const list = [];
+    while (list.length < SHEEP) {
+      const r = Math.floor(Math.random() * SIZE);
+      const c = Math.floor(Math.random() * SIZE);
+      const key = r + ":" + c;
+      if (taken.has(key)) continue;
+      taken.add(key);
+      list.push({ r, c, found: false });
+    }
+    return list;
+  }
+
+  // Chebyshev distance: how many king-moves away. Reads more naturally on a
+  // grid than straight-line distance, because diagonals feel adjacent.
+  function distance(r1, c1, r2, c2) {
+    return Math.max(Math.abs(r1 - r2), Math.abs(c1 - c2));
+  }
+
+  function nearestSheepDistance(r, c) {
+    let best = Infinity;
+    sheep.forEach((s) => {
+      if (s.found) return;
+      best = Math.min(best, distance(r, c, s.r, s.c));
+    });
+    return best;
+  }
+
+  function buildGrid() {
+    gridEl.textContent = "";
+    cells = [];
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ls-cell";
+        b.setAttribute("aria-label", `Row ${r + 1}, column ${c + 1}`);
+        b.addEventListener("click", () => search(r, c, b));
+        gridEl.appendChild(b);
+        cells.push(b);
+      }
+    }
+  }
+
+  function search(r, c, btn) {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    moves += 1;
+    movesEl.textContent = String(moves);
+
+    const hit = sheep.find((s) => !s.found && s.r === r && s.c === c);
+    if (hit) {
+      hit.found = true;
+      found += 1;
+      foundEl.textContent = String(found);
+      btn.classList.add("sheep");
+      btn.textContent = "🐑";
+      btn.setAttribute("aria-label", "Sheep found");
+
+      if (found === SHEEP) {
+        hintEl.textContent = "That's all of them safely home.";
+        endGame();
+      } else {
+        hintEl.textContent = `Found one! ${SHEEP - found} still out there.`;
+      }
+      return;
+    }
+
+    const d = nearestSheepDistance(r, c);
+    if (d <= 1) {
+      btn.classList.add("hot");
+      hintEl.textContent = "Very close — a sheep is right beside that square.";
+    } else if (d <= 3) {
+      btn.classList.add("warm");
+      hintEl.textContent = "Nearby. Keep looking around there.";
+    } else {
+      btn.classList.add("cold");
+      hintEl.textContent = "Far away. Try somewhere else on the field.";
+    }
+    btn.textContent = String(d);
+    btn.setAttribute("aria-label", `Nearest sheep is ${d} squares away`);
+  }
+
+  function endGame() {
+    cells.forEach((b) => { b.disabled = true; });
+    winEl.hidden = false;
+    document.getElementById("ls-final").textContent = String(moves);
+  }
+
+  function newGame() {
+    sheep = placeSheep();
+    moves = 0;
+    found = 0;
+    movesEl.textContent = "0";
+    foundEl.textContent = "0";
+    hintEl.textContent = "Tap a square to search it. You'll be told how close you are.";
+    winEl.hidden = true;
+    const pubBtn = document.getElementById("ls-publish");
+    pubBtn.disabled = false;
+    pubBtn.textContent = "Publish score to leaderboard";
+    document.getElementById("ls-publish-result").textContent = "";
+    buildGrid();
+  }
+
+  document.getElementById("ls-restart").addEventListener("click", newGame);
+  document.getElementById("ls-play-again").addEventListener("click", newGame);
+
+  document.getElementById("ls-publish").addEventListener("click", function () {
+    window.ChurchLeaderboard.publish(
+      "lost_sheep", moves,
+      document.getElementById("ls-publish-result"), this
+    );
+  });
+
+  newGame();
+})();
+</script>
+
+{% endblock %}

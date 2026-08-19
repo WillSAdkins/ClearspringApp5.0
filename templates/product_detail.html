@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% set show_back = false %}{# this page draws its own back link #}
+{% from "icons.html" import icon %}
+{% block content %}
+
+<main class="bible">
+
+  <header class="bible-head">
+    <a href="{{ url_for('store') }}" class="bible-back" aria-label="Back to store">{{ icon('chevron-left', 22) }}</a>
+    <h1 class="bible-title">{{ category_label }}</h1>
+    <span style="width:2.4rem"></span>
+  </header>
+
+  {% if p['image_url'] %}
+    <div class="product-hero">
+      <img src="{{ p['image_url'] }}" alt="{{ p['name'] }}" loading="lazy">
+    </div>
+  {% endif %}
+
+  <h2 class="product-detail-name">{{ p['name'] }}</h2>
+
+  <div class="product-price-row big">
+    {% if p['price_pence'] %}<span class="product-price">{{ p['price_pence'] | gbp }}</span>{% endif %}
+    {% if p['price_note'] %}<span class="product-price-note">{{ p['price_note'] }}</span>{% endif %}
+  </div>
+
+  {% if stock_labels.get(p['stock']) %}
+    <p class="product-stock-line {{ p['stock'] }}">{{ stock_labels[p['stock']] }}</p>
+  {% endif %}
+
+  {% if p['summary'] %}<p class="product-summary">{{ p['summary'] }}</p>{% endif %}
+
+  {% if p['description'] %}
+    <div class="product-body">
+      {% for para in p['description'].split('\n\n') %}<p>{{ para }}</p>{% endfor %}
+    </div>
+  {% endif %}
+
+  {% set link = p['buy_url'] or default_buy_url %}
+  {% if p['stock'] == 'out' %}
+    <div class="placeholder-card">
+      <p><strong>Sold out.</strong></p>
+      <p>Do get in touch if you'd like to know when it's back.</p>
+    </div>
+  {% elif p['stock'] == 'collect' %}
+    <div class="placeholder-card">
+      <p><strong>Available at church.</strong></p>
+      <p>Come and find one of the team on a Sunday.</p>
+    </div>
+  {% elif link %}
+    <a href="{{ link }}" target="_blank" rel="noopener" class="give-primary">
+      {{ icon('bookmark', 20) }}
+      <span>
+        <strong>{{ 'Pre-order' if p['stock'] == 'preorder' else 'Buy this' }}</strong>
+        <small>{% if provider %}Opens {{ provider }} securely{% else %}Opens in a new tab{% endif %}</small>
+      </span>
+      {{ icon('chevron-right', 18) }}
+    </a>
+    <p class="give-secure">
+      {{ icon('check', 14) }}
+      {% if provider %}Payment is handled securely by {{ provider }}.{% else %}Payment is handled by our store provider.{% endif %}
+      Clearspring never sees or stores your card details.
+    </p>
+  {% else %}
+    <div class="placeholder-card">
+      <p><strong>Not yet available to buy online.</strong></p>
+      <p>Please speak to someone at church if you'd like one.</p>
+    </div>
+  {% endif %}
+
+  <p class="charity-note">
+    Clearspring Church is a registered charity (CIO no. {{ charity_number }}).
+    {% if delivery_note %}<br>{{ delivery_note }}{% endif %}
+    {% if returns_url %}<br><a href="{{ returns_url }}" target="_blank" rel="noopener">Returns &amp; delivery</a>{% endif %}
+  </p>
+
+</main>
+
+{% endblock %}
